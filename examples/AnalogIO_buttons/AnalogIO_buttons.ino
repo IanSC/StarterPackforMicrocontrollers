@@ -36,8 +36,8 @@ void setup() {
     aIO.initButtons( 1022, 834, 642, 14, 228, 430 );
     
     // to play around:
-    aIO.setRepeatDelayInMs( 1000 ); // default 400
-    aIO.setRepeatRateInMs (  500 ); // default 250
+    //aIO.setRepeatDelayInMs( 1000 ); // default 400
+    //aIO.setRepeatRateInMs (  500 ); // default 250
 }
 
 int counter[6];
@@ -66,28 +66,21 @@ void loop() {
 
     switch( caseNo ) {
     case 1:
+        // detect when key is pressed
         buttonNo = aIO.getKeyDown();
         break;
     case 2:
+        // detect when key is released
         buttonNo = aIO.getKeyUp();
         break;
     case 3:
-        // get repeated status while pressed
-        buttonNo = aIO.getRepeating();
+        // get repeated results while pressed
+        buttonNo = aIO.getRepeatingKey();
         break;
     case 4:
-        buttonNo = aIO.getContinuous();
+        // get continuous feedback
+        buttonNo = aIO.getContinuousKey();
         break;
-//    case 1:    
-//        // just increment every loop
-//        buttonNo = aIO.readButton();
-//        break;
-//    case 2:
-//        // need to release each time
-//        buttonNo = aIO.readButton();
-//        if ( buttonNo != 0 )
-//            aIO.flagWaitForKeyup();
-//        break;
     }
 
     // R.I.P. counter[0]...

@@ -127,19 +127,19 @@ namespace UserInput {
         //
         public:
 
-            inline Keys getContinuousInput( Keys allowedKeys = Keys::All ) {
-                return getInput( allowedKeys, false );
-            }
+            // inline Keys getContinuousInput( Keys allowedKeys = Keys::All ) {
+            //     return getInput( allowedKeys, false );
+            // }
 
-            Keys getInput( Keys allowedKeys = Keys::All, bool issueWaitForKeyUp = true ) {
+            Keys getContinuousKey( Keys allowedKeys = Keys::All ) {
                 Keys input = Keys::None;
                 if ( usingDigitalKeys ) {
                     for( int i=0 ; i<5 ; i++ ) {
-                        if ( ioDigital[i] != nullptr && ioDigital[i]->getStatus() )
+                        if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
                             input = static_cast<Keys>( input | (1<<i) );
                     }
                 } else {                    
-                    int8_t buttonNo = ioAnalog->readButton();
+                    int8_t buttonNo = ioAnalog->getContinuousKey();
                     if ( buttonNo != 0 ) {
                         for( int i = 0 ; i < 5 ; i++ ) {
                             if ( ioAnalogButtonNo[i] == buttonNo ) {
@@ -149,12 +149,56 @@ namespace UserInput {
                         }
                     }
                 }
-                return processKeysCore( allowedKeys, input, issueWaitForKeyUp );
+                return processKeysCore( allowedKeys, input, false );
             }
 
-            Debouncer debouncer;
+            Keys getKeyDown( Keys allowedKeys = Keys::All ) {
+                Keys input = Keys::None;
+                if ( usingDigitalKeys ) {
+                    for( int i=0 ; i<5 ; i++ ) {
+                        if ( ioDigital[i] != nullptr && ioDigital[i]->getKeyDown() )
+                            input = static_cast<Keys>( input | (1<<i) );
+                    }
+                } else {                    
+                    int8_t buttonNo = ioAnalog->getKeyDown();
+                    if ( buttonNo != 0 ) {
+                        for( int i = 0 ; i < 5 ; i++ ) {
+                            if ( ioAnalogButtonNo[i] == buttonNo ) {
+                                input = static_cast<Keys>( input | (1<<i) );
+                                break;
+                            }
+                        }
+                    }
+                }
+                return processKeysCore( allowedKeys, input, false );
+            }
 
-            Keys getRepeatingInput( Keys allowedKeys = Keys::All, bool issueWaitForKeyUpToOkayKey = true ) {
+            // Keys getInput( Keys allowedKeys = Keys::All, bool issueWaitForKeyUp = true ) {
+            //     Keys input = Keys::None;
+            //     if ( usingDigitalKeys ) {
+            //         for( int i=0 ; i<5 ; i++ ) {
+            //             if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
+            //                 input = static_cast<Keys>( input | (1<<i) );
+            //         }
+            //     } else {                    
+            //         int8_t buttonNo = ioAnalog->getContinuousKey();
+            //         if ( buttonNo != 0 ) {
+            //             for( int i = 0 ; i < 5 ; i++ ) {
+            //                 if ( ioAnalogButtonNo[i] == buttonNo ) {
+            //                     input = static_cast<Keys>( input | (1<<i) );
+            //                     break;
+            //                 }
+            //             }
+            //         }
+            //     }
+            //     return processKeysCore( allowedKeys, input, issueWaitForKeyUp );
+            // }
+
+            Keys getRepeatingKey( bool okayKeyAlsoRepeating, Keys allowedKeys = Keys::All ) {
+                return getRepeatingKey( allowedKeys, okayKeyAlsoRepeating );
+            }
+
+            Keys getRepeatingKey( Keys allowedKeys = Keys::All, bool okayKeyAlsoRepeating = false ) {
                 // if repeating from DigitalIO is used, cannot do diagonal repeating
                 Keys input = Keys::None;
                 if ( usingDigitalKeys ) {
@@ -165,11 +209,11 @@ namespace UserInput {
                     //         input = static_cast<Keys>( input | (1<<i) );
                     // }
                     for( int i=0 ; i<5 ; i++ ) {
-                        if ( ioDigital[i] != nullptr && ioDigital[i]->getStatus() )
+                        if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
                             input = static_cast<Keys>( input | (1<<i) );
                     }
                 } else {
-                    int8_t buttonNo = ioAnalog->getRepeating();
+                    int8_t buttonNo = ioAnalog->getRepeatingKey();
                     if ( buttonNo != 0 ) {
                         for( int i = 0 ; i < 5 ; i++ ) {
                             if ( ioAnalogButtonNo[i] == buttonNo ) {
@@ -184,7 +228,7 @@ namespace UserInput {
                 if ( usingDigitalKeys ) {
                     r = static_cast<Keys>( debouncer.getRepeating( r ) );
                 }
-                if ( r == Okay && issueWaitForKeyUpToOkayKey ) {
+                if ( r == Okay && !okayKeyAlsoRepeating ) {
                     if ( usingDigitalKeys )
                         ioDigital[0]->flagWaitForKeyup();
                     else
@@ -192,6 +236,51 @@ namespace UserInput {
                 }
                 return r;
             }
+
+            // Keys getRepeatingKey( Keys allowedKeys = Keys::All, bool issueWaitForKeyUpToOkayKey = true ) {
+            //     // if repeating from DigitalIO is used, cannot do diagonal repeating
+            //     Keys input = Keys::None;
+            //     if ( usingDigitalKeys ) {
+            //         // if ( ioDigital[0] != nullptr && ioDigital[0]->getStatus() )
+            //         //     input = Okay;
+            //         // for( int i=1 ; i<5 ; i++ ) {
+            //         //     if ( ioDigital[i] != nullptr && ioDigital[i]->getRepeating() )
+            //         //         input = static_cast<Keys>( input | (1<<i) );
+            //         // }
+            //         for( int i=0 ; i<5 ; i++ ) {
+            //             if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
+            //                 input = static_cast<Keys>( input | (1<<i) );
+            //         }
+            //     } else {
+            //         int8_t buttonNo = ioAnalog->getRepeatingKey();
+            //         if ( buttonNo != 0 ) {
+            //             for( int i = 0 ; i < 5 ; i++ ) {
+            //                 if ( ioAnalogButtonNo[i] == buttonNo ) {
+            //                     input = static_cast<Keys>( input | (1<<i) );
+            //                     break;
+            //                 }
+            //             }
+            //         }
+            //     }
+
+            //     Keys r = processKeysCore( allowedKeys, input, false );
+            //     if ( usingDigitalKeys ) {
+            //         r = static_cast<Keys>( debouncer.getRepeating( r ) );
+            //     }
+            //     if ( r == Okay && issueWaitForKeyUpToOkayKey ) {
+            //         if ( usingDigitalKeys )
+            //             ioDigital[0]->flagWaitForKeyup();
+            //         else
+            //             ioAnalog->flagWaitForKeyup();
+            //     }
+            //     return r;
+            // }
+
+        private:
+
+            Debouncer debouncer;
+
+        public:
 
             void setRepeatDelayInMs( uint16_t repeatDelay ) {
                 if ( usingDigitalKeys ) {
@@ -223,7 +312,7 @@ namespace UserInput {
                     if ( okay && issueWaitForKeyUp ) ioDigital[0]->flagWaitForKeyup();
                     return okay;
                 } else {
-                    bool okay = ( ioAnalog->readButton() == ioAnalogButtonNo[0] );
+                    bool okay = ( ioAnalog->getContinuousKey() == ioAnalogButtonNo[0] );
                     if ( okay && issueWaitForKeyUp ) ioAnalog->flagWaitForKeyup();
                     return okay;                    
                 }
@@ -234,14 +323,14 @@ namespace UserInput {
                     while ( true ) {
                         Keys input = Keys::None;
                         for( int i=0 ; i<5 ; i++ ) {
-                            if ( ioDigital[i] != nullptr && ioDigital[i]->getStatus() )
+                            if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
                                 input = static_cast<Keys>( input | (1<<i) );
                         }
                         if ( input == 0 ) break;
                     }
                 } else {
                     while( true ) {
-                        if ( ioAnalog->readButton() == ioAnalog->debouncer.inactiveState )
+                        if ( ioAnalog->getContinuousKey() == ioAnalog->debouncer.inactiveState )
                             break;
                     }
                 }
@@ -250,7 +339,7 @@ namespace UserInput {
             void waitForAnyKey() {
                 waitUntilNothingIsPressed();
                 while ( true ) {
-                    Keys input = getInput();
+                    Keys input = getKeyDown();
                     if ( input != None )
                         return;
                 }
@@ -397,21 +486,37 @@ namespace UserInput {
         return core.isOkayPressed( issueWaitForKeyUp );
     }
 
-    inline static Keys getInput( Keys allowedKeys = Keys::All ) {
-        return core.getInput( allowedKeys, true );
+    // inline static Keys getInput( Keys allowedKeys = Keys::All ) {
+    //     return core.getInput( allowedKeys, true );
+    // }
+
+    inline static Keys getKeyDown( Keys allowedKeys = Keys::All ) {
+        return core.getKeyDown( allowedKeys );
     }
 
-    inline static Keys getContinuousInput( Keys allowedKeys = Keys::All ) {
-        return core.getContinuousInput( allowedKeys );
+    inline static Keys getContinuousKey( Keys allowedKeys = Keys::All ) {
+        return core.getContinuousKey( allowedKeys );
     }
 
-    inline static Keys getRepeatingInput( Keys allowedKeys = Keys::All, bool issueWaitForKeyUpToOkayKey = true ) {
-        return core.getRepeatingInput( allowedKeys, issueWaitForKeyUpToOkayKey );
+    // inline static Keys getContinuousInput( Keys allowedKeys = Keys::All ) {
+    //     return core.getContinuousInput( allowedKeys );
+    // }
+
+    inline static Keys getRepeatingKey( Keys allowedKeys = Keys::All, bool okayKeyAlsoRepeating = false ) {
+        return core.getRepeatingKey( allowedKeys, okayKeyAlsoRepeating );
     }
 
-    inline static Keys getRepeatingInput( bool issueWaitForKeyUpToOkayKey, Keys allowedKeys = Keys::All ) {
-        return core.getRepeatingInput( allowedKeys, issueWaitForKeyUpToOkayKey );
+    inline static Keys getRepeatingKey( bool okayKeyAlsoRepeating, Keys allowedKeys = Keys::All ) {
+        return core.getRepeatingKey( allowedKeys, okayKeyAlsoRepeating );
     }
+
+    // inline static Keys getRepeatingInput( Keys allowedKeys = Keys::All, bool issueWaitForKeyUpToOkayKey = true ) {
+    //     return core.getRepeatingInput( allowedKeys, issueWaitForKeyUpToOkayKey );
+    // }
+
+    // inline static Keys getRepeatingInput( bool issueWaitForKeyUpToOkayKey, Keys allowedKeys = Keys::All ) {
+    //     return core.getRepeatingInput( allowedKeys, issueWaitForKeyUpToOkayKey );
+    // }
 
     inline static void waitUntilNothingIsPressed() {
         core.waitUntilNothingIsPressed();

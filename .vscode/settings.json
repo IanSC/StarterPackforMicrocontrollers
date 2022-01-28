@@ -31,6 +31,7 @@
         "string_view": "cpp",
         "unordered_map": "cpp",
         "unordered_set": "cpp",
-        "digitalio_interrupt": "cpp"
+        "digitalio_interrupt": "cpp",
+        "*.tcc": "cpp"
     }
 }

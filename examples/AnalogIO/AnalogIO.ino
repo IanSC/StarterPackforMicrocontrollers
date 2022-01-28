@@ -28,7 +28,7 @@ int map( int value ) {
     return map( value, 0, 1023, 0, 100 );
 }
 
-int onChange( int value ) {
+void onChange( int value ) {
     // this will fire, but sending to Serial
     // will mess up Serial plotter
     //Serial.print( "changed: " );
@@ -48,7 +48,7 @@ void loop() {
     int value       = aIO.read();
     int rawValue    = aIO.rawValue;
     int smoothValue = aIO.smoothValue;
-    int potMax      = aIO.analogResolution;
+    int potMax      = aIO.getAnalogResolution();
     
     Serial.print( value );
     Serial.print( "\t" );

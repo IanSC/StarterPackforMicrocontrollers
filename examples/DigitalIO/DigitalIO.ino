@@ -25,8 +25,8 @@ void setup() {
     Serial.begin( 115200 );
     Serial.println( "hello" );
     // to play around:
-    dIO3.setRepeatDelayInMs( 1000 ); // default 400
-    dIO3.setRepeatRateInMs (  500 ); // default 250
+    //dIO3.setRepeatDelayInMs( 1000 ); // default 400
+    //dIO3.setRepeatRateInMs (  500 ); // default 250
 }
 
 int r1Count = 0;
@@ -36,35 +36,16 @@ int r4Count = 0;
 
 void loop() {
 
-    bool r1 = dIO1.getKeyDown();
-    bool r2 = dIO2.getKeyUp();
-    bool r3 = dIO3.getRepeating();
-    bool r4 = dIO4.getContinuous();
+    bool r1 = dIO1.getKeyDown();       // detect when key is pressed
+    bool r2 = dIO2.getKeyUp();         // detect when key is released
+    bool r3 = dIO3.getRepeatingKey();  // get repeated results while pressed
+    bool r4 = dIO4.getContinuousKey(); // get continuous feedback
 
     if ( r1 ) r1Count++;
     if ( r2 ) r2Count++;
     if ( r3 ) r3Count++;
     if ( r4 ) r4Count++;
-    
-//    // just read with debounce to remove jitters
-//    // need to track previous state and detect only
-//    // transitions to be usable
-//    bool r1 = dIO1.getStatus();
-//    if ( r1 )
-//        r1Count++;
-//
-//    // must release key in order to get another one
-//    bool r2 = dIO2.getStatus();
-//    if ( r2 ) {
-//        dIO2.flagWaitForKeyup();
-//        r2Count++;
-//    }
-//
-//    // get repeated status if kept pressed
-//    bool r3 = dIO3.getRepeating();
-//    if ( r3 )
-//        r3Count++;        
-    
+
     Serial.print( r1Count );
     Serial.print( " / " );
     Serial.print( r2Count );

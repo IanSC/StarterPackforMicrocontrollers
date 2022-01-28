@@ -26,7 +26,7 @@ void setup() {
     Serial.begin( 115200 );
     Serial.println( "hello" );
 
-    // this only affects debouncing of anoalog buttons
+    // this only affects debouncing of analog buttons
     // not analog signals
     //aIO.debouncer.activeStatesDebounceInMs = 1000;
 
@@ -37,7 +37,7 @@ void loop() {
 
     int potValue  = aIO.read();
     int debounced = db.debounce( potValue );
-    int potMax    = aIO.analogResolution;
+    int potMax    = aIO.getAnalogResolution();
     
     Serial.print( potValue );
     Serial.print( "\t" );

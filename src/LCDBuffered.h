@@ -30,24 +30,25 @@
 //      bool recoverIfHasError()             recover from i2c errors
 //      void setRecoveryThrottleInMs()       throttle between i2c error recoveries
 //
-//   Cursor Control
+//   Cursor Control (Printing Position)
 //
 //      bool cursorAutoCarriageReturn        move to next line after end of current line, default false
 //      bool cursorAutoJumpToStart           move to (0,0) after end of screen, default false
 //
 //   Virtual Cursor
 //
-//      since only changes are sent, the LCD's cursor position will move around
-//      so a virtual blinking cursor is displayed instead
+//      Since updates are buffered, displaying of the actual screen's cursor is complicated.
+//      To overcome this, virtual cursor are used. Virtual cursor and printing position
+//      are independent.
 //
-//      char     virtualCursorChar              cursor character, default 0xFF
-//      uint16_t cursorBlinkOnDurationInMs      blinking on duration, default 600
-//      uint16_t cursorBlinkOffDurationInMs     blink off duration, default 400
-//      void     setVirtualCursor( col, row )   set virtual cursor position
-//      void     cursorOn()                     display/hide cursor
-//      void     cursorOff()                 
-//      void     cursorBlinkOn()                blink on/off
-//      void     cursorBlinkOff()
+//      setVirtualCursor( col, row )          set virtual cursor position
+//      char virtualCursorChar                lcd character for cursor, default 0xFF
+//      cursorOn()         cursor()           show/hide cursor
+//      cursorOff()        noCursor()
+//      cursorBlinkOn()    blink()            blink cursor if shown
+//      cursorBlinkOff()   noBlink()
+//      uint16_t cursorBlinkOnDurationInMs    blink on duration, default 600
+//      uint16_t cursorBlinkOffDurationInMs   blink off duration, default 400
 //
 //   Update
 //
@@ -71,7 +72,7 @@
 //              //    will pause for 100ms before updating again
 //              lcd.update();
 //          }
-//
+//      
 //   Multicore Support (ESP32)
 //        
 //      bool pauseUpdate()                      pause updates until resumed
@@ -102,7 +103,7 @@
 //              lcd.print( "the quick brown fox" );
 //              lcd.resumeUpdate();
 //          }
-        
+
 #pragma once
 
 #if defined(ESP32)

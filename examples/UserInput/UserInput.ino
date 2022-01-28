@@ -24,11 +24,6 @@ namespace ui = StarterPack::UserInput;
 // 1 - digital keys
 // 2 - analog keys
 
-#define INPUT_TYPE 2
-// 1 - single press
-// 2 - continuous press
-// 3 - repeated
-
 #if KEY_TYPE == 1
 
     // digital buttons
@@ -87,24 +82,33 @@ void loop() {
     
     ui::Keys r;
     
-    #if INPUT_TYPE == 1
+    uint8_t caseNo = 1;
+    // 1 - single press
+    // 2 - continuous press
+    // 3 - repeated, except select key
+
+    switch( caseNo ) {
+    case 1:
     
         // must release before next key is registered
         // must hit 2 keys at exactly the same time to get diagonal
-        r = ui::getInput();
-        
-    #elif INPUT_TYPE == 2
+        r = ui::getKeyDown();
+        break;
+
+    case 2:
 
         // keep sending results
-        r = ui::getContinuousInput();
-        
-    #elif INPUT_TYPE == 3
+        r = ui::getContinuousKey();
+        break;
 
-        // throttled result when kept pressed, except for okay key
-        // to also repeat okay key use getRepeatingInput( false );
-        r = ui::getRepeatingInput();
+    case 3:
         
-    #endif
+        // throttled result when kept pressed, except for okay key
+        // to also repeat okay key use getRepeatingKey( true );
+        r = ui::getRepeatingKey();
+        break;
+
+    }
     
     if ( r != ui::Keys::None ) {
         Serial.print( counter++ );

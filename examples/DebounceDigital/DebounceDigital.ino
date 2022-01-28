@@ -10,7 +10,7 @@
 //  Circuit
 //  -------
 //  - 2 pcs of wires
-//  - connect one end of wire 1 to A0
+//  - connect one end of wire 1 to IO PIN 2
 //  - connect one end of wire 2 to Ground
 //  - touch the free ends of the wires to each other
 //    to simulate pressing a button
@@ -27,6 +27,8 @@ using namespace StarterPack;
 #define NOT_PRESSED HIGH
 #define PRESSED     LOW
 
+#define PIN         2
+
 Debouncer db1 = Debouncer();
 Debouncer db2 = Debouncer();
 
@@ -37,14 +39,14 @@ void setup() {
     Serial.begin( 115200 );
     Serial.println( "hello" );
 
-    pinMode( A0, INPUT_PULLUP );
+    pinMode( PIN, INPUT_PULLUP );
 
     // if not pressed, state is HIGH
     db1.inactiveState = NOT_PRESSED;
     db2.inactiveState = NOT_PRESSED;
 
     // initialize debouncers
-    int initialState = digitalRead( A0 );
+    int initialState = digitalRead( PIN );
     db1.setInitialValue( initialState );
     db2.setInitialValue( initialState );
 
@@ -66,7 +68,7 @@ int r2Count = 0;
 
 void loop() {
 
-    int buttonStatus = digitalRead( A0 );
+    int buttonStatus = digitalRead( PIN );
     
     // count the number of times "button" is pressed
     bool r0 = buttonStatus;

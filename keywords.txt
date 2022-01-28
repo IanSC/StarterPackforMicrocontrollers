@@ -1,0 +1,126 @@
+#======================
+# Datatypes (KEYWORD1)
+#======================
+
+StarterPack	KEYWORD1
+AnalogIO	KEYWORD1
+Debouncer	KEYWORD1
+DigitalIO	KEYWORD1
+LCD_i2c	KEYWORD1
+LCD_wired	KEYWORD1
+LCDBuffered_i2c	KEYWORD1
+LCDBuffered_wired	KEYWORD1
+#LCDBuffered	KEYWORD1
+#LCDInterface	KEYWORD1
+LCDUtility	KEYWORD1
+Throttle	KEYWORD1
+TwoWireHelper	KEYWORD1
+UserInput	KEYWORD1
+
+#==========
+# AnalogIO
+#==========
+
+rawValue	KEYWORD3
+smoothValue	KEYWORD3
+value	KEYWORD3
+NO_SMOOTHING	LITERAL1
+SMOOTHING	LITERAL1
+NO_PULLUP	LITERAL1
+WITH_PULLUP	LITERAL1
+WITH_PULLDOWN	LITERAL1
+
+init	KEYWORD2
+setMappingFunction	KEYWORD2
+setOnChangeCallback	KEYWORD2	
+setAnalogResolution	KEYWORD2
+getAnalogResolution	KEYWORD2
+
+useSmoothing	KEYWORD3
+readRaw	KEYWORD2
+read	KEYWORD2
+
+getButtonCount	KEYWORD2
+getButtonValue	KEYWORD2
+initButtons	KEYWORD2
+initButtonsN	KEYWORD2
+
+getContinuousKey	KEYWORD2
+getKeyDown	KEYWORD2
+getKeyUp	KEYWORD2
+getRepeatingKey	KEYWORD2
+
+debouncer	KEYWORD3
+setActiveDebounceTimeInMs	KEYWORD2
+setInactiveDebounceTimeInMs	KEYWORD2
+setMinimumDebounceTimeInMs	KEYWORD2
+setConfirmStateTimeInMs	KEYWORD2
+flagWaitForKeyup	KEYWORD2
+cancelDebouncing	KEYWORD2
+setRepeatDelayInMs	KEYWORD2
+setRepeatRateInMs	KEYWORD2
+setInactiveButton	KEYWORD2
+
+#===========
+# Debouncer
+#===========
+
+actualState	KEYWORD3
+effectiveState	KEYWORD3
+
+inactiveState	KEYWORD3
+
+activeStatesDebounceInMs	KEYWORD3
+inactiveStateDebounceInMs	KEYWORD3
+minimumDebounceTimeInMs	KEYWORD3
+confirmStateTimeInMs	KEYWORD3
+
+setInitialValue	KEYWORD2
+deactivate	KEYWORD2
+activate	KEYWORD2
+
+debounce	KEYWORD2
+
+flagWaitForKeyup	KEYWORD2
+cancelDebouncing	KEYWORD2
+
+updateLastValue	KEYWORD2
+getKeyDown	KEYWORD2
+getKeyUp	KEYWORD2
+getRepeating	KEYWORD2
+repeatDelayInMs	KEYWORD3
+repeatRateInMs	KEYWORD3
+
+#===========
+# DigitalIO
+#===========
+
+actualState	KEYWORD3
+value	KEYWORD3
+readStatus	KEYWORD2
+getStatus	KEYWORD2
+
+getContinuousKey	KEYWORD2
+getKeyDown	KEYWORD2
+getKeyUp	KEYWORD2
+getRepeatingKey	KEYWORD2
+
+debouncer	KEYWORD2
+setActiveDebounceTimeInMs	KEYWORD2
+setInactiveDebounceTimeInMs	KEYWORD2
+setMinimumDebounceTimeInMs	KEYWORD2
+setConfirmStateTimeInMs	KEYWORD2
+flagWaitForKeyup	KEYWORD2
+cancelDebouncing	KEYWORD2
+setRepeatDelayInMs	KEYWORD2
+setRepeatRateInMs	KEYWORD2
+
+setOnChangeCallback KEYWORD2
+
+
+
+#RESERVED_WORD		editor.reserved_word.style		KEYWORD3
+#RESERVED_WORD_2	editor.reserved_word_2.style	LITERAL1
+#DATA_TYPE			editor.data_type.style			KEYWORD1
+#PREPROCESSOR		editor.preprocessor.style		KEYWORD3
+#LITERAL_BOOLEAN	editor.literal_boolean.style	LITERAL1

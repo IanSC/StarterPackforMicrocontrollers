@@ -182,7 +182,7 @@ namespace LCDUtility {
                 // 0    - no selection
                 // 1..N - option selected
 
-                ui::Keys input = ui::getRepeatingInput( ui::Keys::LeftRightOkay );
+                ui::Keys input = ui::getRepeatingKey( ui::Keys::LeftRightOkay );
                 // iKeys::userKey input = iKeys::getUserInput();
                 if ( input == ui::Keys::None ) return 0;
                 if ( input == ui::Keys::Okay ) {
@@ -298,7 +298,7 @@ namespace LCDUtility {
             }
             lcd.displayAll();
 
-            ui::Keys input = ui::getRepeatingInput( ui::Keys::UpDownOkay );
+            ui::Keys input = ui::getRepeatingKey( ui::Keys::UpDownOkay );
             switch( input ) {
             case ui::Keys::Okay:
                 return;

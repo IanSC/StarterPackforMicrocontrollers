@@ -11,6 +11,10 @@
 //  Functions/Fields
 //
 //      int debounce( int state )             debounce a signal
+//
+//      int actualState                       last value used without applying debounce
+//      int effectiveState                    last debounced value
+//
 //      int inactiveState                     state that is considered inactive or "keyup"
 //      uint16_t activeStatesDebounceInMs     time to debounce/maintain active states
 //                                            active states are values that are not equal to inactive state
@@ -23,24 +27,35 @@
 //      uint16_t confirmStateTimeInMs         a state will only be considered if after this time 
 //                                            it is still maintained
 //                                            eg. got high, after 10 ms and still high, accept the state change
+//
 //      setInitialValue( state )              set the initial value during startup
 //      deactivate()                          deactivate debouncing
 //      activate()                            reactivate debouncing
+//
 //      flagWaitForKeyup()                    do not send any active state until inactive state is seen again
 //                                            eg. user keeps a button pressed
 //                                                after debounce time
+//      cancelDebouncing()                    stop debouncing if beyond certain period (MinimumDebounceTime)
+//                                            eg. signal already processed, so stop debouncing if for next call
+//
+//      updateLastValue()                     just internal last value
+//      getKeyDown()                          process key so it only register once per click
+//      getKeyUp()                            process key so it registers upon release
+//      getRepeating()                        send multiple clicks if held down
+//      uint16_t repeatDelayInMs              time before sending 1st repeated key
+//      uint16_t repeatRateInMs               time before sending subsequent keys
+//
+//      REMOVED:
 //      assignGetStateHandler( function )     assign a function to read the state
 //      int debounce()                        use function from assignGetStateHandler()
 //
-//      int actualState                       last value used without applying debounce
-//      int effectiveState                    last debounced value
 //
 //  Example: basic
 //
 //      Debouncer db = Debouncer();
 //      bool result = db.debounce( digitalRead( 8 ) );
 //
-//  Example: assign state reader
+//  REMOVED!!! Example: assign state reader
 //
 //      int readPin() {
 //          return digitalRead( A0 );
@@ -75,28 +90,32 @@ class Debouncer {
     public:
 
         int actualState = false;                    // actual physical state of the button
-        int effectiveState = false;                 // state to consider taken into account debouncing, confirmation
+        int effectiveState = false;                 // state to consider taken into account debouncing and confirmation logic
         int inactiveState = false;                  // value that is considered the "keyUp"
         uint16_t activeStatesDebounceInMs = 50;     // debouncing keyDown time        
         uint16_t inactiveStateDebounceInMs = 50;    // debouncing keyUp time
-        uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce before allowed to be cancelled 
+        uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
         uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
 
         void setInitialValue( int state ) {
             actualState = state;
             effectiveState = state;
+            lastValue = state;
             mode = mIdle;
+            repeatMode = rIdle;
         }
 
         void deactivate() {
             active = false;
             effectiveState = actualState;
             mode = mIdle;
+            repeatMode = rIdle;
         }
 
         void activate() {
             active = true;
             mode = mIdle;
+            repeatMode = rIdle;
         }
 
         // example:
@@ -136,25 +155,13 @@ class Debouncer {
             return debounceCore( state );
         }
 
-        //  debouncer db1;
-        //  debouncer db2;
-        //  int readDigitalPin() {
-        //      return digitalRead( 10 );
-        //  }
-        //  int readAnalogPin() {
-        //      return potToButtonMap( analogRead( A0 ) );
-        //  }
-        //  void setup() {
-        //      db1.assignGetStateHandler( &readDigitalPin );
-        //      db2.assignGetStateHandler( &readAnalogPin );
-        //  }
-        //  void loop() {
-        //      bool input = db1.debounce();
-        //      int result = db2.debounce();
-        //      ...
-        //  }
-
+    /*
+    public:
         int debounce() {
+            // auto get value:
+            // int readValue() { return digitalRead(10); }
+            // db.assignGetStateHandler( &readValue );
+            // db.debounce(); // <-- will call readValue() automatically
             if ( stateGetter == nullptr )
                 return inactiveState;
             actualState = stateGetter();
@@ -167,10 +174,9 @@ class Debouncer {
         void assignGetStateHandler( int (*stateGetter)(void) ) {
             this->stateGetter = stateGetter;
         }
-
-    private:
-    
+    private:    
         int (*stateGetter)(void) = nullptr;
+    */
 
     //
     // CORE
@@ -188,8 +194,10 @@ class Debouncer {
         };
         modes mode = mIdle;
 
-        int debounceCore( int currentState ) {
+        uint32_t confirmStartTime;
+        int toConfirmState;
 
+        int debounceCore( int currentState ) {
             switch( mode ) {
             case mIdle: JUMP_IDLE:
                 if ( currentState == effectiveState ) {
@@ -255,17 +263,11 @@ class Debouncer {
         }
 
     //
-    // CONFIRM
-    //
-
-    private:
-
-        uint32_t confirmStartTime;
-        int toConfirmState;
-
-    //
     // KEY UP
     //
+    private:
+
+        bool waitForKeyupFlag = false;
 
     public:
 
@@ -311,14 +313,9 @@ class Debouncer {
             }
         }
 
-    private:
-
-        bool waitForKeyupFlag = false;
-
     //
     // DEBOUNCE
     //
-
     private:
 
         uint32_t debouncingStartTime;
@@ -353,6 +350,48 @@ class Debouncer {
         }
 
     //
+    // BUTTONS
+    //
+    private:
+
+        int lastValue = -1;
+
+    public:
+
+        void updateLastValue( int value ) {
+            lastValue = value;
+        }
+        // int getContinuous( int value ) {
+        //     lastValue = value;
+        //     return value;
+        // }
+
+        int getKeyDown( int value ) {
+            if ( value != lastValue ) {
+                lastValue = value;
+                if ( value != inactiveState )
+                    return value;
+            }
+            return inactiveState;
+        }
+
+        int getKeyUp( int value ) {
+            if ( value != lastValue ) {
+                int releasedButton;
+                if ( value == inactiveState ) {
+                    // key released, keep what was being pressed before
+                    releasedButton = lastValue;
+                } else {
+                    // key pressed, return nothing
+                    releasedButton = inactiveState;
+                }
+                lastValue = value;
+                return releasedButton;
+            }
+            return false;
+        }
+
+    //
     // REPEATING
     //
     private:
@@ -371,6 +410,17 @@ class Debouncer {
 
         uint16_t repeatDelayInMs = 400;
         uint16_t repeatRateInMs  = 250;
+
+        int getRepeating( int value ) {
+            // if user keeps button held down send signal intermitently
+            // eg. selecting an option, by sending right key every few seconds
+            //     as opposed to keep going right as in gamepad
+            value = getRepeatingCore( value );
+            lastValue = value;
+            return value;
+        }
+
+    private:
 
         int getRepeatingCore( int current ) {
             actualState = current;
@@ -413,51 +463,6 @@ class Debouncer {
             }
             repeatMode = rIdle;
             return actualState;
-        }
-
-    //
-    // BUTTONS
-    //
-
-        int lastValue;
-
-        int getKeyDown( int value ) {
-            if ( value != lastValue ) {
-                lastValue = value;
-                if ( value != inactiveState )
-                    return value;
-            }
-            return inactiveState;
-        }
-
-        int getKeyUp( int value ) {
-            if ( value != lastValue ) {
-                int releasedButton;
-                if ( value == inactiveState ) {
-                    // key released, keep what was being pressed before
-                    releasedButton = lastValue;
-                } else {
-                    // key pressed, return nothing
-                    releasedButton = inactiveState;
-                }
-                lastValue = value;
-                return releasedButton;
-            }
-            return false;
-        }
-
-        int getContinuous( int value ) {
-            lastValue = value;
-            return value;
-        }
-
-        int getRepeating( int value ) {
-            // if user keeps button held down send signal intermitently
-            // eg. selecting an option, by sending right key every few seconds
-            //     as opposed to keep going right as in gamepad
-            value = getRepeatingCore( value );
-            lastValue = value;
-            return value;
         }
 
 };

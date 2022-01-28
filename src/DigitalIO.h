@@ -16,29 +16,34 @@
 //                    WITH_PULLDOWN   with pulldown to GND (ESP32 only)
 //          activeDebounceTime        debounce time when key is pressed
 //          inactiveDebounceTime      debounce time when key is released
-//          
-//      bool value                            last debounced value
-//      int  readStatus()                     read button, debounce and keep, use "value" to read it
-//      bool getStatus()                      read button, debounce then return (also stored in "value")
 //
-//      setActiveDebounceTimeInMs( time )     set debounce time for active state, default 50
-//      setInactiveDebounceTimeInMs( time )   set debounce time for inactive state, default 50
-//      setMinimumDebounceTimeInMs( time )    set minimum time of debouncing before allowed to be cancelled, default 50
-//      setConfirmStateTimeInMs( time )       confirm state change is consistent for specified time
+//      bool actualState                          last unprocessed value
+//      bool value                                last debounced value
 //
-//      flagWaitForKeyup()                    suppress key presses, until key is released then pressed again
-//      cancelDebouncing()                    stop debouncing current state
-//                                            eg. signal already processed, stop debouncing if 
+//           readStatus()                         read button, debounce and keep, use "value" to read it
+//      bool getStatus()                          read button, debounce then return (also stored in "value")
 //
-//      bool getRepeating()                   get intermitent true's while a key is held down
-//      setRepeatDelayInMs( delay )           time before sending 1st repeated key
-//      setRepeatRateInMs( rate )             time before sending subsequent keys
+//      bool getContinuousKey()                   send button being pressed on each call
+//      bool getKeyDown()                         process key so it only register once per click
+//      bool getKeyUp()                           process key so it registers upon release
+//      bool getRepeatingKey()                    send multiple clicks if held down
+//      setRepeatDelayInMs( uint16_t )            time before sending 1st repeated key
+//      setRepeatRateInMs( uint16_t )             time before sending subsequent keys
 //
-//      setOnChangeCallback( &handler )       specify callback if value has changed
-//                                            applied during readStatus()/getStatus()
-//                                            signature: void onChange( int )
+//      Debouncer debouncer                       access to internal debouncer, see <Debouncer.h>
 //
-//      Debouncer debouncer                   access to internal debouncer, see <Debouncer.h>
+//      setActiveDebounceTimeInMs( uint16_t )     set debounce time for active state, default 50
+//      setInactiveDebounceTimeInMs( uint16_t )   set debounce time for inactive state, default 50
+//      setMinimumDebounceTimeInMs( uint16_t )    set minimum time of debouncing before allowed to be cancelled, default 50
+//      setConfirmStateTimeInMs( uint16_t )       confirm state change is consistent for specified time
+//
+//      flagWaitForKeyup()                        suppress key presses, until key is released then pressed again
+//      cancelDebouncing()                        stop debouncing if beyond certain period (MinimumDebounceTime)
+//                                                eg. signal already processed, so stop debouncing if for next call
+//
+//      setOnChangeCallback( &handler )           specify callback if value has changed
+//                                                signature: void onChange( int )
+//
 
 #pragma once
 #include <stdint.h>
@@ -104,6 +109,7 @@ class DigitalIO {
 
         inline void readStatus()  {
             readPinCore();
+            debouncer.updateLastValue( value );
             handleOnChanged();
             // actualState = ( digitalRead( PIN ) == ACTIVE_STATE );
             // value = debouncer.debounce( actualState );
@@ -114,10 +120,12 @@ class DigitalIO {
         }
 
         inline bool getStatus() {
-            readPinCore();
-            handleOnChanged();
-            // readStatus();
+            readStatus();
             return value;
+            // readPinCore();
+            // handleOnChanged();
+            // // readStatus();
+            // return value;
         }
 
         // bool getRepeating() {
@@ -155,58 +163,38 @@ class DigitalIO {
         bool actualState;
         bool value;
 
-        int getKeyDown() {
+        inline bool getContinuousKey() {
+            readStatus();
+            return value;
+            // readPinCore();
+            // debouncer.updateLastValue( value );
+            // handleOnChanged();
+            // return value;
+        }
+
+        bool getKeyDown() {
             readPinCore();
             value = debouncer.getKeyDown( value );
             handleOnChanged();
-            // if ( value != lastValue ) {
-            //     lastValue = value;
-            //     if ( onChange != NULL )
-            //         onChange( value );
-            // }
             return value;
         }
 
-        int getKeyUp() {
+        bool getKeyUp() {
             readPinCore();
             value = debouncer.getKeyUp( value );
             handleOnChanged();
-            // if ( value != lastValue ) {
-            //     lastValue = value;
-            //     if ( onChange != NULL )
-            //         onChange( value );
-            // }
             return value;
         }
 
-        int getContinuous() {
-            readPinCore();
-            value = debouncer.getContinuous( value );
-            handleOnChanged();
-            // if ( value != lastValue ) {
-            //     lastValue = value;
-            //     if ( onChange != NULL )
-            //         onChange( value );
-            // }
-            return value;
-        }
-
-        int getRepeating() {
+        bool getRepeatingKey() {
             // if user keeps button held down send signal intermitently
             // eg. selecting an option, by sending right key every few seconds
             //     as opposed to keep going right as in gamepad
             readPinCore();
             value = debouncer.getRepeating( value );
             handleOnChanged();
-            // if ( value != lastValue ) {
-            //     lastValue = value;
-            //     if ( onChange != NULL )
-            //         onChange( value );
-            // }
             return value;
         }
-
-
 
         // direct access to debouncer being used
         Debouncer debouncer;

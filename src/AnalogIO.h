@@ -22,31 +22,33 @@
 //          onChangeHandler               function to call when value changes
 //                                        template: void OnChange( int )
 //
-//      int  read()                       read value, apply optional smoothing and/or mapping
-//      int  value                        last result of read()
-//      int  readRaw()                    read raw value, same as analogRead()
-//
 //      void init()                       initialize smoothing and initial value
 //                                        only needed if using smoothing or onChange callback
 //                                            smoothing - send to smoothing function current value several times
 //                                            onChange callback - set initial state
 //                                        assign mapping function first (if required) before calling 
 //                                            init() to get correct onChange value
-//      RAR                               access to embedded ResponsiveAnalogRead variable
-//
-//      int  rawValue                     last reading from ADC
-//      int  smoothValue                  last applied smoothing
-//      int  value                        last processed value
-//
 //      setMappingFunction( &function )   specify function to convert raw adc value to usable range
 //                                        applies to read() and onChange handlers
 //                                        signature: int map( int )
 //
-//      setOnChangeCallback( &handler )   specify callback if value has changed
-//                                        applied during read()
-//                                        signature: void onChange( int )
+//      bool useSmoothing                 whether smoothing is activated
+//      setAnalogResolution( int )        set resolution for smoothing function
+//      int getAnalogResolution()         get resolution of smoothing function
+//      RAR                               access to embedded ResponsiveAnalogRead variable
 //
-//      setAnalogResolution( res )        set resolution for smoothing function
+//      int  read()                       analog value, apply optional smoothing and/or mapping
+//      int  readRaw()                    raw analog value, same as analogRead()
+//
+//      int  rawValue                     last reading from ADC, analog and buttons mode
+//      int  smoothValue                  last applied smoothing, analog only
+//      int  value                        last processed value, analog and buttons mode
+//
+//   Callback
+//
+//      setOnChangeCallback( &handler )   specify callback if value has changed
+//                                        applies to analog and button modes
+//                                        signature: void onChange( int )
 //
 //  Button Mode - initialize as resistor network buttons
 //
@@ -58,34 +60,34 @@
 //          
 //      initButtonsN( entryCount, zeroValue, value1, ..., valueN )
 //          use this if more than 10 buttons
-//          entryCount   number of entries
+//          entryCount   number of entries (zeroValue should be included in count)
 //          
 //          ex. aIO.initButtons (    1022, 834, 642, 14, 228, 430 ); // up to 10 buttons, including zeroValue, 11 entries
 //              aIO.initButtonsN( 6, 1022, 834, 642, 14, 228, 430 ); // 1st param is number of total entries
 //
-//      uint8_t  getButtonCount()             query number of buttons assigned
-//      int      getButtonValue( buttonNo )   query value for specified button
-//      setInactiveButton( buttonNo )         adc value slot that is considered not pressed
-//                                            when initButtons() or initButtonsN() was called
-//                                            default to slot 0
+//      uint8_t  getButtonCount()                 query number of buttons assigned
+//      int      getButtonValue( buttonNo )       query value for specified button
+//      setInactiveButton( buttonNo )             adc value slot that is considered not pressed
+//                                                when initButtons() or initButtonsN() was called
+//                                                default to slot 0 (corresponding to zeroValue)
 //
-//      int8_t   readButton()                 read pin and map to corresponding button number
-//                                            onChange handler is called
+//      int8_t getContinuousKey()                 send button being pressed on each call
+//      int8_t getKeyDown()                       process key so it only register once per click
+//      int8_t getKeyUp()                         process key so it registers upon release
+//      int8_t getRepeatingKey()                  send multiple clicks if held down
+//      setRepeatDelayInMs( uint16_t )            time before sending 1st repeated key
+//      setRepeatRateInMs( uint16_t )             time before sending subsequent keys
 //
-//      setActiveDebounceTimeInMs( time )     set debounce time for active state, default 50
-//      setInactiveDebounceTimeInMs( time )   set debounce time for inactive state, default 50
-//      setMinimumDebounceTimeInMs( time)     set minimum time of debouncing before allowed to be cancelled, default 50
-//      setConfirmStateTimeInMs( time )       confirm state change is consistent for specified time
+//      Debouncer debouncer                       access to internal debouncer, see <Debouncer.h>
 //
-//      flagWaitForKeyup()                    detect keyup before sending keydown again, see <Debouncer.h>
-//      cancelDebouncing()                    stop debouncing current state
-//                                            eg. signal already processed, stop debouncing if 
+//      setActiveDebounceTimeInMs( uint16_t )     set debounce time for active state, default 50
+//      setInactiveDebounceTimeInMs( uint16_t )   set debounce time for inactive state, default 50
+//      setMinimumDebounceTimeInMs( uint16_t)     set minimum time of debouncing before allowed to be cancelled, default 50
+//      setConfirmStateTimeInMs( uint16_t )       confirm state change is consistent for specified time
 //
-//      int8_t   getRepeating()               readButton() with repeat
-//      setRepeatDelayInMs( delay )           time before sending 1st repeated key
-//      setRepeatRateInMs( rate )             time before sending subsequent keys
-//
-//      Debouncer debouncer                   access to internal debouncer, see <Debouncer.h>
+//      flagWaitForKeyup()                        detect keyup before sending keydown again, see <Debouncer.h>
+//      cancelDebouncing()                        stop debouncing if beyond certain period (MinimumDebounceTime)
+//                                                eg. signal already processed, so stop debouncing if for next call
 //
 //      To determine values, run this sketch and press each button, record the values.
 //          AnalogIO aIO = AnalogIO( A0 );
@@ -204,17 +206,25 @@ class AnalogIO {
             this->onChange = onChange;
         }
 
+    private:
+
         #if defined(ESP32)
             int analogResolution = 4096;
         #else
             int analogResolution = 1024;
         #endif
 
+    public:
+
         inline void setAnalogResolution( int resolution ) {
             analogResolution = resolution;
             #if defined(USE_RESPONSIVE_AR)
                 RAR.setAnalogResolution( resolution );
             #endif
+        }
+
+        inline int getAnalogResolution() {
+            return analogResolution;
         }
 
 //
@@ -530,30 +540,17 @@ class AnalogIO {
     //
     // READ
     //
-    public:
+    // public:
 
-        int8_t readButton() {
-            value = debouncer.debounce( readButtonCore() );
-            if ( value != lastValue ) {
-                lastValue = value;
-                if ( onChange != NULL )
-                    onChange( value );
-            }
-            return value;
-        }
-
-        // int getKeyDown() {
-        //     value = readButtonCore();
-        //     if ( value != lastValue ) {
-        //         lastValue = value;
-        //         if ( onChange != NULL )
-        //             onChange( value );
-        //     }
-        //     // getContinuous();
-        //     if ( value != debouncer.inactiveState )
-        //         debouncer.flagWaitForKeyup();
-        //     return value;
-        // }
+    //     int8_t readButton() {
+    //         value = debouncer.debounce( readButtonCore() );
+    //         if ( value != lastValue ) {
+    //             lastValue = value;
+    //             if ( onChange != NULL )
+    //                 onChange( value );
+    //         }
+    //         return value;
+    //     }
 
     private:
 
@@ -569,96 +566,29 @@ class AnalogIO {
             return debouncer.inactiveState;
         }
 
-
-
     public:
 
-        int getKeyDown() {
+        int8_t getContinuousKey() {
+            value = readButtonCore();
+            debouncer.updateLastValue( value );
+            handleOnChanged();
+            return value;
+        }
+        int8_t getKeyDown() {
             value = readButtonCore();
             value = debouncer.getKeyDown( value );
             handleOnChanged();
             return value;
-            /*
-            value = readButtonCore();
-            if ( value != lastValue ) {
-                // int releasedButton;
-                // if ( value == debouncer.inactiveState ) {
-                //     // key released, keep what was being pressed before
-                //     releasedButton = lastValue;
-                // } else {
-                //     // key pressed
-                //     releasedButton = debouncer.inactiveState;
-                // }
-                lastValue = value;
-                if ( onChange != NULL )
-                    onChange( value );
-                if ( value != debouncer.inactiveState )
-                    return value;
-                // if ( onChange != NULL )
-                //     onChange( value );
-            }
-            return debouncer.inactiveState;
-            */
         }
 
-        int getKeyUp() {
+        int8_t getKeyUp() {
             value = readButtonCore();
             value = debouncer.getKeyUp( value );
             handleOnChanged();
             return value;
-            /*
-            // value, lastValue and what is returned
-            // will not be in sync anymore
-            // - key presesed, must keep key, so value=buttonNo, but return false
-            // - key released, value=0, but return released key
-            // - onChange is what is real
-            value = readButtonCore();
-            if ( value != lastValue ) {
-                int releasedButton;
-                if ( value == debouncer.inactiveState ) {
-                    // key released, keep what was being pressed before
-                    releasedButton = lastValue;
-                } else {
-                    // key pressed
-                    releasedButton = debouncer.inactiveState;
-                }
-                lastValue = value;
-                if ( onChange != NULL )
-                    onChange( value );
-                return releasedButton;
-            }
-            return false;
-            // value = debouncer.debounce( readButtonCore() );
-            // if ( value != lastValue ) {
-            //     int releasedButton = lastValue;
-            //     lastValue = value;
-            //     if ( onChange != NULL )
-            //         onChange( value );
-            //     if ( value == debouncer.inactiveState )
-            //         return releasedButton;
-            // }
-            // return false;
-            */
         }
 
-        int getContinuous() {
-            value = readButtonCore();
-            value = debouncer.getContinuous( value );
-            handleOnChanged();
-            return value;
-            /*
-            value = readButtonCore();
-            // value = debouncer.debounce( readButtonCore() );
-            if ( value != lastValue ) {
-                lastValue = value;
-                if ( onChange != NULL )
-                    onChange( value );
-            }
-            return value;
-            */
-        }
-
-        int getRepeating() {
+        int8_t getRepeatingKey() {
             // if user keeps button held down send signal intermitently
             // eg. selecting an option, by sending right key every few seconds
             //     as opposed to keep going right as in gamepad
@@ -666,19 +596,6 @@ class AnalogIO {
             value = debouncer.getRepeating( value );
             handleOnChanged();
             return value;
-            /*
-            value = readButtonCore();
-            value = debouncer.getRepeating( value );
-            if ( value != lastValue ) {
-                lastValue = value;
-                if ( onChange != NULL )
-                    onChange( value );
-            }
-            return value;
-            // getContinuous();
-            // value = debouncer.getRepeating( value );
-            // return value;
-            */
         }
 
         // direct access to debouncer being used
@@ -694,10 +611,6 @@ class AnalogIO {
         inline void setRepeatRateInMs( uint16_t rate )    { debouncer.repeatRateInMs = rate;    }
 
         inline void setInactiveButton( uint8_t buttonNo ) { debouncer.inactiveState = buttonNo; }
-
-    private:
-
-
 
 };
 
