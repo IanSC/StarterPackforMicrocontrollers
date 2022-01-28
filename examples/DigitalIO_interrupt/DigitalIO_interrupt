@@ -1,0 +1,60 @@
+//===========================================
+//  StarterPack DigitalIO Interrupt Example
+//  2022-01 isc
+//===========================================
+//
+//  Circuit
+//  -------
+//  - 2 buttons
+//  - connect button1 to pin 2 and ground
+//  - connect button2 to pin 3 and ground
+//  - or just a piece of wire and touch pins 2, 3
+
+#include <StarterPack.h> // include all
+#include <DigitalIO.h>   // ... or only those used in this project
+using namespace StarterPack;
+
+#define PIN_WITH_INTERRUPT 2
+#define ANY_PIN            3
+
+DigitalIO dIO1 = DigitalIO( PIN_WITH_INTERRUPT, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO2 = DigitalIO( ANY_PIN,            DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+
+void onInterrupt() {
+    dIO1.readStatus();
+}
+
+void setup() {
+    Serial.begin( 115200 );
+    Serial.println( "hello" );
+
+    attachInterrupt( digitalPinToInterrupt( PIN_WITH_INTERRUPT  ), onInterrupt, FALLING );
+    dIO1.setActiveDebounceTimeInMs( 3000 ); // default 50
+    dIO2.setActiveDebounceTimeInMs( 3000 ); // default 50
+}
+
+void loop() {
+
+    // we're busy here...
+    Serial.println( "   busy" );
+    delay( 2000 );
+    Serial.println( "   checking" );
+
+    // dIO1 is connected to interrupt and change will be recorded
+    // debounce time is longer than busy time, so will still be active after busy process
+    // after processing, cancel long debounce time so it is ready to accept new signal
+    //    with full debounce time duration
+    // dIO1 will be detected even by just flicking wire end together
+    //
+    // dIO2 will only be detected if it is on right after end of busy state and end of loop
+    //    which is a very small window
+
+    if ( dIO1.getStatus() ) {
+        dIO1.cancelDebouncing();
+        Serial.println( "HIT 1" );
+    }
+    if ( dIO2.getStatus() ) {
+        dIO2.cancelDebouncing();
+        Serial.println( "HIT 2" );
+    }
+}
