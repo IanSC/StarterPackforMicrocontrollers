@@ -27,7 +27,7 @@
 
 namespace StarterPack {
 
-class pmSemaphore {
+class spSemaphore {
 
     // 1. write to variable
     // 2. then read
@@ -39,7 +39,7 @@ class pmSemaphore {
 
 public:
 
-    pmSemaphore( uint16_t timeoutInMs = 100 ) {
+    spSemaphore( uint16_t timeoutInMs = 100 ) {
         this->timeoutInMs = timeoutInMs;
     }
 

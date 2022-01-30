@@ -69,6 +69,8 @@
 //      printStrAtLine( row, string )       print string at specified line and clear out till end of line
 //                                          ex. lcd.printLine( 0, "hello" );
 //
+//      printStrN( string, N )              print only first N characters of string
+//
 //      clearLine( row )                    clear out specified line
 //                                          ex. lcd.clearLine( 1 );
 //
@@ -263,6 +265,14 @@ class LCDInterface : public Print {
             print( str );
             int len = maxColumns - strlen( str );
             if ( len > 0 ) printCharsN( ' ', len );
+        }
+
+        // print first N characters of string
+        void printStrN( const char *str, uint8_t N ) {
+            while( N > 0 && *str != 0 ) {
+                print( *str++ );
+                N--;
+            }
         }
 
         // clear whole line

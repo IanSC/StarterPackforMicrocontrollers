@@ -1,29 +1,47 @@
-// include all copoennts
-#include <StarterPack.h>
 // note: unused compoents will automatically be
-// removed in the final code by the compiler
-
-#include <AnalogIO.h>
-
-//
-// option 1 - fully qualified
-//
-StarterPack::DigitalIO dIO1 = StarterPack::DigitalIO( 10 );
+// removed from final uploaded code
+// so importing the whole package won't make
+// your code bigger
 
 //
-// option 2 - alias
+// OPTION 1-A - import namespace, all components
 //
+#include <StarterPack.h>
+using namespace StarterPack;
+DigitalIO dIO3 = DigitalIO( 10 );
+
+//
+// OPTION 1-B - import namespace, specific component
+//
+#include <DigitalIO.h>
+using namespace StarterPack;
+DigitalIO dIO3 = DigitalIO( 10 );
+
+//
+// OPTION 2-A - alias, all components
+//
+#include <StarterPack.h>
 namespace sp = StarterPack;
 sp::DigitalIO dIO2 = sp::DigitalIO( 10 );
 
 //
-// option 3 - import all
+// OPTION 2-B - alias, specific components
 //
-using namespace StarterPack;
-DigitalIO dIO3 = DigitalIO( 10 );
+#include <DigitalIO.h>
+namespace sp = StarterPack;
+sp::DigitalIO dIO2 = sp::DigitalIO( 10 );
 
-void setup() {
-}
+//
+// OPTION 3-A - fully qualified, all components
+//
+#include <StarterPack.h>
+StarterPack::DigitalIO dIO1 = StarterPack::DigitalIO( 10 );
 
-void loop() {
-}
+//
+// OPTION 3-B - fully qualified, specific component
+//
+#include <DigitalIO.h>
+StarterPack::DigitalIO dIO1 = StarterPack::DigitalIO( 10 );
+
+void setup() {}
+void loop() {}

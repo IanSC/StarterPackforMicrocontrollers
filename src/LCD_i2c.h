@@ -32,7 +32,7 @@
 
 #pragma once
 #include <LCDInterface.h>
-#include <TwoWireHelper.h>
+#include <i2cHelper.h>
 
 //
 // 
@@ -60,7 +60,7 @@ namespace StarterPack {
 
 class LCD_i2c : public LCDInterface {
 
-        TwoWireHelper *_wireHelper;
+        i2cHelper *_wireHelper;
         uint8_t _i2cAddress;
 
     public:
@@ -79,7 +79,11 @@ class LCD_i2c : public LCDInterface {
             // use specified wire
             init( wire, i2cAddress );
         }
-        LCD_i2c( TwoWireHelper &wireHelper ) {
+        LCD_i2c( i2cHelper &wireHelper, int16_t i2cAddress = -1 ) {
+            if ( i2cAddress == -1 )
+                this->_i2cAddress = i2cDefaultAddress;
+            else
+                this->_i2cAddress = i2cAddress;
             _wireHelper = &wireHelper;
         }
 
@@ -116,7 +120,7 @@ class LCD_i2c : public LCDInterface {
         inline void init( TwoWire &wire, int16_t i2cAddress = -1 ) {
             if ( i2cAddress == -1 ) i2cAddress = i2cDefaultAddress;
             this->_i2cAddress = i2cAddress;
-            _wireHelper = new TwoWireHelper( wire, i2cAddress );
+            _wireHelper = new i2cHelper( wire, i2cAddress );
         }
 
     public:

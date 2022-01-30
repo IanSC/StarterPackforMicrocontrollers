@@ -153,6 +153,10 @@ class AnalogIO {
 
     public:
 
+        ~AnalogIO() {
+            if ( buttonList != nullptr ) delete buttonList;
+        }
+
         int rawValue    = 0;
         int smoothValue = 0;
         int value       = -1;
@@ -250,6 +254,7 @@ class AnalogIO {
             adc2_channel_t ADC_CHANNEL2;
 
             inline void mapGPIOtoADC() {
+                // don't know how to map GPIO to ADC channel
                 // ~/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/driver/driver/adc.h
                 switch( PIN ) {
                 case 36: ADC_PORT = 1; ADC_CHANNEL1 = ADC1_CHANNEL_0; break;

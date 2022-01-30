@@ -45,22 +45,22 @@
 //      ERROR_NO readOneByte( dataAddr, &result )
 //      ex. byte result;
 //          ERROR_NO err = i2cHelper.readOneByte( dataAddress, result );
-//          if ( err != I2C_ERROR_OK ) ... error found
+//          if ( err != ERR_I2C_OK ) ... error found
 //
 //      uint8_t readOneByte( dataAddr )
 //      ex. byte result = i2cHelper.readOneByte( dataAddress );
-//          if ( i2cHelper.lastError != I2C_ERROR_OK ) ... error found
+//          if ( i2cHelper.lastError != ERR_I2C_OK ) ... error found
 //
 //  Read 2 Bytes from Different Address
 //
 //      ERROR_NO readTwoBytes_DiffAddr( lowDataAddr, highDataAddr, &result )
 //      ex. uint16_t result;
 //          ERROR_NO err = i2cHelper.readTwoBytes_DiffAddr( addr1, addr2, result );
-//          if ( err != I2C_ERROR_OK ) ... error found
+//          if ( err != ERR_I2C_OK ) ... error found
 //
 //      uint16_t readTwoBytes_DiffAddr( lowDataAddr, highDataAddr )
 //      ex. uint16_t result = i2cHelper.readTwoBytes_DiffAddr( addr1, addr2 );
-//          if ( i2cHelper.lastError != I2C_ERROR_OK ) ... error found
+//          if ( i2cHelper.lastError != ERR_I2C_OK ) ... error found
 //
 //  Read 2 Bytes from Same Address (ex. AS5600 magnetic encoder)
 //
@@ -68,12 +68,12 @@
 //      ERROR_NO readTwoBytes_SameAddr_LoHi( dataAddr, &result )
 //      ex. uint16_t result;
 //          ERROR_NO err = i2cHelper.readTwoBytes_SameAddr_HiLo( addr, result );
-//          if ( err != I2C_ERROR_OK ) ... error found
+//          if ( err != ERR_I2C_OK ) ... error found
 //
 //      uint16_t readTwoBytes_SameAddr_HiLo( dataAddr )        
 //      uint16_t readTwoBytes_SameAddr_LoHi( dataAddr )
 //      ex. uint16_t result = i2cHelper.readTwoBytes_SameAddr_LoHi( addr );
-//          if ( i2cHelper.lastError != I2C_ERROR_OK ) ... error found
+//          if ( i2cHelper.lastError != ERR_I2C_OK ) ... error found
 //
 //  Ex:
 //      TwoWireHelper i2cHelper = TwoWireHelper( 0x36 )
@@ -82,7 +82,7 @@
 //      while( true ) {
 //          byte result;
 //          ERROR_NO err = i2cHelper.readOneByte( 0x0B, result );
-//          if ( err != I2C_ERROR_OK )
+//          if ( err != ERR_I2C_OK )
 //              Serial.println( i2cHelper.errorMessage( err ) );
 //          else
 //              Serial.println( result );
@@ -98,7 +98,7 @@
 //      int result2 = i2cHelper.readTwoBytes_SameAddr_HiLo( 0x0C );
 //      // ... do something assume no errors
 //      // check in case of failure once in a while
-//      if ( i2cHelper.lastError != I2C_ERROR_OK ) {
+//      if ( i2cHelper.lastError != ERR_I2C_OK ) {
 //          Serial.println( i2cHelper.errorMessage( i2cHelper._lastError ) );
 //          // ... reset device if necessary
 //      }
@@ -113,77 +113,84 @@
 
 namespace StarterPack {
 
-//
-// ERROR CODES
-//
+typedef uint8_t ERROR_NO;
 
-    typedef uint8_t ERROR_NO;
+class i2cHelper {
+
+    //
+    // ERROR MESSAGES
+    //
+    // option 1 - make error# global, clutter
+    // option 2 - make it internal to i2cHelper, but must remap everything otherwise
+    //            for ESP32:              I2C_ERROR_OK, i2cHelper::I2C_ERROR_WRITE
+    //            for Arduino: i2cHelper::I2C_ERROR_OK, i2cHelper::I2C_ERROR_WRITE
+    //            so just remap all, so common code for any mpu
+    //
+    // make error number same as original to avoid extra mapping
+    //
+    public:
     
-    #if defined(ESP32)
+        #if defined(ESP32)
 
-        // ALREADY DEFINED: ~/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-i2c.h
-        // typedef enum {
-        //     I2C_ERROR_OK =      0,
-        //     I2C_ERROR_DEV,      1
-        //     I2C_ERROR_ACK,      2
-        //     I2C_ERROR_TIMEOUT,  3
-        //     I2C_ERROR_BUS,      4
-        //     I2C_ERROR_BUSY,     5
-        //     I2C_ERROR_MEMORY,   6
-        //     I2C_ERROR_CONTINUE, 7
-        //     I2C_ERROR_NO_BEGIN  8
-        // } i2c_err_t;
+            // from Wire.h
+            //      ~/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-i2c.h
+            static const ERROR_NO ERR_I2C_OK       = I2C_ERROR_OK;
+            static const ERROR_NO ERR_I2C_DEV      = I2C_ERROR_DEV;
+            static const ERROR_NO ERR_I2C_ACK      = I2C_ERROR_ACK;
+            static const ERROR_NO ERR_I2C_TIMEOUT  = I2C_ERROR_TIMEOUT;
+            static const ERROR_NO ERR_I2C_BUS      = I2C_ERROR_BUS;
+            static const ERROR_NO ERR_I2C_BUSY     = I2C_ERROR_BUSY;
+            static const ERROR_NO ERR_I2C_MEMORY   = I2C_ERROR_MEMORY;
+            static const ERROR_NO ERR_I2C_CONTINUE = I2C_ERROR_CONTINUE;
+            static const ERROR_NO ERR_I2C_NO_BEGIN = I2C_ERROR_NO_BEGIN;
+
+        #else
         
-    #else
-    
-        // match errors as close as possible to ESP32
-    
-        const ERROR_NO I2C_ERROR_OK        = 0;
-        const ERROR_NO I2C_ERROR_MEMORY    = 1;  // 1 .. length too long for buffer
-        const ERROR_NO I2C_ERROR_ACK       = 2;  // 2 .. address send, NACK received
-        const ERROR_NO I2C_ERROR_BUSY      = 3;  // 3 .. data send, NACK received
-        const ERROR_NO I2C_ERROR_BUS       = 4;  // 4 .. other twi error (lost bus arbitration, bus error, ..)
-        const ERROR_NO I2C_ERROR_TIMEOUT   = 5;  // 5 .. timeout    
-        const ERROR_NO I2C_ERROR_DEV       = 51; // unused - placeholders only so same error codes for ESP32/Arduino
-        const ERROR_NO I2C_ERROR_CONTINUE  = 52;
-        const ERROR_NO I2C_ERROR_NO_BEGIN  = 53;
-    
-        // twi calls that generates timeout errors:
-        // - twi_readFrom()
-        // - two_writeTo()
-        // - twi_stop()
-        // - ISR --> twi_stop()
-        //
-        // Wire                  Calls TWI Functions
-        // -------------------   -------------------
-        // beginTransmission()
-        // endTransmission()     twi_writeTo()
-        //                       Output   0 .. success
-        //                                1 .. length too long for buffer
-        //                                2 .. address send, NACK received
-        //                                3 .. data send, NACK received
-        //                                4 .. other twi error (lost bus arbitration, bus error, ..)
-        //                                5 .. timeout
-        // write()               twi_transmit(),                       *** ERRORS WERE IGNORED *** dumbf...
-        //                       Output   1 length too long for buffer *** NOT HANDLED
-        //                                2 not slave transmitter      *** NOT HANDLED
-        //                                0 ok
-        // requestFrom()         beginTransmission()
-        //                       write()
-        //                       endTransmission()
-        //                       twi_readFrom() - timeout
-    
-        extern volatile uint32_t twi_timeout_us;
+            // match errors as close as possible to ESP32
+            static const ERROR_NO ERR_I2C_OK       = 0;
+            static const ERROR_NO ERR_I2C_MEMORY   = 1;  // 1 .. length too long for buffer
+            static const ERROR_NO ERR_I2C_ACK      = 2;  // 2 .. address send, NACK received
+            static const ERROR_NO ERR_I2C_BUSY     = 3;  // 3 .. data send, NACK received
+            static const ERROR_NO ERR_I2C_BUS      = 4;  // 4 .. other twi error (lost bus arbitration, bus error, ..)
+            static const ERROR_NO ERR_I2C_TIMEOUT  = 5;  // 5 .. timeout    
+            static const ERROR_NO ERR_I2C_DEV      = 51; // unused - placeholders only so same error codes for ESP32/Arduino
+            static const ERROR_NO ERR_I2C_CONTINUE = 52;
+            static const ERROR_NO ERR_I2C_NO_BEGIN = 53;
         
-    #endif
+            // twi calls that generates timeout errors:
+            // - twi_readFrom()
+            // - two_writeTo()
+            // - twi_stop()
+            // - ISR --> twi_stop()
+            //
+            // Wire                  Calls TWI Functions
+            // -------------------   -------------------
+            // beginTransmission()
+            // endTransmission()     twi_writeTo()
+            //                       Output   0 .. success
+            //                                1 .. length too long for buffer
+            //                                2 .. address send, NACK received
+            //                                3 .. data send, NACK received
+            //                                4 .. other twi error (lost bus arbitration, bus error, ..)
+            //                                5 .. timeout
+            // write()               twi_transmit(),                       *** ERRORS WERE IGNORED *** dumbf...
+            //                       Output   1 length too long for buffer *** NOT HANDLED
+            //                                2 not slave transmitter      *** NOT HANDLED
+            //                                0 ok
+            // requestFrom()         beginTransmission()
+            //                       write()
+            //                       endTransmission()
+            //                       twi_readFrom() - timeout
+        
+            //extern volatile uint32_t twi_timeout_us;
+            
+        #endif
 
-    // additional errors possibly not handled in Wire.h
-    const ERROR_NO I2C_ERROR_WRITE    = 101;
-    const ERROR_NO I2C_ERROR_ENDTRANS = 102;
-    const ERROR_NO I2C_ERROR_REQUEST  = 103;
-    const ERROR_NO I2C_ERROR_TIMEOUT2 = 104;
-
-class TwoWireHelper {
+        // additional errors possibly not handled in Wire.h
+        static const ERROR_NO ERR_I2C_WRITE    = 101;
+        static const ERROR_NO ERR_I2C_ENDTRANS = 102;
+        static const ERROR_NO ERR_I2C_REQUEST  = 103;
+        static const ERROR_NO ERR_I2C_TIMEOUT2 = 104;
 
     private:
 
@@ -192,10 +199,19 @@ class TwoWireHelper {
 
     public:
 
-        TwoWireHelper( TwoWire &wire, uint8_t defaultI2cAddress ) {
+        i2cHelper( uint8_t defaultI2cAddress ) {
+            // default to global "Wire"
+            _wire = &Wire;
+            _defaultI2cAddress = defaultI2cAddress;
+            // up to user to set timeout on wire or through setTimeoutInMs() ???            
+            setTimeoutInMs( 50 ); // let's just set it
+        }
+
+        i2cHelper( TwoWire &wire, uint8_t defaultI2cAddress ) {
             _wire = &wire;
             _defaultI2cAddress = defaultI2cAddress;
-            setTimeoutInMs( 50 );
+            // up to user to set timeout on wire or through setTimeoutInMs() ???
+            setTimeoutInMs( 50 ); // let's just set it
         }
 
         inline void setTimeoutInMs( uint16_t timeOut ) {
@@ -223,22 +239,23 @@ class TwoWireHelper {
         #if defined(ESP32)
 
             static const char* errorMessage( ERROR_NO errorNo ) {
+                // Wire.h
                 // ~/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-i2c.h
                 switch ( errorNo ) {
-                case I2C_ERROR_OK:       return "no error";                          // errors from Wire.h
-                case I2C_ERROR_DEV:      return "I2C_ERROR_DEV";
-                case I2C_ERROR_ACK:      return "NACK received";
-                case I2C_ERROR_TIMEOUT:  return "timeout";
-                case I2C_ERROR_BUS:      return "bus arbitration";
-                case I2C_ERROR_BUSY:     return "bus busy";
-                case I2C_ERROR_MEMORY:   return "memory related error";
-                case I2C_ERROR_CONTINUE: return "stop not received";
-                case I2C_ERROR_NO_BEGIN: return "I2C_ERROR_NO_BEGIN";
-                case I2C_ERROR_WRITE:    return "invalid return from write()";       // additional errors
-                case I2C_ERROR_ENDTRANS: return "invalid return from endTransmission()";
-                case I2C_ERROR_REQUEST:  return "invalid requestFrom() length";
-                case I2C_ERROR_TIMEOUT2: return "uncaught timeout";
-                default:                 return "unknown error";
+                case ERR_I2C_OK:       return "no error";                          // errors from ESP32 Wire.h
+                case ERR_I2C_DEV:      return "I2C_ERROR_DEV";
+                case ERR_I2C_ACK:      return "NACK received";
+                case ERR_I2C_TIMEOUT:  return "timeout";
+                case ERR_I2C_BUS:      return "bus arbitration";
+                case ERR_I2C_BUSY:     return "bus busy";
+                case ERR_I2C_MEMORY:   return "memory related error";
+                case ERR_I2C_CONTINUE: return "stop not received";
+                case ERR_I2C_NO_BEGIN: return "I2C_ERROR_NO_BEGIN";
+                case ERR_I2C_WRITE:    return "invalid return from write()";       // additional errors
+                case ERR_I2C_ENDTRANS: return "invalid return from endTransmission()";
+                case ERR_I2C_REQUEST:  return "invalid requestFrom() length";
+                case ERR_I2C_TIMEOUT2: return "uncaught timeout";
+                default:               return "unknown error";
                 }
             }
 
@@ -246,19 +263,19 @@ class TwoWireHelper {
     
             static const char* errorMessage( ERROR_NO errorNo ) {
                 switch ( errorNo ) {
-                case I2C_ERROR_OK:       return "no error";                          // errors from Wire.h
-                case I2C_ERROR_MEMORY:   return "length too long for buffer";
-                case I2C_ERROR_ACK:      return "address send, NACK received";
-                case I2C_ERROR_BUSY:     return "data send, NACK received";
-                case I2C_ERROR_BUS:      return "other twi error";
-                case I2C_ERROR_TIMEOUT:  return "timeout";
-                case I2C_ERROR_DEV:                                                  // unused
-                case I2C_ERROR_CONTINUE:
-                case I2C_ERROR_NO_BEGIN: return "( placeholder only )";
-                case I2C_ERROR_WRITE:    return "invalid return value from write()"; // additional errors
-                case I2C_ERROR_ENDTRANS: return "invalid return value from endTransmission()";
-                case I2C_ERROR_REQUEST:  return "invalid requestFrom() length";
-                case I2C_ERROR_TIMEOUT2: return "uncaught timeout";
+                case ERR_I2C_OK:       return "no error";                          // errors from Arduino Wire.h
+                case ERR_I2C_MEMORY:   return "length too long for buffer";
+                case ERR_I2C_ACK:      return "address send, NACK received";
+                case ERR_I2C_BUSY:     return "data send, NACK received";
+                case ERR_I2C_BUS:      return "other twi error";
+                case ERR_I2C_TIMEOUT:  return "timeout";
+                case ERR_I2C_DEV:                                                  // unused
+                case ERR_I2C_CONTINUE:
+                case ERR_I2C_NO_BEGIN: return "( placeholder only )";
+                case ERR_I2C_WRITE:    return "invalid return value from write()"; // additional errors
+                case ERR_I2C_ENDTRANS: return "invalid return value from endTransmission()";
+                case ERR_I2C_REQUEST:  return "invalid requestFrom() length";
+                case ERR_I2C_TIMEOUT2: return "uncaught timeout";
                 default:                 return "unknown error";
                 }
             }
@@ -270,9 +287,9 @@ class TwoWireHelper {
     //
     public:
 
-        ERROR_NO lastError = I2C_ERROR_OK;
+        ERROR_NO lastError = ERR_I2C_OK;
 
-        inline void clearLastError() { lastError = I2C_ERROR_OK; }
+        inline void clearLastError() { lastError = ERR_I2C_OK; }
         
     private:
     
@@ -283,7 +300,7 @@ class TwoWireHelper {
         #if defined(ESP32)
         
             inline bool CheckAndRecordError() {
-                if ( _wire->lastError() == I2C_ERROR_OK )
+                if ( _wire->lastError() == ERR_I2C_OK )
                     return true;
                 else {
                     lastError = _wire->lastError();
@@ -295,7 +312,7 @@ class TwoWireHelper {
         
             inline bool CheckAndRecordError() {
                 if ( _wire->getWireTimeoutFlag() ) {
-                    lastError = I2C_ERROR_TIMEOUT;
+                    lastError = ERR_I2C_TIMEOUT;
                     return false;
                 } else
                     return true;
@@ -309,11 +326,11 @@ class TwoWireHelper {
     public:
 
         bool verify() {
-            return ( verifyWithError( _defaultI2cAddress ) == I2C_ERROR_OK );
+            return ( verifyWithError( _defaultI2cAddress ) == ERR_I2C_OK );
         }
         
         bool verify( uint8_t _i2cAddress ) {
-            return ( verifyWithError( _i2cAddress ) == I2C_ERROR_OK );
+            return ( verifyWithError( _i2cAddress ) == ERR_I2C_OK );
         }
 
         inline ERROR_NO verifyWithError() {
@@ -323,7 +340,7 @@ class TwoWireHelper {
         ERROR_NO verifyWithError( uint8_t _i2cAddress ) {
             _wire->beginTransmission( _i2cAddress );
             if ( !endTransmission() ) return lastError;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
     //
@@ -340,7 +357,7 @@ class TwoWireHelper {
         #if defined(ESP32)
 
             bool recoverIfHasError( uint8_t _i2cAddress ) {
-                if ( lastError == I2C_ERROR_OK && _wire->lastError() == I2C_ERROR_OK )
+                if ( lastError == ERR_I2C_OK && _wire->lastError() == ERR_I2C_OK )
                     return false;
                 
                 // try to recover every recoveryThrottleInMs only
@@ -349,13 +366,13 @@ class TwoWireHelper {
                     lastRecovery = now;
 
                     //Serial.println( "RECO: " );
-                    //if ( lastError != I2C_ERROR_OK )
+                    //if ( lastError != ERR_I2C_OK )
                     //   Serial.printf( "   Last Error = %s\n", errorMessage( lastError ) );
-                    //if ( _wire->lastError() != I2C_ERROR_OK )
+                    //if ( _wire->lastError() != ERR_I2C_OK )
                     //   Serial.printf( "   Wire Last Error = %s\n", errorMessage( _wire->lastError() ) );
 
                     _wire->begin();
-                    lastError = I2C_ERROR_OK;
+                    lastError = ERR_I2C_OK;
                     return true;
                 }
                 return false;
@@ -364,7 +381,7 @@ class TwoWireHelper {
         #else
 
             bool recoverIfHasError( uint8_t _i2cAddress ) {
-                if ( lastError == I2C_ERROR_OK )
+                if ( lastError == ERR_I2C_OK )
                     return false;
 
                 // try to recover every recoveryThrottleInMs only
@@ -392,7 +409,7 @@ class TwoWireHelper {
                     _wire->begin( _i2cAddress );
                     _wire->setClock( freq );
                     
-                    lastError = I2C_ERROR_OK;
+                    lastError = ERR_I2C_OK;
                     _wire->clearWireTimeoutFlag();
                     return true;
                 }
@@ -416,7 +433,7 @@ class TwoWireHelper {
                 _wire->endTransmission();
                 if ( !CheckAndRecordError() ) return false;
                 // NO NEED FOR ESP32 lastError() detected it
-                // if ( err != I2C_ERROR_OK ) { RecordError( I2C_ERROR_ENDTRANS ); return false; }
+                // if ( err != ERR_I2C_OK ) { RecordError( ERR_I2C_ENDTRANS ); return false; }
                 return true;
             }
             
@@ -425,7 +442,7 @@ class TwoWireHelper {
                 _wire->write( data );
                 if ( !CheckAndRecordError() ) return false;
                 // NO NEED FOR ESP32 lastError() detected it
-                //if ( bytesWritten != 1 ) { RecordError( I2C_ERROR_WRITE ); return false; }
+                //if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
                 return true;
             }
 
@@ -434,7 +451,7 @@ class TwoWireHelper {
                 if ( _wire->available() < length ) {
                     uint32_t start = millis();
                     while ( _wire->available() < length ) {
-                        if ( millis() - start >= _wire->getTimeOut() ) { RecordError( I2C_ERROR_TIMEOUT2 ); return false; }
+                        if ( millis() - start >= _wire->getTimeOut() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
                         if ( !CheckAndRecordError() ) return false;
                     }
                 }
@@ -446,7 +463,7 @@ class TwoWireHelper {
             inline bool endTransmission() {
                 int8_t err = _wire->endTransmission();
                 if ( !CheckAndRecordError() ) return false;
-                if ( err != 0 ) { RecordError( I2C_ERROR_ENDTRANS ); return false; }
+                if ( err != 0 ) { RecordError( ERR_I2C_ENDTRANS ); return false; }
                 return true;
             }
             
@@ -454,16 +471,17 @@ class TwoWireHelper {
                 size_t bytesWritten = _wire->write( data );
                 if ( !CheckAndRecordError() ) return false;
                 // NEEDED FOR ARDUINO
-                if ( bytesWritten != 1 ) { RecordError( I2C_ERROR_WRITE ); return false; }
+                if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
                 return true;
             }
 
             inline bool available( uint8_t length ) {
                 // TIMEOUT IN MICROS
+                extern volatile uint32_t twi_timeout_us; // in Wire.h/TWI.h
                 if ( _wire->available() < length ) {
                     uint32_t start = micros();
                     while ( _wire->available() < length ) {
-                        if ( micros() - start >= twi_timeout_us ) { RecordError( I2C_ERROR_TIMEOUT2 ); return false; }
+                        if ( micros() - start >= twi_timeout_us ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
                         if ( !CheckAndRecordError() ) return false;
                     }
                 }
@@ -476,7 +494,7 @@ class TwoWireHelper {
             size_t bytesArrived = _wire->requestFrom( _i2cAddress, length );
             if ( !CheckAndRecordError() ) return false;
             // NEEDED FOR ARDUINO / ESP32
-            if ( bytesArrived != length ) { RecordError( I2C_ERROR_REQUEST ); return false; }
+            if ( bytesArrived != length ) { RecordError( ERR_I2C_REQUEST ); return false; }
             return true;
         }
         
@@ -491,7 +509,7 @@ class TwoWireHelper {
             if ( !endTransmission() ) return lastError;
             if ( !requestFrom( _i2cAddress, length ) ) return lastError;
             if ( !available( length ) ) return lastError;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
     //
@@ -501,15 +519,15 @@ class TwoWireHelper {
 
         ERROR_NO readOneByte_i2c( uint8_t _i2cAddress, uint8_t dataAddr, uint8_t &result ) {
             ERROR_NO r = readBytesCore( _i2cAddress, dataAddr, 1 );
-            if ( r != I2C_ERROR_OK ) { return r; }
+            if ( r != ERR_I2C_OK ) { return r; }
             result = _wire->read();
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
         uint8_t readOneByte_i2c( uint8_t _i2cAddress, uint8_t dataAddr ) {
             uint8_t result;
             ERROR_NO r = readOneByte_i2c( _i2cAddress, dataAddr, result );
-            if ( r != I2C_ERROR_OK ) { return 0; }
+            if ( r != ERR_I2C_OK ) { return 0; }
             return result;
         }
 
@@ -532,18 +550,18 @@ class TwoWireHelper {
             //    highDataAddr is MSB (high byte)
             uint8_t lowByte, highByte;
             ERROR_NO r = readOneByte_i2c( _i2cAddress, lowDataAddr, lowByte );
-            if ( r != I2C_ERROR_OK ) { return r; }
+            if ( r != ERR_I2C_OK ) { return r; }
             r = readOneByte_i2c( _i2cAddress, highDataAddr, highByte );
-            if ( r != I2C_ERROR_OK ) { return r; }
+            if ( r != ERR_I2C_OK ) { return r; }
             result = ( highByte << 8 ) | lowByte;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
         uint16_t readTwoBytes_DiffAddr_i2c( uint8_t _i2cAddress, uint8_t lowDataAddr, uint8_t highDataAddr ) {
             uint16_t result;
             ERROR_NO r = readTwoBytes_DiffAddr_i2c( _i2cAddress, lowDataAddr, highDataAddr, result );
-            if ( r != I2C_ERROR_OK ) { return 0; }
-            return I2C_ERROR_OK;
+            if ( r != ERR_I2C_OK ) { return 0; }
+            return ERR_I2C_OK;
         }
 
         inline ERROR_NO readTwoBytes_DiffAddr( uint8_t lowDataAddr, uint8_t highDataAddr, uint16_t &result ) {
@@ -564,11 +582,11 @@ class TwoWireHelper {
             //    1st byte to arrive is MSB (high byte)
             //    2nd byte to arrive is LSB (low byte)
             ERROR_NO r = readBytesCore( _i2cAddress, dataAddr, 2 );
-            if ( r != I2C_ERROR_OK ) { return r; }
+            if ( r != ERR_I2C_OK ) { return r; }
             uint8_t highByte = _wire->read();
             uint8_t lowByte  = _wire->read();
             result = ( highByte << 8 ) | lowByte;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
         ERROR_NO readTwoBytes_SameAddr_LoHi_i2c( uint8_t _i2cAddress, uint8_t dataAddr, uint16_t &result ) {
@@ -576,24 +594,24 @@ class TwoWireHelper {
             //    1st byte to arrive is LSB (low byte)
             //    2nd byte to arrive is MSB (high byte)
             ERROR_NO r = readBytesCore( _i2cAddress, dataAddr, 2 );
-            if ( r != I2C_ERROR_OK ) { return r; }
+            if ( r != ERR_I2C_OK ) { return r; }
             uint8_t lowByte  = _wire->read();
             uint8_t highByte = _wire->read();
             result = ( highByte << 8 ) | lowByte;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
         uint16_t readTwoBytes_SameAddr_HiLo_i2c( uint8_t _i2cAddress, uint8_t dataAddr ) {
             uint16_t result;
             ERROR_NO r = readTwoBytes_SameAddr_HiLo_i2c( _i2cAddress, dataAddr, result );
-            if ( r != I2C_ERROR_OK ) { return 0; }
+            if ( r != ERR_I2C_OK ) { return 0; }
             return result;
         }
         
         uint16_t readTwoBytes_SameAddr_LoHi_i2c( uint8_t _i2cAddress, uint8_t dataAddr ) {
             uint16_t result;
             ERROR_NO r = readTwoBytes_SameAddr_LoHi_i2c( _i2cAddress, dataAddr, result );
-            if ( r != I2C_ERROR_OK ) { return 0; }
+            if ( r != ERR_I2C_OK ) { return 0; }
             return result;
         }
 
@@ -622,7 +640,7 @@ class TwoWireHelper {
             _wire->beginTransmission( _i2cAddress );
             if ( !write( data ) ) return lastError;
             if ( !endTransmission() ) return lastError;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
         inline ERROR_NO writeOneByte( uint8_t data ) {
@@ -634,7 +652,7 @@ class TwoWireHelper {
             if ( !write( dataAddr ) ) return lastError;
             if ( !write( dataValue ) ) return lastError;
             if ( !endTransmission() ) return lastError;
-            return I2C_ERROR_OK;
+            return ERR_I2C_OK;
         }
 
         inline ERROR_NO writeAddrAndData( uint8_t dataAddr, uint8_t dataValue ) {

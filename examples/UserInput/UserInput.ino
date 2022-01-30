@@ -80,7 +80,7 @@ int counter = 0;
 
 void loop() {
     
-    ui::Keys r;
+    ui::Keys r = ui::Keys::None;
     
     uint8_t caseNo = 1;
     // 1 - single press

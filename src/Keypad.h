@@ -4,7 +4,7 @@
 
 namespace StarterPack {
 
-namespace UserInput {
+namespace Keypad {
 
     enum Keys {
         None          = 0b00000000,
@@ -71,6 +71,22 @@ namespace UserInput {
         // INIT
         //
         public:
+
+            void addDevice( DigitalIO key, uint16_t keyId ) {
+
+            }
+
+            void allowSimulaneous( uint16_t keyId1, uint16_t keyId2 ) {
+
+            }
+
+            void addDevice( AnalogIO key ) {
+
+            }
+
+            void analogMapping( uint8_t analogButtonNo, uint16_t keyId ) {
+
+            }
 
             void assignKeys( DigitalIO *okayKey, DigitalIO *leftAndUpKey, DigitalIO *rightAndDownKey ) {
                 usingDigitalKeys = true;

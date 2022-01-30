@@ -86,7 +86,7 @@ AnalogIO aIO = AnalogIO( A0 );
             "princess and a",
             "ying prince",
             "haha..." };
-        LCDUtility::show( lcd, story );
+        LCDUtility::showMultiLineMsg( lcd, story );
 
         //
         // BLINK

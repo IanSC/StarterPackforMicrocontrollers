@@ -9,11 +9,11 @@
 //  For Hardwired
 //
 //      const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-//      lcd = zz_LCDBuffered( rs, en, d4, d5, d6, d7 );
+//      lcd = LCDBuffered_wired( rs, en, d4, d5, d6, d7 );
 //
 //  For I2C
 //
-//      lcd = zz_LCDBuffered( 0x27 );
+//      lcd = LCDBuffered_i2c( 0x27 );
 //
 //  Functions
 //
@@ -110,7 +110,7 @@
     #include <Arduino.h>
 #endif
 #include <LCDInterface.h>
-#include <pmSemaphore.h>
+#include <spSemaphore.h>
 
 namespace StarterPack {
 
@@ -141,10 +141,17 @@ class LCDBuffered : public LCDInterface {
 
         LCDBuffered() {}
 
-        LCDBuffered( LCDInterface &lcd ) {
+        inline LCDBuffered( LCDInterface &lcd ) {
             this->lcd = &lcd;
             // assume user already called begin() of lcd
             initBuffers();
+            // ... otherwise must call our begin, not "lcd"
+            // ex 1. ... lcd = LCD_i2c();
+            //       ... lcd.begin( 16, 2 );
+            //       ... lcdBuff = LCDBuffered( lcd );
+            // ex 2. ... lcd = LCD_i2c();
+            //       ... lcdBuff = LCDBuffered( lcd );
+            //       ... lcdBuff.begin( 16, 2 );
         }
 
         inline void setTimeoutInMs( uint16_t timeOut ) {
@@ -189,8 +196,9 @@ class LCDBuffered : public LCDInterface {
         
         void initBuffers() {
 
-            //Serial.println( lcd->maxColumns );
-            //Serial.println( lcd->maxRows );
+            // not initialized
+            if ( lcd == nullptr ) return;
+            if ( lcd->maxColumns == 0 || lcd->maxRows == 0 ) return;
 
             this->maxColumns = lcd->maxColumns;
             this->maxRows = lcd->maxRows;
@@ -431,7 +439,7 @@ class LCDBuffered : public LCDInterface {
         bool offscreen = true;
         // SemaphoreHandle_t userBufferSem = xSemaphoreCreateMutex();
         // TickType_t semLockTimeout = portTICK_PERIOD_MS * 50;
-        pmSemaphore userBufferSem = pmSemaphore( 50 );
+        spSemaphore userBufferSem = spSemaphore( 50 );
 
         const uint8_t SEM_ID_pauseResume = 10;
         const uint8_t SEM_ID_copyUserBuffer = 20;

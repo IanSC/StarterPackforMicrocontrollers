@@ -32,6 +32,15 @@
         "unordered_map": "cpp",
         "unordered_set": "cpp",
         "digitalio_interrupt": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "i2chelperdual": "cpp",
+        "utility": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "cmath": "cpp",
+        "new": "cpp"
     }
 }
