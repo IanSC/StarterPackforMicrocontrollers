@@ -133,8 +133,16 @@ class LCDBuffered : public LCDInterface {
         // - calling update is on available processor time
 
         LCDInterface *lcd;
+        bool mustDeletedLCD = true;
 
     public:
+
+        ~LCDBuffered() {
+            if ( userBuffer != nullptr ) delete userBuffer;
+            if ( screenData != nullptr ) delete screenData;
+            if ( btsBufferCore != nullptr ) delete btsBufferCore;
+            if ( mustDeletedLCD ) delete lcd;
+        }
 
         bool isBuffered() { return true; }
         void displayAll() { updateAllNow(); }
@@ -143,6 +151,7 @@ class LCDBuffered : public LCDInterface {
 
         inline LCDBuffered( LCDInterface &lcd ) {
             this->lcd = &lcd;
+            mustDeletedLCD = false;
             // assume user already called begin() of lcd
             initBuffers();
             // ... otherwise must call our begin, not "lcd"

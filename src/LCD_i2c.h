@@ -61,9 +61,14 @@ namespace StarterPack {
 class LCD_i2c : public LCDInterface {
 
         i2cHelper *_wireHelper;
+        bool createdHelper = false;
         uint8_t _i2cAddress;
 
     public:
+
+        ~LCD_i2c() {
+            if ( createdHelper ) delete _wireHelper;
+        }
 
         static const uint8_t i2cDefaultAddress = 0x27;
 
@@ -121,6 +126,7 @@ class LCD_i2c : public LCDInterface {
             if ( i2cAddress == -1 ) i2cAddress = i2cDefaultAddress;
             this->_i2cAddress = i2cAddress;
             _wireHelper = new i2cHelper( wire, i2cAddress );
+            createdHelper = true;
         }
 
     public:

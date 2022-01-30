@@ -9,6 +9,10 @@ class LCDBuffered_i2c : public LCDBuffered {
 
     public:
 
+        ~LCDBuffered_i2c() {
+            delete lcd;
+        }
+
         inline LCDBuffered_i2c( int16_t i2cAddress = -1 ) {
             // use default global "Wire"
             lcd = new LCD_i2c( i2cAddress );

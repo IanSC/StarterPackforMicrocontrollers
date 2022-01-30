@@ -208,6 +208,7 @@ private:
     // option 2
     // - create/delete object when needed
     // - save space but waste runtime
+    // use #2, seldom used anyways
     static ChangeObserver *CHG;
     
 };
