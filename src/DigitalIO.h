@@ -73,8 +73,8 @@ class DigitalIO {
             WITH_PULLDOWN = 4
         };
         
-        DigitalIO( const uint8_t pin, int options = ACTIVE_HIGH, // WITH_PULLUP | ACTIVE_LOW,
-        uint16_t activeDebounceTime = 50, uint16_t inactiveDebounceTime = 50 ) {
+        DigitalIO( const uint8_t pin, int options = ACTIVE_HIGH ) { //}, // WITH_PULLUP | ACTIVE_LOW,
+        // uint16_t activeDebounceTime = 50, uint16_t inactiveDebounceTime = 50 ) {
             PIN = pin;
             if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )
                 ACTIVE_STATE = LOW;
@@ -90,8 +90,8 @@ class DigitalIO {
                 #endif
             else
                 pinMode( PIN, INPUT );
-            debouncer.activeStatesDebounceInMs = activeDebounceTime;
-            debouncer.inactiveStateDebounceInMs = inactiveDebounceTime;
+            // debouncer.activeStatesDebounceInMs = activeDebounceTime;
+            // debouncer.inactiveStateDebounceInMs = inactiveDebounceTime;
             // initial values
             value = ( digitalRead( PIN ) == ACTIVE_STATE );
             lastValue = value;
@@ -109,7 +109,7 @@ class DigitalIO {
 
         inline void readStatus()  {
             readPinCore();
-            debouncer.updateLastValue( value );
+            value = debouncer.getContinuousKey( value );
             handleOnChanged();
             // actualState = ( digitalRead( PIN ) == ACTIVE_STATE );
             // value = debouncer.debounce( actualState );
@@ -191,7 +191,7 @@ class DigitalIO {
             // eg. selecting an option, by sending right key every few seconds
             //     as opposed to keep going right as in gamepad
             readPinCore();
-            value = debouncer.getRepeating( value );
+            value = debouncer.getRepeatingKey( value );
             handleOnChanged();
             return value;
         }
@@ -199,14 +199,14 @@ class DigitalIO {
         // direct access to debouncer being used
         Debouncer debouncer;
 
-        inline void setActiveDebounceTimeInMs  ( uint16_t time ) { debouncer.activeStatesDebounceInMs  = time; }
-        inline void setInactiveDebounceTimeInMs( uint16_t time ) { debouncer.inactiveStateDebounceInMs = time; }
-        inline void setMinimumDebounceInMs     ( uint16_t time ) { debouncer.minimumDebounceTimeInMs   = time; }
-        inline void setConfirmStateTimeInMs    ( uint16_t time ) { debouncer.confirmStateTimeInMs      = time; }
+        // inline void setActiveDebounceTimeInMs  ( uint16_t time ) { debouncer.activeStatesDebounceInMs  = time; }
+        // inline void setInactiveDebounceTimeInMs( uint16_t time ) { debouncer.inactiveStateDebounceInMs = time; }
+        // inline void setMinimumDebounceInMs     ( uint16_t time ) { debouncer.minimumDebounceTimeInMs   = time; }
+        // inline void setConfirmStateTimeInMs    ( uint16_t time ) { debouncer.confirmStateTimeInMs      = time; }
         inline void flagWaitForKeyup()                   { debouncer.flagWaitForKeyup();      }
         inline void cancelDebouncing()                   { debouncer.cancelDebouncing();      }
-        inline void setRepeatDelayInMs( uint16_t delay ) { debouncer.repeatDelayInMs = delay; }
-        inline void setRepeatRateInMs( uint16_t rate )   { debouncer.repeatRateInMs = rate;   }
+        // inline void setRepeatDelayInMs( uint16_t delay ) { debouncer.repeatDelayInMs = delay; }
+        // inline void setRepeatRateInMs( uint16_t rate )   { debouncer.repeatRateInMs = rate;   }
 
 };
 

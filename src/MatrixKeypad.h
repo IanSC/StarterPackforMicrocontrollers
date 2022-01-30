@@ -25,6 +25,8 @@ class MatrixKeypad {
             if ( rowPinList != nullptr ) delete rowPinList;
             if ( colPinList != nullptr ) delete colPinList;
             if ( bits != nullptr ) delete bits;
+            if ( scanCodeList != nullptr ) delete scanCodeList;
+            if ( keyIdList != nullptr ) delete keyIdList;
         }
 
         // user convenience, don't know how to count number of args without so much extra code
@@ -94,7 +96,10 @@ class MatrixKeypad {
         }
 
         void begin() {
-            bits = new spBitPackedBoolean( rowCount * colCount );
+
+            // Debouncer::defaultSettings.activeStatesDebounceInMs = 1000;
+
+            bits = new spBitPackedBoolean(); // rowCount * colCount );
             rowIsOutput = ( rowCount >= colCount );
             if ( rowIsOutput ) {
                 outPinCount = rowCount; outPinList = rowPinList;
@@ -107,54 +112,45 @@ class MatrixKeypad {
                 setOutputPinStandy( outPinList[i] );
             for ( uint8_t i = 0 ; i < inPinCount; i++ )
                 pinMode( inPinList[i], INPUT_PULLUP );
-            // if ( !rowIsOutput ) {
-            //     // wrong assumption, exchange in and out
-            //     uint8_t *ptr = outPinList; outPinList = inPinList; inPinList = ptr;
-            //     uint8_t t = outPinCount; outPinCount = inPinCount; inPinCount = t;
-            // }
-            // for ( uint8_t i = 0 ; i < outPinCount; i++ ) {
-            //     if ( rowIsOutput ) {
-            //         // will be used as OUTPUT during scanning
-            //         setOutputPinStandy( outPinList[i] );
-            //         // pinMode( rowList[i], INPUT );
-            //     } else
-            //         pinMode( outPinList[i], INPUT_PULLUP );
-            // }
-            // for ( uint8_t i = 0 ; i < inPinCount; i++ ) {
-            //     if ( rowIsOutput )
-            //         pinMode( inPinList[i], INPUT_PULLUP );
-            //     else {
-            //         // will be used as OUTPUT during scanning
-            //         setOutputPinStandy( inPinList[i] );
-            //         // pinMode( colList[i], INPUT );
-            //     }
-            // }
         }
 
     void info() {
         Serial.print( "ROW = " );
-        Serial.println( outPinCount );
-        for( int i = 0 ; i < outPinCount ; i++ ) {
-            Serial.println( outPinList[i] );
+        Serial.println( rowCount );
+        for( int i = 0 ; i < rowCount ; i++ ) {
+            Serial.println( rowPinList[i] );
         }
         Serial.print( "COL = " );
-        Serial.println( inPinCount );
-        for( int i = 0 ; i < inPinCount ; i++ ) {
-            Serial.println( inPinList[i] );
+        Serial.println( colCount );
+        for( int i = 0 ; i < colCount ; i++ ) {
+            Serial.println( colPinList[i] );
         }
     }
 
-    void abc() {
-        // readRowsHelper( 0, rowCount/2 );
-        // readRowsHelper( rowCount/2 + 1, rowCount );
+    Debouncer myDb;
+
+    uint8_t getContinuousKey() {
+        return myDb.getContinuousKey( getKeymap( readRaw() ) );
+    }
+
+    uint8_t getKeyDown() {
+        return myDb.getKeyDown( getKeymap( readRaw() ) );
+    }
+
+    uint8_t getKeyUp() {
+        return myDb.getKeyUp( getKeymap( readRaw() ) );
+    }
+
+    uint8_t getRepeatingKey() {
+        return myDb.getRepeatingKey( getKeymap( readRaw() ) );
+    }
+
+    uint32_t readRaw() {
         bits->reset();
         if ( outPinCount == 0 || inPinCount == 0 )
             return;
         readHelper( 0, outPinCount - 1, 0 );
-        // if ( rowIsOutput )
-        //     readHelper( 0, outPinCount - 1, 0 );
-        // else
-        //     readHelper( 0, inPinCount - 1, 0 );
+        return bits->data;
         for( int i = 0 ; i < bits->slots ; i++ ) {
             if ( bits->get( i ) )
                 Serial.print( "1" );
@@ -183,56 +179,6 @@ class MatrixKeypad {
         } else {
             setOutputPinsStandy( from, to );
         }
-        // if ( from == to ) {
-        //     // single row/column - individual bits already saved
-        //     // SerialPrintCharsN( ' ', step );
-        //     // SerialPrintf( "live %d\n", from );
-        //     setOutputPinsStandy( from, to );
-        // } else if ( active ) {
-        //     // SerialPrintCharsN( ' ', step );
-        //     // SerialPrintf( "%d - %d\n", from, to );
-        //     // divide to 2
-        //     uint8_t mid = ( to + from ) / 2;
-        //     // put upper half on standy and read lower half
-        //     setOutputPinsStandy( mid+1, to );
-        //     readHelper( from, mid, step+1 );
-        //     setOutputPinsStandy( from, mid );
-        //     // read upper half
-        //     readHelper( mid+1, to, step+1 );
-        //     setOutputPinsStandy( mid+1, to );
-
-        //     // uint8_t mid = ( to + from ) / 2;
-        //     // bool b1 = ( from <= mid ); // lower half
-        //     // bool b2 = ( mid+1 <= to ); // upper half
-        //     // if ( b1 ) {
-        //     //     if ( b2 ) {
-        //     //         // if upper half is valid, put it on standby
-        //     //         setOutputPinsStandy( mid+1, to );
-        //     //     }
-        //     //     readHelper( from, mid, step+1 );
-        //     // } else {
-        //     //     Serial.println( "XXXX" );
-        //     // }
-        //     // setOutputPinsStandy( from, mid );
-        //     // if ( b2 ) {
-        //     //     readHelper( mid+1, to, step+1 );
-        //     //     setOutputPinsStandy( mid+1, to );
-        //     // } else {
-        //     //     Serial.println( "XXXX" );
-        //     // }
-
-        //     // if ( from <= mid ) {
-        //     //     resetOutput( mid+1, to );
-        //     //     readHelper( from, mid, step+1 );
-        //     //     resetOutput( from, mid );
-        //     // }
-        //     // if ( mid+1 <= to ) {
-        //     //     readHelper( mid+1, to, step+1 );
-        //     //     resetOutput( mid+1, to );
-        //     // }
-        // } else {
-        //     setOutputPinsStandy( from, to );
-        // }
     }
 
     void setOutputPinsStandy( uint8_t from, uint8_t to ) {
@@ -241,41 +187,50 @@ class MatrixKeypad {
         // SerialPrintf( "   output standy: %d-%d\n", from, to );
         for ( ; from <= to; from++ )
             setOutputPinStandy( outPinList[from] );
-        // if ( rowIsOutput ) {
-        //     // SerialPrintf( "   rows standy: %d-%d\n", from, to );
-        //     for ( ; from <= to; from++ )
-        //         setOutputPinStandy( outPinList[from] );
-        // } else {
-        //     // SerialPrintf( "   cols standby: %d-%d\n", from, to );
-        //     for ( ; from <= to; from++ )
-        //         setOutputPinStandy( inPinList[from] );
-        // }
     }
 
     inline bool IsAnyPressed( uint8_t from, uint8_t to ) {
         // SerialPrintf( "   output active: %d-%d\n", from, to );
-        for ( int i = from ; i <= to; i++ )
+        for ( int i = from ; i <= to ; i++ )
             setOutputPinActive( outPinList[i] );
         // SerialPrintf( "   read inputs: %d-%d\n", 0, colCount );
         if ( from == to ) {
             // single output being checked, record results
             if ( rowIsOutput ) {
                 for ( int i = 0 ; i < inPinCount ; i++ ) {
-                    if ( digitalRead( inPinList[i] ) == LOW ) {
-                        bits->turnOn( from * inPinCount + i );
-                        // SerialPrintf( "   ON  = %d-%d\n", outPinList[from], inPinList[i] );
-                    } else {
-                        // SerialPrintf( "   OFF = %d-%d\n", outPinList[from], inPinList[i] );
-                    }
+                    uint8_t scanCode = from * inPinCount + i;
+                    bool state = digitalRead( inPinList[i] ) == LOW;
+                    if ( state )
+                        state = debounce( scanCode, state );
+                    else
+                        state = debounceExisting( scanCode, state );
+                    if ( state ) bits->turnOn( scanCode );
+                    // if ( digitalRead( inPinList[i] ) == LOW ) {
+                    //     if ( debounce( keyId, true ) )
+                    //         bits->turnOn( keyId );
+                    //     // SerialPrintf( "   ON  = %d-%d\n", outPinList[from], inPinList[i] );
+                    // } else {
+                    //     debounceExisting( keyId, false );
+                    //     // SerialPrintf( "   OFF = %d-%d\n", outPinList[from], inPinList[i] );
+                    // }
                 }
             } else {
                 for ( int i = 0 ; i < inPinCount ; i++ ) {
-                    if ( digitalRead( inPinList[i] ) == LOW ) {
-                        bits->turnOn( i * outPinCount + from );
-                        // SerialPrintf( "   ON  = %d-%d\n", inPinList[i], outPinList[from] );
-                    } else {
-                        // SerialPrintf( "   OFF = %d-%d\n", inPinList[i], outPinList[from] );
-                    }
+                    uint8_t scanCode = i * outPinCount + from;
+                    bool state = digitalRead( inPinList[i] ) == LOW;
+                    if ( state )
+                        state = debounce( scanCode, state );
+                    else
+                        state = debounceExisting( scanCode, state );
+                    if ( state ) bits->turnOn( scanCode );
+                    // if ( digitalRead( inPinList[i] ) == LOW ) {
+                    //     if ( debounce( keyId, true ) )
+                    //         bits->turnOn( keyId );
+                    //     // SerialPrintf( "   ON  = %d-%d\n", inPinList[i], outPinList[from] );
+                    // } else {
+                    //     debounceExisting( keyId, false );
+                    //     // SerialPrintf( "   OFF = %d-%d\n", inPinList[i], outPinList[from] );
+                    // }
                 }
             }
         } else {
@@ -285,47 +240,128 @@ class MatrixKeypad {
                 if ( digitalRead( inPinList[i] ) == LOW )
                     return true;
             }
+            // debounce out from-to, in all pins
+            if ( rowIsOutput ) {
+                for ( int sendPin = from ; sendPin <= to ; sendPin++ ) {
+                    for ( int recvPin = 0 ; recvPin <= inPinCount ; recvPin++ ) {
+                        uint8_t scanCode = sendPin * inPinCount + recvPin;
+                        bool state = debounceExisting( scanCode, false );
+                        if ( state ) bits->turnOn( scanCode );
+                    }
+                }
+            } else {
+                for ( int sendPin = from ; sendPin <= to ; sendPin++ ) {
+                    for ( int recvPin = 0 ; recvPin <= inPinCount ; recvPin++ ) {
+                        uint8_t scanCode = recvPin * outPinCount + sendPin;
+                        bool state = debounceExisting( scanCode, false );
+                        if ( state ) bits->turnOn( scanCode );
+                    }
+                }
+            }
         }
+
         return false;
-        // if ( rowIsOutput ) {
-        //     // SerialPrintf( "   rows active: %d-%d\n", from, to );
-        //     for ( int i = from ; i <= to; i++ )
-        //         setOutputPinActive( outPinList[i] );
-        //     // SerialPrintf( "   read cols: %d-%d\n", 0, colCount );
-        //     if ( from == to ) {
-        //         for ( int i = 0 ; i < inPinCount ; i++ ) {
-        //             if ( digitalRead( inPinList[i] ) == LOW ) {
-        //                 bits->turnOn( from * inPinCount + i );
-        //                 SerialPrintf( "   ON  = %d-%d\n", outPinList[from], inPinList[i] );
-        //             } else {
-        //                 SerialPrintf( "   OFF = %d-%d\n", outPinList[from], inPinList[i] );
-        //             }
-        //         }
-        //     } else {
-        //         for ( int i = 0 ; i < inPinCount ; i++ ) {
-        //             if ( digitalRead( inPinList[i] ) == LOW )
-        //                 return true;
-        //         }
-        //     }
-        // } else {
-        //     // SerialPrintf( "   cols active: %d-%d\n", from, to );
-        //     for ( int i = from ; i <= to; i++ )
-        //         setOutputPinActive( inPinList[i] );
-        //     // SerialPrintf( "   read rows: %d-%d\n", 0, colCount );
-        //     if ( from == to ) {
-        //         // single row, save results
-        //         for ( int i = 0 ; i < outPinCount ; i++ ) {
-        //             if ( digitalRead( outPinList[i] ) == LOW )
-        //                 bits->turnOn( i * inPinCount + from );
-        //         }
-        //     } else {
-        //         for ( int i = 0 ; i < outPinCount ; i++ ) {
-        //             if ( digitalRead( outPinList[i] ) == LOW )
-        //                 return true;
-        //         }
-        //     }
-        // }
-        // return false;
+    }
+
+    //
+    // KEYMAP
+    //
+
+    uint8_t keymapIndex = 0;
+    uint8_t keyCount = 0;
+    uint8_t *scanCodeList = nullptr;
+    uint16_t *keyIdList = nullptr;
+
+    void initKeymap( uint8_t keyCount ) {
+        if ( scanCodeList != nullptr ) delete scanCodeList;
+        if ( keyIdList != nullptr ) delete keyIdList;
+        this->keyCount = keyCount;
+        scanCodeList = new uint8_t[keyCount];
+        keyIdList = new uint16_t[keyCount];
+    }
+
+    void addKeymap( uint8_t scanCode, uint16_t keyId ) {
+        if ( keymapIndex >= keyCount ) return;
+        scanCodeList[keymapIndex] = scanCode;
+        keyIdList[keymapIndex] = keyId;
+        keymapIndex++;
+    }
+
+    uint16_t getKeymap( const uint32_t &keyBitmap ) {
+        if ( keyBitmap == 0 ) return 0;
+        if ( countBits( keyBitmap ) > 1 ) return 0;
+        // https://stackoverflow.com/a/31393298
+        uint8_t bitPosition = __builtin_ctzl( keyBitmap );
+        for ( int i = 0 ; i < keyCount ; i++ ) {
+            if ( scanCodeList[i] == bitPosition ) {
+                return keyIdList[i];
+            }
+        }
+        return bitPosition + 1;
+    }
+
+    //
+    // DUPLICATE KEY
+    //
+
+    // specify keys that can be duplicated
+    // or the keymap of those keys
+
+    //
+    // DEBOUNCE
+    //
+
+    //  use 1 debouncer per scanCode:
+    //  - too much memory
+    //  - send to each debouncer
+    //  - need to OR a lot of keys
+    //  use fixed number debouncers rotated to those pressed
+    //  - can't use this for musical keyboard ?
+
+    static const uint8_t DEBOUNCER_COUNT = 3;
+    Debouncer db[DEBOUNCER_COUNT];
+    uint8_t dbScanCode[DEBOUNCER_COUNT];
+    uint8_t dbPos = 0;
+
+    bool debounce( uint8_t scanCode, bool state ) {
+        for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
+            if ( dbScanCode[i] == scanCode ) {
+                // bool xx =  db[i].debounce( state );
+                // if ( key == 2 ) {
+                //     Serial.print( "db1=" );
+                //     // Serial.print( key );
+                //     // Serial.print( "-" );
+                //     Serial.println( xx );
+                // }
+                // return xx;
+                return db[i].debounce( state );
+            }
+        }
+        // not found
+        uint8_t pos = dbPos;
+        dbPos++;
+        dbScanCode[pos] = scanCode;
+        db[pos].setInitialValue( !state );
+        return db[pos].debounce( state );
+    }
+
+    bool debounceExisting( uint8_t scanCode, bool state ) {
+        for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
+            if ( dbScanCode[i] == scanCode ) {
+                // bool xx = db[i].debounce( state );
+                // if ( key == 2 ) {
+                //     Serial.print( "db2=" );
+                //     // Serial.print( key );
+                //     // Serial.print( "-" );
+                //     Serial.println( xx );
+                // }
+                // return xx;
+                return db[i].debounce( state );
+            }
+            // if ( dbKey[i] == key )
+            //     return db[i].debounce( state );
+        }
+        return state;
     }
 
 };

@@ -234,7 +234,7 @@ namespace UserInput {
 
                 Keys r = processKeysCore( allowedKeys, input, false );
                 if ( usingDigitalKeys ) {
-                    r = static_cast<Keys>( debouncer.getRepeating( r ) );
+                    r = static_cast<Keys>( debouncer.getRepeatingKey( r ) );
                 }
                 if ( r == Okay && !okayKeyAlsoRepeating ) {
                     if ( usingDigitalKeys )
@@ -290,29 +290,29 @@ namespace UserInput {
 
         public:
 
-            void setRepeatDelayInMs( uint16_t repeatDelay ) {
-                if ( usingDigitalKeys ) {
-                    for( int i=0 ; i<5 ; i++ ) {
-                        if ( ioDigital[i] != nullptr )
-                            ioDigital[i]->setRepeatDelayInMs( repeatDelay );
-                    }
-                    debouncer.repeatDelayInMs = repeatDelay;
-                } else {
-                    ioAnalog->setRepeatDelayInMs( repeatDelay );
-                }
-            }
+            // void setRepeatDelayInMs( uint16_t repeatDelay ) {
+            //     if ( usingDigitalKeys ) {
+            //         for( int i=0 ; i<5 ; i++ ) {
+            //             if ( ioDigital[i] != nullptr )
+            //                 ioDigital[i]->setRepeatDelayInMs( repeatDelay );
+            //         }
+            //         debouncer.repeatDelayInMs = repeatDelay;
+            //     } else {
+            //         ioAnalog->setRepeatDelayInMs( repeatDelay );
+            //     }
+            // }
 
-            void setRepeatRateInMs( uint16_t repeatRate ) {
-                if ( usingDigitalKeys ) {
-                    for( int i=0 ; i<5 ; i++ ) {
-                        if ( ioDigital[i] != nullptr )
-                            ioDigital[i]->setRepeatRateInMs( repeatRate );
-                    }
-                    debouncer.repeatRateInMs = repeatRate;
-                } else {
-                    ioAnalog->setRepeatRateInMs( repeatRate );
-                }
-            }
+            // void setRepeatRateInMs( uint16_t repeatRate ) {
+            //     if ( usingDigitalKeys ) {
+            //         for( int i=0 ; i<5 ; i++ ) {
+            //             if ( ioDigital[i] != nullptr )
+            //                 ioDigital[i]->setRepeatRateInMs( repeatRate );
+            //         }
+            //         debouncer.repeatRateInMs = repeatRate;
+            //     } else {
+            //         ioAnalog->setRepeatRateInMs( repeatRate );
+            //     }
+            // }
 
             bool isOkayPressed( bool issueWaitForKeyUp = true ) {
                 if ( usingDigitalKeys ) {

@@ -575,10 +575,11 @@ class AnalogIO {
 
         int8_t getContinuousKey() {
             value = readButtonCore();
-            debouncer.updateLastValue( value );
+            value = debouncer.getContinuousKey( value );
             handleOnChanged();
             return value;
         }
+
         int8_t getKeyDown() {
             value = readButtonCore();
             value = debouncer.getKeyDown( value );
@@ -598,7 +599,7 @@ class AnalogIO {
             // eg. selecting an option, by sending right key every few seconds
             //     as opposed to keep going right as in gamepad
             value = readButtonCore();
-            value = debouncer.getRepeating( value );
+            value = debouncer.getRepeatingKey( value );
             handleOnChanged();
             return value;
         }
@@ -606,14 +607,14 @@ class AnalogIO {
         // direct access to debouncer being used
         Debouncer debouncer;
 
-        inline void setActiveDebounceTimeInMs  ( uint16_t time ) { debouncer.activeStatesDebounceInMs  = time; }
-        inline void setInactiveDebounceTimeInMs( uint16_t time ) { debouncer.inactiveStateDebounceInMs = time; }
-        inline void setMinimumDebounceTimeInMs ( uint16_t time ) { debouncer.minimumDebounceTimeInMs   = time; }
-        inline void setConfirmStateTimeInMs    ( uint16_t time ) { debouncer.confirmStateTimeInMs      = time; }
+        // inline void setActiveDebounceTimeInMs  ( uint16_t time ) { debouncer.activeStatesDebounceInMs  = time; }
+        // inline void setInactiveDebounceTimeInMs( uint16_t time ) { debouncer.inactiveStateDebounceInMs = time; }
+        // inline void setMinimumDebounceTimeInMs ( uint16_t time ) { debouncer.minimumDebounceTimeInMs   = time; }
+        // inline void setConfirmStateTimeInMs    ( uint16_t time ) { debouncer.confirmStateTimeInMs      = time; }
         inline void flagWaitForKeyup()                    { debouncer.flagWaitForKeyup();       }
         inline void cancelDebouncing()                    { debouncer.cancelDebouncing();       }
-        inline void setRepeatDelayInMs( uint16_t delay )  { debouncer.repeatDelayInMs = delay;  }
-        inline void setRepeatRateInMs( uint16_t rate )    { debouncer.repeatRateInMs = rate;    }
+        // inline void setRepeatDelayInMs( uint16_t delay )  { debouncer.repeatDelayInMs = delay;  }
+        // inline void setRepeatRateInMs( uint16_t rate )    { debouncer.repeatRateInMs = rate;    }
 
         inline void setInactiveButton( uint8_t buttonNo ) { debouncer.inactiveState = buttonNo; }
 

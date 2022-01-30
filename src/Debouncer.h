@@ -89,31 +89,40 @@ class Debouncer {
 
     public:
 
-        int actualState = false;                    // actual physical state of the button
-        int effectiveState = false;                 // state to consider taken into account debouncing and confirmation logic
+        struct Settings {
+            uint16_t activeStatesDebounceInMs = 50;     // debouncing keyDown time
+            uint16_t inactiveStateDebounceInMs = 50;    // debouncing keyUp time
+            uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
+            uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
+            uint16_t repeatDelayInMs = 400;
+            uint16_t repeatRateInMs  = 250;
+        };
+
+        static Settings defaultSettings;            // global single instance setting to save space
+
+    private:
+
+        Settings *settings = &defaultSettings;
+
+    public:
+
+        //int actualState = false;                    // actual physical state of the button
+        int debouncedState = false;                 // state to consider taken into account debouncing and confirmation logic
+
         int inactiveState = false;                  // value that is considered the "keyUp"
-        uint16_t activeStatesDebounceInMs = 50;     // debouncing keyDown time        
-        uint16_t inactiveStateDebounceInMs = 50;    // debouncing keyUp time
-        uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
-        uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
+        // uint16_t activeStatesDebounceInMs = 50;     // debouncing keyDown time
+        // uint16_t inactiveStateDebounceInMs = 50;    // debouncing keyUp time
+        // uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
+        // uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
+
+        void changeSettings( Settings &settings ) {
+            this->settings = &settings;
+        }
 
         void setInitialValue( int state ) {
-            actualState = state;
-            effectiveState = state;
+            //actualState = state;
+            debouncedState = state;
             lastValue = state;
-            mode = mIdle;
-            repeatMode = rIdle;
-        }
-
-        void deactivate() {
-            active = false;
-            effectiveState = actualState;
-            mode = mIdle;
-            repeatMode = rIdle;
-        }
-
-        void activate() {
-            active = true;
             mode = mIdle;
             repeatMode = rIdle;
         }
@@ -140,20 +149,33 @@ class Debouncer {
     //
     //
 
-    private:
+    // private:
 
-        bool active = true;
+    //     bool active = true;
 
-    public:
+    // public:
 
-        int debounce( int state ) {
-            actualState = state; // keep copy for user
-            if ( !active ) {
-                effectiveState = state;
-                return effectiveState;
-            }
-            return debounceCore( state );
-        }
+    //     void deactivate() {
+    //         active = false;
+    //         effectiveState = actualState;
+    //         mode = mIdle;
+    //         repeatMode = rIdle;
+    //     }
+
+    //     void activate() {
+    //         active = true;
+    //         mode = mIdle;
+    //         repeatMode = rIdle;
+    //     }
+
+        // int debounce( int state ) {
+        //     //actualState = state; // keep copy for user
+        //     // if ( !active ) {
+        //     //     effectiveState = state;
+        //     //     return effectiveState;
+        //     // }
+        //     return debounceCore( state );
+        // }
 
     /*
     public:
@@ -184,6 +206,18 @@ class Debouncer {
 
     private:
 
+        //  pressed
+        //  confirm     start       end
+        //  debounce                start     ~ end
+        //  repeat                  start     ~ 1st ~ next ~next
+        //  +-----------+-----------+------------>
+        //
+        //  can combine storage for: confirmStart, debounceStart
+        //  can combine storage for: confirmKey, repeatKey
+        //  cannot combine storage for: confirmKey, repeatKey
+        //     while repeating, new key is pressed
+        //  must separate debounce and repeat since can overlap
+        
         // #define DEBUG_TRACE(x)   x;
         #define DEBUG_TRACE(x)   ;
 
@@ -194,31 +228,47 @@ class Debouncer {
         };
         modes mode = mIdle;
 
-        uint32_t confirmStartTime;
-        int toConfirmState;
+        // will confirm before debounce
+        union startingTimesUnion {
+            uint32_t confirmStartTime;
+            uint32_t debouncingStartTime;
+        };
+        startingTimesUnion startingTimes;
 
-        int debounceCore( int currentState ) {
+        union keyToMonitorUnion {
+            int keyToConfirm = -1;
+            int keyBeingRepeated;
+        };
+        keyToMonitorUnion keyToMonitor;
+
+        // uint32_t confirmStartTime;
+        //int toConfirmState;
+
+    public:
+
+        int debounce( int currentState ) {
             switch( mode ) {
             case mIdle: JUMP_IDLE:
-                if ( currentState == effectiveState ) {
+                if ( currentState == debouncedState ) {
                     DEBUG_TRACE( Serial.print( "#" ) );
                 } else {
-                    if ( confirmStateTimeInMs == 0 ) {
+                    repeatMode = rIdle;
+                    if ( settings->confirmStateTimeInMs == 0 ) {
                         // no need to confirm
                         DEBUG_TRACE( Serial.printf( "accepted: %d\n", currentState ) );
                         updateState( currentState );
                     } else {
                         // confirm first
                         DEBUG_TRACE( Serial.printf( "to confirm: %d\n", currentState ) );
-                        toConfirmState = currentState;
-                        confirmStartTime = millis();
+                        keyToMonitor.keyToConfirm = currentState;
+                        startingTimes.confirmStartTime = millis();
                         mode = mConfirm;
                     }
                 }
                 break;
             case mConfirm:
-                if ( millis() - confirmStartTime >= confirmStateTimeInMs ) {
-                    if ( toConfirmState == currentState ) {
+                if ( millis() - startingTimes.confirmStartTime >= settings->confirmStateTimeInMs ) {
+                    if ( keyToMonitor.keyToConfirm == currentState ) {
                         // still same, confirmed
                         DEBUG_TRACE( Serial.printf( "confirmed: %d\n", currentState ) );
                         updateState( currentState );
@@ -228,8 +278,8 @@ class Debouncer {
                         // and return the last confirmed state, which is technically 
                         // still correct since new state cannot be confirmed
                         DEBUG_TRACE( Serial.printf( "reconfirm: %d\n", currentState ) );
-                        toConfirmState = currentState;
-                        confirmStartTime = millis();
+                        keyToMonitor.keyToConfirm = currentState;
+                        startingTimes.confirmStartTime = millis();
                         // for now return same as before
                     }
                 } else {
@@ -251,7 +301,7 @@ class Debouncer {
                 //     debounce of 1:    ========        do not consider 0's here
                 //     check for 0:              ======= begin checking for 0's here
                 //     ignore 0's while still debouncing 1's
-                if ( effectiveState == inactiveState ) {
+                if ( debouncedState == inactiveState ) {
                     DEBUG_TRACE( Serial.printf( "done waiting for keyup: %d\n", currentState ) );
                     waitForKeyupFlag = false;
                 } else {
@@ -259,7 +309,7 @@ class Debouncer {
                 }
                 return inactiveState;
             }
-            return effectiveState;
+            return debouncedState;
         }
 
     //
@@ -286,8 +336,8 @@ class Debouncer {
             // use last real state for next operations
             if ( mode == mDebouncing ) {
                 uint32_t now = millis();
-                uint32_t ellapsed = now - debouncingStartTime;
-                if ( ellapsed < minimumDebounceTimeInMs ) {
+                uint32_t ellapsed = now - startingTimes.debouncingStartTime;
+                if ( ellapsed < settings->minimumDebounceTimeInMs ) {
                     // still debouncing, adjust time to stop debouncing once minimum is reached
                     //                          |<-- min -->|
                     //  ------------------------|--------|----------------------|
@@ -297,17 +347,17 @@ class Debouncer {
                     //      start                           end
                     //      adjust start so end will
                     //      be same as min time
-                    uint32_t shortage = minimumDebounceTimeInMs - ellapsed;
-                    if ( effectiveState == inactiveState ) {
+                    uint32_t shortage = settings->minimumDebounceTimeInMs - ellapsed;
+                    if ( debouncedState == inactiveState ) {
                         // debouncing inactive state
-                        debouncingStartTime = now + shortage - inactiveStateDebounceInMs;
+                        startingTimes.debouncingStartTime = now + shortage - settings->inactiveStateDebounceInMs;
                     } else {
                         // debouncing active state
-                        debouncingStartTime = now + shortage - activeStatesDebounceInMs;
+                        startingTimes.debouncingStartTime = now + shortage - settings->activeStatesDebounceInMs;
                     }
                 } else {
-                    // already reached minimum, cancel
-                    effectiveState = actualState;
+                    // already reached minimum, stop
+                    //effectiveState = actualState;
                     mode = mIdle;
                 }
             }
@@ -318,18 +368,18 @@ class Debouncer {
     //
     private:
 
-        uint32_t debouncingStartTime;
+        // uint32_t debouncingStartTime;
         
         inline bool isDebouncing() {
             uint32_t now = millis();
             // debounce time of inactive and active are possibly different
-            if ( effectiveState == inactiveState ) {
-                if ( now - debouncingStartTime < inactiveStateDebounceInMs ) {
+            if ( debouncedState == inactiveState ) {
+                if ( now - startingTimes.debouncingStartTime < settings->inactiveStateDebounceInMs ) {
                     // still debouncing, maintain effectiveState
                     return true;
                 }
             } else {
-                if ( now - debouncingStartTime < activeStatesDebounceInMs ) {
+                if ( now - startingTimes.debouncingStartTime < settings->activeStatesDebounceInMs ) {
                     // still debouncing, maintain effectiveState
                     return true;
                 }
@@ -338,11 +388,11 @@ class Debouncer {
         }
 
         void updateState( int currentState ) {
-            if ( currentState != effectiveState ) {
+            if ( currentState != debouncedState ) {
                 // change state, start debounce
                 mode = mDebouncing;
-                debouncingStartTime = millis();
-                effectiveState = currentState;
+                startingTimes.debouncingStartTime = millis();
+                debouncedState = currentState;
             } else {
                 // same as before
                 mode = mIdle;
@@ -354,17 +404,21 @@ class Debouncer {
     //
     private:
 
+        // value send to user, not actual state
+        // cannot combine with debouncedState
+        // eg. while pressed debounceState = HIGH
+        //     but repeating key is LOW..LOW, HIGH, LOW..LOW, HIGH, ...
         int lastValue = -1;
 
     public:
 
-        void updateLastValue( int value ) {
-            lastValue = value;
-        }
-        // int getContinuous( int value ) {
+        // void updateLastValue( int value ) {
         //     lastValue = value;
-        //     return value;
         // }
+        int getContinuousKey( int value ) {
+            lastValue = value;
+            return value;
+        }
 
         int getKeyDown( int value ) {
             if ( value != lastValue ) {
@@ -398,20 +452,20 @@ class Debouncer {
 
         enum repeatModeStates {
             rIdle,
-            rSentFirstKey, // waiting for for [repeatDelay] to go into Repeating
+            rSentFirstKey, // waiting for [repeatDelay] to go into Repeating
             rRepeating     // send every [repeatRate]
         };
-
         repeatModeStates repeatMode = rIdle;
-        int repeatValue = 0;
-        uint32_t lastActionTime;
+
+        // int repeatValue = 0;
+        uint32_t lastRepeatActionTime;
 
     public:
 
-        uint16_t repeatDelayInMs = 400;
-        uint16_t repeatRateInMs  = 250;
+        // uint16_t repeatDelayInMs = 400;
+        // uint16_t repeatRateInMs  = 250;
 
-        int getRepeating( int value ) {
+        int getRepeatingKey( int value ) {
             // if user keeps button held down send signal intermitently
             // eg. selecting an option, by sending right key every few seconds
             //     as opposed to keep going right as in gamepad
@@ -423,23 +477,23 @@ class Debouncer {
     private:
 
         int getRepeatingCore( int current ) {
-            actualState = current;
+            //actualState = current;
             if ( current != inactiveState ) {
                 uint32_t now = millis();
                 switch( repeatMode ) {
                 case rIdle:
                     repeatMode = rSentFirstKey;
-                    repeatValue = current;
-                    lastActionTime = now;
+                    keyToMonitor.keyBeingRepeated = current;
+                    lastRepeatActionTime = now;
                     return current;
                 case rSentFirstKey: {
-                        if ( current != repeatValue ) {
+                        if ( current != keyToMonitor.keyBeingRepeated ) {
                             // pressed another key
                             break;
                         }
-                        if ( now - lastActionTime >= repeatDelayInMs ) {
+                        if ( now - lastRepeatActionTime >= settings->repeatDelayInMs ) {
                             repeatMode = rRepeating;
-                            lastActionTime = now;
+                            lastRepeatActionTime = now;
                             return current;
                         } else {
                             return inactiveState;
@@ -447,12 +501,12 @@ class Debouncer {
                     }
                     break;
                 case rRepeating: {
-                        if ( current != repeatValue ) {
+                        if ( current != keyToMonitor.keyBeingRepeated ) {
                             // pressed another key
                             break;
                         }                    
-                        if ( now - lastActionTime >= repeatRateInMs ) {
-                            lastActionTime = now;
+                        if ( now - lastRepeatActionTime >= settings->repeatRateInMs ) {
+                            lastRepeatActionTime = now;
                             return current;
                         } else {
                             return inactiveState;
@@ -462,9 +516,12 @@ class Debouncer {
                 }
             }
             repeatMode = rIdle;
-            return actualState;
+            return current;
+            // return actualState;
         }
 
 };
+
+Debouncer::Settings Debouncer::defaultSettings;
 
 }
