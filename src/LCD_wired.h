@@ -2,8 +2,11 @@
 //
 //  Interface for Directly Wired LCD
 //  --------------------------------
+//  - unified HD44780 with i2c version
+//    only difference is how data is sent to screen
 //  - converted from my PIC days
-//  - direct replacement of <LiquidCrystal.h>
+//  - need this to make it compatible with buffering
+//  - compatible with <LiquidCrystal.h>
 //
 //  To Use
 //
@@ -17,12 +20,12 @@
 using namespace StarterPack;
 
 // NOT FULLY TESTED: !!!
-// - R/W MODE
-// - 8-BIT PORT
-// - WRITE ROUTINES
+// - R/W mode
+// - 8-bit port
+// - read routines
+// WHY NOT? no one is goint to use it anyway, everything's i2c
 
-//
-// define these before calling header
+// define these before calling header (all unused funcs are stripped out)
 //
 // #define LCD_READ_WRITE_MODE       // R/W pin of LCD is used, otherwise R/W pin is hardwired as write (low)
 // #define LCD_USE_8BIT_PORT         // handle 8 bit data mode
@@ -160,70 +163,9 @@ public:
     }
 
     //
-    // BEGIN
-    //
-    // private:
-
-    //     static const uint8_t LCD_FUNCTION_MODE    = 0b00100000;
-    //     static const uint8_t LCD_FUNCTION_8_BIT   = 0b00010000;
-    //     static const uint8_t LCD_FUNCTION_4_BIT   = 0b00000000;
-    //     static const uint8_t LCD_FUNCTION_1_LINE  = 0b00000000;
-    //     static const uint8_t LCD_FUNCTION_2_LINES = 0b00001000;
-        
-    //     charDotSize dotSize; // copy when initialized, to use for recovery
-    //     uint8_t rowAddress[4];
-
-    public:
-        
-        // inline void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
-        //     // initialize LCD
-        //     //  - set number of bits
-        //     //  - cursor movement and style
-        //     //  - clear screen
-                        
-        //     this->maxColumns = maxColumns;
-        //     this->maxRows = maxRows;
-        //     this->dotSize = dotSize;
-
-        //     // https://forum.arduino.cc/t/solved-16x4-lcd-characters-in-row-3-4-are-moved-to-the-right/62808/5
-        //     // ddram address:
-        //     // lines   address
-        //     //         line0     line1     line2     line3     notes
-        //     // 1       00-4F                                   80 characters
-        //     // 2       00-27     40-67                         40 characters each
-        //     // 4       00-[c-1]  40-[+c]   [c]-yy    xx-zz     ?? characters each
-        //     rowAddress[0] = 0x00;
-        //     rowAddress[1] = 0x40;
-        //     rowAddress[2] = 0x00 + maxColumns;
-        //     rowAddress[3] = 0x40 + maxColumns;
-
-        //     unsigned char com = LCD_FUNCTION_MODE | dotSize;
-        //     if ( maxRows > 1 )
-        //         com = com | LCD_FUNCTION_2_LINES;
-    
-        //     // DELAY_30_mSec();
-    
-        //     #if defined( LCD_USE_8BIT_PORT )
-        //         com = com | LCD_FUNCTION_8_BIT;
-        //         command( com );
-        //     #else
-        //         com = com | LCD_FUNCTION_4_BIT;
-        //         command( com );
-        //         command( com );
-        //     #endif
-            
-        //     // default for entryMode: move cursor to right, no screen shifting
-        //     command( entryMode );
-            
-        //     // default for displayMode: display on, no cursor, no cursor blink
-        //     command( displayMode );
-            
-        //     clear();
-        // }
-
-    //
     // VERIFY / RECOVERY
     //
+    public:
 
         // no way to detect errors
         // also if reconnected will still work unless power is removed
@@ -246,186 +188,11 @@ public:
         inline void backlightOn()  {} // not supported
         inline void backlightOff() {}
 
-/*
-    //
-    // USER COMMANDS
-    //
-    private:
-    
-        static const uint8_t LCD_CLEAR          = 0b00000001;
-        static const uint8_t LCD_HOME           = 0b00000010;
-        static const uint8_t LCD_SET_DDRAM_ADDR = 0b10000000;
-        
-    public:
-
-        // https://en.wikipedia.org/wiki/Hitachi_HD44780_LCD_controller
-        // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/6019/24/HD44780.html
-        
-        inline void setCursor( uint8_t col, uint8_t row ) {
-            command( LCD_SET_DDRAM_ADDR | ( rowAddress[row && 0b11] + col ) );
-        }
-
-        inline void backlightOn()    {} // not supported
-        inline void backlightOff()   {}
-    
-        inline void clear()          {
-            command( LCD_CLEAR );
-            delayMicroseconds( 1520 - 37 ); // 1.52ms
-        }
-        inline void home() {
-            command( LCD_HOME );
-            delayMicroseconds( 1520 - 37 ); // 1.52ms
-        }
-
-    private:
-    
-        static const uint8_t LCD_DISPLAY_MODE       = 0b00001000;
-        static const uint8_t LCD_DISPLAY_ON         = 0b00000100;
-        static const uint8_t LCD_DISPLAY_OFF        = 0b00000000;
-        static const uint8_t LCD_DISPLAY_CURSOR_ON  = 0b00000010;
-        static const uint8_t LCD_DISPLAY_CURSOR_OFF = 0b00000000;
-        static const uint8_t LCD_DISPLAY_BLINK_ON   = 0b00000001;
-        static const uint8_t LCD_DISPLAY_BLINK_OFF  = 0b00000000;
-
-        // keep track of last update
-        uint8_t displayMode = LCD_DISPLAY_MODE | LCD_DISPLAY_ON | LCD_DISPLAY_CURSOR_OFF | LCD_DISPLAY_BLINK_OFF;
-        
-    public:
-    
-        inline void displayOn() {
-            displayMode |= LCD_DISPLAY_ON;
-            command( displayMode );
-        }
-        inline void displayOff() {
-            displayMode &= ~LCD_DISPLAY_ON;
-            command( displayMode );
-        }
-        inline void cursorOn() {
-            displayMode |= LCD_DISPLAY_CURSOR_ON;
-            command( displayMode );
-            // or just: display ON, cursor ON, blink OFF
-        }
-        inline void cursorOff() {
-            displayMode &= ~LCD_DISPLAY_CURSOR_ON;
-            command( displayMode );
-            // or just: display ON, cursor OFF, blink N/A
-        }
-        inline void cursorBlinkOn()  {
-            displayMode |= LCD_DISPLAY_BLINK_ON;
-            command( displayMode );
-            // or just: display ON, cursor ON, blink ON
-        }
-        inline void cursorBlinkOff() {
-            displayMode &= ~LCD_DISPLAY_BLINK_ON;
-            command( displayMode );
-            // or just: display ON, cursor ON, blink OFF
-        }
-        
-    //
-    // SCREEN SHIFT
-    //
-    private:
-
-        // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/7023/28/HD44780.html
-        // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/7274/29/HD44780.html
-        static const uint8_t LCD_SHIFT_MODE         = 0b00010000;
-        static const uint8_t LCD_SHIFT_DISPLAY_ON   = 0b00001000;
-        static const uint8_t LCD_SHIFT_DISPLAY_OFF  = 0b00000000;
-        static const uint8_t LCD_SHIFT_LEFT         = 0b00000000;
-        static const uint8_t LCD_SHIFT_RIGHT        = 0b00000100;
-
-    public:
-    
-        inline void moveCursorLeft() {
-            command( LCD_SHIFT_MODE | LCD_SHIFT_LEFT );
-        }
-        inline void moveCursorRight() {
-            command( LCD_SHIFT_MODE | LCD_SHIFT_RIGHT );
-        }    
-        inline void scrollDisplayLeft() {
-            command( LCD_SHIFT_MODE | LCD_SHIFT_DISPLAY_ON | LCD_SHIFT_LEFT );
-        }
-        inline void scrollDisplayRight() {
-            command( LCD_SHIFT_MODE | LCD_SHIFT_DISPLAY_ON | LCD_SHIFT_RIGHT );
-        }
-        
-    //
-    // ENTRY MODE
-    //
-    private:
-    
-        static const uint8_t LCD_ENTRY_MODE      = 0b00000100;
-        static const uint8_t LCD_ENTRY_INCREMENT = 0b00000010;
-        static const uint8_t LCD_ENTRY_DECREMENT = 0b00000000;
-        static const uint8_t LCD_ENTRY_SHIFT_ON  = 0b00000001;
-        static const uint8_t LCD_ENTRY_SHIFT_OFF = 0b00000000;
-
-        // keep track of last user updates
-        uint8_t entryMode = LCD_ENTRY_MODE | LCD_ENTRY_INCREMENT | LCD_ENTRY_SHIFT_OFF;
-        
-    public:
-    
-        inline void leftToRight() {
-            entryMode |= LCD_ENTRY_INCREMENT;
-            command( entryMode );
-        }
-        inline void rightToLeft() { 
-            entryMode &= ~LCD_ENTRY_INCREMENT;
-            command( entryMode );
-        }
-        inline void autoscrollOn() {
-            entryMode |= LCD_ENTRY_SHIFT_ON;
-            command( entryMode );
-        }
-        inline void autoscrollOff() {
-            entryMode &= ~LCD_ENTRY_SHIFT_ON;
-            command( entryMode );
-        }
-        
-    //
-    // CUSTOM CHARACTERS
-    //
-    private:
-
-        static const uint8_t LCD_SET_CGRAM_ADDR = 0b01000000;
-
-    public:
-    
-        void createChar( uint8_t charID, uint8_t charmap[] ) {
-            charID &= 0b111;
-            command( LCD_SET_CGRAM_ADDR | ( charID << 3 ) );
-            for( int i = 0 ; i < 8 ; i++ )
-                write( (uint8_t) charmap[i] );
-        }
-
-        // createChar with PROGMEM input
-        // Example: 	const char bell[8] PROGMEM = {B00100,B01110,B01110,B01110,B11111,B00000,B00100,B00000};
-        void createChar( uint8_t charID, const char *charmap ) {
-            // put custom character into charID
-            // pattern = 8 characters, rightmost 5 bits is the on/off pattern
-            //
-            // ex. set custom character 0 as pointing arrow
-            //  LCD_customChar(0, "\004\016\037\004\004\004\004\004");
-            //  Char 0 =    --1--
-            //              -111-
-            //              11111
-            //              --1--
-            //              --1--
-            //              --1--
-            //              --1--
-            //              --1--
-            charID &= 0b111;
-            command( LCD_SET_CGRAM_ADDR | ( charID << 3 ) );
-            for( int i = 0 ; i < 8 ; i++ )
-                write( (uint8_t) *charmap++ );
-                // write( (uint8_t) pgm_read_byte_near( charmap++ ) );
-        }
-*/
-
     //
     // CORE
     //
-    
+    public:
+
         void command( uint8_t com ) {
             digitalWrite( LCD_RS, LOW );
             setWriteMode();
@@ -448,11 +215,22 @@ public:
     //
     private:
 
+        inline void pulse() {
+            // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/12294/49/HD44780.html
+            digitalWrite( LCD_E, HIGH );
+            // pulse width - 450ns
+            delayMicroseconds( 1 );
+            digitalWrite( LCD_E, LOW );
+            // write - setup time 195ns
+            // read  - delay time 360ns
+            delayMicroseconds( 1 );
+        }
+
         #if defined( LCD_USE_8BIT_PORT )
 
             void LCD_SEND_COMMAND( uint8_t ch ) {
                 // easier to convert to fastDigitalWrite()
-                digitalWrite( LCD_E, HIGH );
+                // digitalWrite( LCD_E, HIGH );
                 // PORTB = ch;
                 // assume HIGH==1, LOW==0
                 digitalWrite( LCD_DB0, ch & 1 ); ch >>= 1;
@@ -463,7 +241,8 @@ public:
                 digitalWrite( LCD_DB5, ch & 1 ); ch >>= 1;
                 digitalWrite( LCD_DB6, ch & 1 ); ch >>= 1;
                 digitalWrite( LCD_DB7, ch & 1 );
-                digitalWrite( LCD_E, LOW );
+                // digitalWrite( LCD_E, LOW );
+                pulse();
             }
             
         #else
@@ -482,14 +261,16 @@ public:
                 // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/8278/33/HD44780.html
                 
                 // upper nibble
-                digitalWrite( LCD_E, HIGH );
+                // digitalWrite( LCD_E, HIGH );
                 LCD_putNibble( ch >> 4 );
-                digitalWrite( LCD_E, LOW );
-                
+                // digitalWrite( LCD_E, LOW );
+                pulse();
+
                 // lower nibble
-                digitalWrite( LCD_E, HIGH );
+                // digitalWrite( LCD_E, HIGH );
                 LCD_putNibble( ch );
-                digitalWrite( LCD_E, LOW );
+                // digitalWrite( LCD_E, LOW );
+                pulse();
             };
             
         #endif
@@ -508,8 +289,9 @@ public:
 
                 uint8_t result = 0;
                 #if defined( LCD_USE_8BIT_PORT )
-                    digitalWrite( LCD_E, HIGH );
-                    digitalWrite( LCD_E, LOW );
+                    // digitalWrite( LCD_E, HIGH );
+                    // digitalWrite( LCD_E, LOW );
+                    pulse();
                     // delay here ???
                     // result = PORTB;
                     if ( digitalRead( LCD_DB7 ) ) result |= 1; result <<= 1;
@@ -521,15 +303,17 @@ public:
                     if ( digitalRead( LCD_DB1 ) ) result |= 1; result <<= 1;
                     if ( digitalRead( LCD_DB0 ) ) result |= 1;
                 #else                                    
-                    digitalWrite( LCD_E, HIGH );
-                    digitalWrite( LCD_E, LOW );
+                    // digitalWrite( LCD_E, HIGH );
+                    // digitalWrite( LCD_E, LOW );
+                    pulse();
                     // delay here ???
                     if ( digitalRead( LCD_DB7 ) ) result |= 1; result <<= 1;
                     if ( digitalRead( LCD_DB6 ) ) result |= 1; result <<= 1;
                     if ( digitalRead( LCD_DB5 ) ) result |= 1; result <<= 1;
                     if ( digitalRead( LCD_DB4 ) ) result |= 1; result <<= 1;
-                    digitalWrite( LCD_E, HIGH );
-                    digitalWrite( LCD_E, LOW );
+                    // digitalWrite( LCD_E, HIGH );
+                    // digitalWrite( LCD_E, LOW );
+                    pulse();
                     // delay here ???
                     if ( digitalRead( LCD_DB7 ) ) result |= 1; result <<= 1;
                     if ( digitalRead( LCD_DB6 ) ) result |= 1; result <<= 1;

@@ -13,9 +13,11 @@
 
 using namespace StarterPack;
 
-// choose wired or i2c
-#define LCD_Wired // use wired version
-//#define LCD_I2C // use i2c version
+//
+// CHOOSE WIRED OR I2C
+//
+// #define LCD_Wired // use wired version
+#define LCD_I2C   // use i2c version
 
     #if defined( LCD_Wired )
     

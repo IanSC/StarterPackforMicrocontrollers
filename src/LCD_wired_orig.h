@@ -19,31 +19,31 @@
 
 namespace StarterPack {
 
-class LCD_wired_old : public LCDInterface {
+class LCD_wired_orig : public LCDInterface {
 
         LiquidCrystal *lcd;
 
     public:
 
-        ~LCD_wired_old() {
+        ~LCD_wired_orig() {
             delete lcd;
         }
 
-        inline LCD_wired_old( uint8_t rs, uint8_t rw, uint8_t enable,
+        inline LCD_wired_orig( uint8_t rs, uint8_t rw, uint8_t enable,
         uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
             lcd = new LiquidCrystal( rs, rw, enable, d0, d1, d2, d3, d4, d5, d6, d7 );
         }
         
-        inline LCD_wired_old( uint8_t rs, uint8_t enable,
+        inline LCD_wired_orig( uint8_t rs, uint8_t enable,
         uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
             lcd = new LiquidCrystal( rs, enable, d0, d1, d2, d3, d4, d5, d6, d7 );
         }
         
-        inline LCD_wired_old( uint8_t rs, uint8_t rw, uint8_t enable, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3 ) {
+        inline LCD_wired_orig( uint8_t rs, uint8_t rw, uint8_t enable, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3 ) {
             lcd = new LiquidCrystal( rs, rw, enable, d0, d1, d2, d3 );
         }
         
-        inline LCD_wired_old( uint8_t rs, uint8_t enable, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3 ) {
+        inline LCD_wired_orig( uint8_t rs, uint8_t enable, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3 ) {
             lcd = new LiquidCrystal( rs, enable, d0, d1, d2, d3 );
         }
 

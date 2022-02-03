@@ -58,7 +58,8 @@
 //      updateAllNow()                        update the LCD completely, no duration or throttling
 //
 //      uint16_t updateDurationInMs           time to spend in update(), default 10
-//      setUpdateThrottleInMs( delayInMs )    time between actual updates
+//      setUpdateThrottleInMs( timeInMs )     time between actual updates
+//      uint16_t getUpdateThrottleInMs        get current throttle
 //
 //      ex. lcd.setUpdateThrottleInMs(100);
 //          lcd.updateDurationInMs = 50;
@@ -149,18 +150,20 @@ class LCDBuffered : public LCDInterface {
 
         LCDBuffered() {}
 
-        inline LCDBuffered( LCDInterface &lcd ) {
+        inline LCDBuffered( LCDInterface &lcd, uint16_t throttleTimeInMs = 50, uint16_t updateDurationInMs = 10 ) {
             this->lcd = &lcd;
             mustDeletedLCD = false;
             // assume user already called begin() of lcd
             initBuffers();
-            // ... otherwise must call our begin, not "lcd"
-            // ex 1. ... lcd = LCD_i2c();
-            //       ... lcd.begin( 16, 2 );
-            //       ... lcdBuff = LCDBuffered( lcd );
-            // ex 2. ... lcd = LCD_i2c();
-            //       ... lcdBuff = LCDBuffered( lcd );
-            //       ... lcdBuff.begin( 16, 2 );
+            // ... otherwise must call our begin, not lcd's
+            // ex 1. lcd = LCD_i2c();
+            //       lcd.begin( 16, 2 );
+            //       lcdBuff = LCDBuffered( lcd );
+            // ex 2. lcd = LCD_i2c();
+            //       lcdBuff = LCDBuffered( lcd );
+            //       lcdBuff.begin( 16, 2 );
+            setUpdateThrottleInMs( throttleTimeInMs );
+            this->updateDurationInMs = updateDurationInMs;
         }
 
         inline void setTimeoutInMs( uint16_t timeOut ) {
@@ -630,8 +633,8 @@ class LCDBuffered : public LCDInterface {
         inline void autoscrollOn () {} // not supported
         inline void autoscrollOff() {}
 
-        inline void createChar( uint8_t location, uint8_t     charmap[] ) { lcd->createChar(location,charmap); }
-        inline void createChar( uint8_t location, const char *charmap   ) { lcd->createChar(location,charmap); }
+        inline void createChar( uint8_t charID, const uint8_t charmap[] ) { lcd->createChar( charID, charmap ); }
+        inline void createChar( uint8_t charID, const char *charmap )     { lcd->createChar( charID, charmap ); }
 
         inline void command( uint8_t value ) { lcd->command( value ); }
 
@@ -763,7 +766,7 @@ class LCDBuffered : public LCDInterface {
         uint8_t btsCursorX = 0, btsCursorY = 0;
 
         uint32_t btsLastCompletedUpdate = millis();
-        uint16_t btsThrottleInMs = 10;
+        uint16_t btsThrottleInMs = 50;
 
         enum btsModes {
             mStart, mRunning
@@ -774,10 +777,13 @@ class LCDBuffered : public LCDInterface {
 
         uint16_t updateDurationInMs = 10;
 
-        void setUpdateThrottleInMs( uint16_t delayInMs ) {
-            btsThrottleInMs = delayInMs;
+        void setUpdateThrottleInMs( uint16_t timeInMs ) {
+            btsThrottleInMs = timeInMs;
             // set time in the past so next call will update at once
             btsLastCompletedUpdate = millis() - btsThrottleInMs;
+        }
+        inline uint16_t getUpdateThrottleInMs() {
+            return btsThrottleInMs;
         }
 
         enum updateResult {
@@ -809,7 +815,9 @@ class LCDBuffered : public LCDInterface {
                 btsMode = mRunning;
                 btsPtr = 0; btsCursorX = 0; btsCursorY = 0;
                 //Serial.print( "u" );
-            }
+            
+            } // else btsMode == mRunning...
+
             if ( updateScreenCore( true ) ) {
                 // done sending btsBuffer to screen
                 btsMode = mStart;

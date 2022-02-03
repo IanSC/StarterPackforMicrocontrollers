@@ -383,18 +383,14 @@ public:
 
     public:
     
-        void createChar( uint8_t charID, const uint8_t charmap[] ) {
-            // charID &= 0b111;
-            // command( LCD_SET_CGRAM_ADDR | ( charID << 3 ) );
-            // for( int i = 0 ; i < 8 ; i++ )
-            //     write( (uint8_t) charmap[i] );
+        inline void createChar( uint8_t charID, const uint8_t charmap[] ) {
             createCharCore( charID, (const char *) charmap );
         }
 
-        void createChar( uint8_t charID, const char *charmap ) {
+        inline void createChar( uint8_t charID, const char *charmap ) {
             createCharCore( charID, charmap );
         }
-        
+
     protected:
 
         void createCharCore( uint8_t charID, const char *charmap ) {
