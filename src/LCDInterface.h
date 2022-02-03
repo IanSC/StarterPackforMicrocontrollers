@@ -174,6 +174,10 @@ class LCDInterface : public Print {
         inline void blink()    { cursorBlinkOn();  }
         inline void noBlink()  { cursorBlinkOff(); }
 
+        // move cursor
+        virtual void moveCursorRight() = 0;
+        virtual void moveCursorLeft() = 0;
+
         // scroll the display without changing the RAM
         virtual void scrollDisplayLeft() = 0;
         virtual void scrollDisplayRight() = 0;
@@ -208,11 +212,13 @@ class LCDInterface : public Print {
         //     lcd.createChar( 0, bitmapPattern );
         //     lcd.setCursor(0,0);
         //     lcd.write(0);
-        virtual void createChar( uint8_t location, uint8_t charmap[] ) = 0;
+        // note: reset cursor position after this command
+        virtual void createChar( uint8_t charID, const uint8_t charmap[] ) = 0;
+        virtual void createChar( uint8_t charID, const char *charmap ) = 0;
 
         // createChar with PROGMEM input
         // ex. const char bell[8] PROGMEM = {B00100,B01110,B01110,B01110,B11111,B00000,B00100,B00000};
-        virtual void createChar( uint8_t location, const char *charmap ) = 0;
+        //     write( (uint8_t) pgm_read_byte_near( charmap++ ) );
 
         virtual void command( uint8_t value ) = 0;
 
@@ -295,7 +301,7 @@ class LCDInterface : public Print {
                 char buffer[maxColumns+1];
                 va_list args;
                 va_start( args, format );
-                vsnprintf(buffer, maxColumns, format, args);
+                vsnprintf( buffer, maxColumns, format, args );
                 va_end( args );
                 setCursor( col, row );
                 print( buffer );

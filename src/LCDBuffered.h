@@ -501,6 +501,10 @@ class LCDBuffered : public LCDInterface {
     //
     // WRITE
     //
+    private:
+
+        bool cursorMovementLeftToRight = true;
+
     public:
     
         size_t write( uint8_t ch ) {
@@ -520,46 +524,49 @@ class LCDBuffered : public LCDInterface {
 
     private:
 
-        bool cursorMovementLeftToRight = true;
-
         void cursorForward() {
             if ( offscreen ) return;
-            userCursorX++;
-            if ( userCursorX >= maxColumns ) {
-                if ( cursorAutoCarriageReturn ) {
+            if ( userCursorX < maxColumns - 1 )
+                // enough space
+                userCursorX++;
+            else if ( cursorAutoCarriageReturn ) {
+                // not enough space, but can auto next/prev line
+                if ( userCursorY < maxRows - 1 ) {
+                    // enough lines
                     userCursorX = 0;
                     userCursorY++;
-                    if ( userCursorY >= maxRows ) {
-                        if ( cursorAutoJumpToStart ) {
-                            userCursorY = 0;
-                        } else {
-                            offscreen = true;
-                        }
-                    }
+                } else if ( cursorAutoJumpToStart ) {
+                    // not enough lines, but can auto start/end
+                    userCursorX = 0;
+                    userCursorY = 0;
                 } else {
                     offscreen = true;
                 }
+            } else {
+                offscreen = true;
             }
         }
 
         void cursorBackward() {
             if ( offscreen ) return;
             if ( userCursorX > 0 ) {
+                // enough space
                 userCursorX--;
-            } else {
-                if ( cursorAutoCarriageReturn ) {
-                    userCursorX = maxColumns-1;
-                    userCursorY++;
-                    if ( userCursorY >= maxRows ) {
-                        if ( cursorAutoJumpToStart ) {
-                            userCursorY = 0;
-                        } else {
-                            offscreen = true;
-                        }
-                    }
+            } else if ( cursorAutoCarriageReturn ) {
+                // not enough space, but can auto next/prev line
+                if ( userCursorY > 0 ) {
+                    // enough lines
+                    userCursorX = maxColumns - 1;
+                    userCursorY--;
+                } else if ( cursorAutoJumpToStart ) {
+                    // not enough lines, but can auto start/end
+                    userCursorX = maxColumns - 1;
+                    userCursorY = maxRows - 1;
                 } else {
                     offscreen = true;
                 }
+            } else {
+                offscreen = true;
             }
         }
 
@@ -588,6 +595,9 @@ class LCDBuffered : public LCDInterface {
         inline void backlightOff() { lcd->backlightOff(); }
         inline void displayOn()    { lcd->displayOn();    }
         inline void displayOff()   { lcd->displayOff();   }
+
+        inline void moveCursorRight() { cursorForward(); }
+        inline void moveCursorLeft()  { cursorBackward(); }        
 
         void scrollDisplayLeft() {
             // ABCDE

@@ -13,8 +13,10 @@
 //      lcd.begin( 16, 2 );
 
 #pragma once
-#include <LCD_HD44780.h>
+#include <LCDInterface.h>
 using namespace StarterPack;
+
+#include <Arduino.h>
 
 // NOT FULLY TESTED: !!!
 // - R/W MODE
@@ -30,7 +32,7 @@ using namespace StarterPack;
 
 namespace StarterPack {
 
-class LCD_wired : public LCD_HD44780 {
+class LCD_wired_newxxx : public LCDInterface {
 
     // data port, in/out
     #if defined( LCD_USE_8BIT_PORT )
@@ -126,7 +128,7 @@ public:
                 initPort();
             }
         #else
-            inline LCD_wired( uint8_t rs, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
+            inline LCD_wired_newxxx( uint8_t rs, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
                 LCD_RS = rs; LCD_E = enable;
                 LCD_DB4 = d4; LCD_DB5 = d5; LCD_DB6 = d6; LCD_DB7 = d7;
                 initPort();
@@ -162,64 +164,64 @@ public:
     //
     // BEGIN
     //
-    // private:
+    private:
 
-    //     static const uint8_t LCD_FUNCTION_MODE    = 0b00100000;
-    //     static const uint8_t LCD_FUNCTION_8_BIT   = 0b00010000;
-    //     static const uint8_t LCD_FUNCTION_4_BIT   = 0b00000000;
-    //     static const uint8_t LCD_FUNCTION_1_LINE  = 0b00000000;
-    //     static const uint8_t LCD_FUNCTION_2_LINES = 0b00001000;
+        static const uint8_t LCD_FUNCTION_MODE    = 0b00100000;
+        static const uint8_t LCD_FUNCTION_8_BIT   = 0b00010000;
+        static const uint8_t LCD_FUNCTION_4_BIT   = 0b00000000;
+        static const uint8_t LCD_FUNCTION_1_LINE  = 0b00000000;
+        static const uint8_t LCD_FUNCTION_2_LINES = 0b00001000;
         
-    //     charDotSize dotSize; // copy when initialized, to use for recovery
-    //     uint8_t rowAddress[4];
+        charDotSize dotSize; // copy when initialized, to use for recovery
+        uint8_t rowAddress[4];
 
     public:
         
-        // inline void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
-        //     // initialize LCD
-        //     //  - set number of bits
-        //     //  - cursor movement and style
-        //     //  - clear screen
+        inline void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
+            // initialize LCD
+            //  - set number of bits
+            //  - cursor movement and style
+            //  - clear screen
                         
-        //     this->maxColumns = maxColumns;
-        //     this->maxRows = maxRows;
-        //     this->dotSize = dotSize;
+            this->maxColumns = maxColumns;
+            this->maxRows = maxRows;
+            this->dotSize = dotSize;
 
-        //     // https://forum.arduino.cc/t/solved-16x4-lcd-characters-in-row-3-4-are-moved-to-the-right/62808/5
-        //     // ddram address:
-        //     // lines   address
-        //     //         line0     line1     line2     line3     notes
-        //     // 1       00-4F                                   80 characters
-        //     // 2       00-27     40-67                         40 characters each
-        //     // 4       00-[c-1]  40-[+c]   [c]-yy    xx-zz     ?? characters each
-        //     rowAddress[0] = 0x00;
-        //     rowAddress[1] = 0x40;
-        //     rowAddress[2] = 0x00 + maxColumns;
-        //     rowAddress[3] = 0x40 + maxColumns;
+            // https://forum.arduino.cc/t/solved-16x4-lcd-characters-in-row-3-4-are-moved-to-the-right/62808/5
+            // ddram address:
+            // lines   address
+            //         line0     line1     line2     line3     notes
+            // 1       00-4F                                   80 characters
+            // 2       00-27     40-67                         40 characters each
+            // 4       00-[c-1]  40-[+c]   [c]-yy    xx-zz     ?? characters each
+            rowAddress[0] = 0x00;
+            rowAddress[1] = 0x40;
+            rowAddress[2] = 0x00 + maxColumns;
+            rowAddress[3] = 0x40 + maxColumns;
 
-        //     unsigned char com = LCD_FUNCTION_MODE | dotSize;
-        //     if ( maxRows > 1 )
-        //         com = com | LCD_FUNCTION_2_LINES;
+            unsigned char com = LCD_FUNCTION_MODE | dotSize;
+            if ( maxRows > 1 )
+                com = com | LCD_FUNCTION_2_LINES;
     
-        //     // DELAY_30_mSec();
+            // DELAY_30_mSec();
     
-        //     #if defined( LCD_USE_8BIT_PORT )
-        //         com = com | LCD_FUNCTION_8_BIT;
-        //         command( com );
-        //     #else
-        //         com = com | LCD_FUNCTION_4_BIT;
-        //         command( com );
-        //         command( com );
-        //     #endif
+            #if defined( LCD_USE_8BIT_PORT )
+                com = com | LCD_FUNCTION_8_BIT;
+                command( com );
+            #else
+                com = com | LCD_FUNCTION_4_BIT;
+                command( com );
+                command( com );
+            #endif
             
-        //     // default for entryMode: move cursor to right, no screen shifting
-        //     command( entryMode );
+            // default for entryMode: move cursor to right, no screen shifting
+            command( entryMode );
             
-        //     // default for displayMode: display on, no cursor, no cursor blink
-        //     command( displayMode );
+            // default for displayMode: display on, no cursor, no cursor blink
+            command( displayMode );
             
-        //     clear();
-        // }
+            clear();
+        }
 
     //
     // VERIFY / RECOVERY
@@ -238,16 +240,7 @@ public:
             begin( maxColumns, maxRows, dotSize );
         }
 
-    //
-    // USER COMMANDS
-    //
-    public:
-
-        inline void backlightOn()  {} // not supported
-        inline void backlightOff() {}
-
-/*
-    //
+   //
     // USER COMMANDS
     //
     private:
@@ -420,7 +413,6 @@ public:
                 write( (uint8_t) *charmap++ );
                 // write( (uint8_t) pgm_read_byte_near( charmap++ ) );
         }
-*/
 
     //
     // CORE

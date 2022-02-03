@@ -1,4 +1,5 @@
 #pragma once
+#include <stdarg.h>
 
 namespace StarterPack {
 
@@ -6,17 +7,35 @@ namespace StarterPack {
 // CONVERTERS
 //
 
-    template <typename TType>
-    TType spMap( TType value, TType inputMin, TType inputMax, TType outputMin, TType outputMax ) {
-        // from WMath.cpp
-        const TType divisor = inputMax - inputMin;
-        if( divisor == 0 ) {
-            log_e( "spMap(): invalid input range, min == max" );
-            return -1; //AVR returns -1, SAM returns 0
-        }
-        const TType dividend = outputMax - outputMin;
-        const TType delta = value - inputMin;
-        return ( delta * dividend + (divisor / 2) ) / divisor + outputMin;
+    // template <typename TType>
+    // TType spMapCore( TType value, TType inputMin, TType inputMax, TType outputMin, TType outputMax ) {
+    //     // from WMath.cpp - but fixed
+    //     const TType run = inputMax - inputMin;
+    //     if( divisor == 0 ) {
+    //         log_e( "spMap(): invalid input range, min == max" );
+    //         return -1; //AVR returns -1, SAM returns 0
+    //     }
+    //     const TType rise = outputMax - outputMin;
+    //     const TType delta = value - inputMin;
+    //     return ( delta * rise ) / run + outputMin;
+    // }
+
+    int spMap( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
+        int run = inputMax - inputMin;
+        if ( run == 0 ) return -1;
+        return ( (long)(value - inputMin) * (long)(outputMax - outputMin) ) / run + outputMin;
+    }
+
+    long spMapLong( long value, long inputMin, long inputMax, long outputMin, long outputMax ) {
+        int run = inputMax - inputMin;
+        if ( run == 0 ) return -1;
+        return ( (long long)(value - inputMin) * (long long)(outputMax - outputMin) ) / run + outputMin;
+    }
+
+    inline float spMapFloat( float value, float inputMin, float inputMax, float outputMin, float outputMax ) {
+        float run = inputMax - inputMin;
+        if ( run == 0 ) return -1;
+        return ( (value - inputMin) * (outputMax - outputMin) ) / run + outputMin;
     }
 
     template <typename TType>

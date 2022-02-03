@@ -26,9 +26,9 @@ public:
     void turnOff( uint8_t slot ) {
         data &= ~( 1 << slot );
     }
-    bool flip( uint8_t slot ) {
+    void flip( uint8_t slot ) {
         uint32_t d = 1 << slot;
-        if ( data & d != 0 )
+        if ( ( data & d ) != 0 )
             data &= ~d;
         else
             data |= d;

@@ -170,7 +170,14 @@ class AnalogIO {
             WITH_PULLDOWN = 4
         };
 
-        AnalogIO( uint8_t pin, int options = NONE, intIntFunction mapFunction = nullptr, voidIntFunction onChange = nullptr ) {
+        inline friend optionsEnum operator | ( optionsEnum a, optionsEnum b ) {
+            return static_cast<optionsEnum>( static_cast<int>(a) | static_cast<int>(b) );
+        }
+        inline friend optionsEnum& operator |= ( optionsEnum& a, optionsEnum b ) {
+            a = a | b; return a;
+        }
+
+        AnalogIO( uint8_t pin, optionsEnum options = NONE, intIntFunction mapFunction = nullptr, voidIntFunction onChange = nullptr ) {
 
             PIN = pin;
             useSmoothing = ( ( options & optionsEnum::SMOOTHING ) == optionsEnum::SMOOTHING );

@@ -73,7 +73,14 @@ class DigitalIO {
             WITH_PULLDOWN = 4
         };
         
-        DigitalIO( const uint8_t pin, int options = ACTIVE_HIGH ) { //}, // WITH_PULLUP | ACTIVE_LOW,
+        inline friend optionsEnum operator | ( optionsEnum a, optionsEnum b ) {
+            return static_cast<optionsEnum>( static_cast<int>(a) | static_cast<int>(b) );
+        }
+        inline friend optionsEnum& operator |= ( optionsEnum& a, optionsEnum b ) {
+            a = a | b; return a;
+        }
+
+        DigitalIO( const uint8_t pin, optionsEnum options = ACTIVE_HIGH ) { //}, // WITH_PULLUP | ACTIVE_LOW,
         // uint16_t activeDebounceTime = 50, uint16_t inactiveDebounceTime = 50 ) {
             PIN = pin;
             if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )
@@ -96,6 +103,15 @@ class DigitalIO {
             value = ( digitalRead( PIN ) == ACTIVE_STATE );
             lastValue = value;
             debouncer.setInitialValue( value );
+        }
+
+        DigitalIO( const uint8_t pin, optionsEnum options,
+        uint16_t activeDebounceTime, uint16_t inactiveDebounceTime = 50 )
+        : DigitalIO( pin, options ) {
+            // custom debounce time
+            debouncer.initializeCustomSettings();
+            debouncer.getSettings()->activeStatesDebounceInMs = activeDebounceTime;
+            debouncer.getSettings()->inactiveStateDebounceInMs = inactiveDebounceTime;
         }
 
         inline void setOnChangeCallback( voidIntFunction onChange ) {

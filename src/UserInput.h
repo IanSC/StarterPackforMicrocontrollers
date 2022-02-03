@@ -13,7 +13,7 @@ namespace UserInput {
         Right         = 0b00000100,
         Up            = 0b00001000,
         Down          = 0b00010000,
-        Cancel        = 0b00100000, // user defined
+        // Cancel        = 0b00100000, // user defined        
         UpLeft        = Up | Left,
         UpRight       = Up | Right,
         DownLeft      = Down | Left,
@@ -48,7 +48,7 @@ namespace UserInput {
             if ( (key & Keys::Down  ) != 0 ) Serial.print( "Down" );
             if ( (key & Keys::Left  ) != 0 ) Serial.print( "Left" );
             if ( (key & Keys::Right ) != 0 ) Serial.print( "Right" );
-            if ( (key & Keys::Cancel) != 0 ) Serial.print( "Cancel" );
+            // if ( (key & Keys::Cancel) != 0 ) Serial.print( "Cancel" );
         }
         Serial.println();
     }
@@ -57,7 +57,15 @@ namespace UserInput {
 
         private:
 
-            bool usingDigitalKeys = true;
+            enum deviceType {
+                dNone,
+                dDigital,
+                dAnalog,
+                dMatrixKeypad
+            };
+            deviceType deviceType = dNone;
+
+            // bool usingDigitalKeys = true;
 
             // DIGITAL KEYS
             //                          okay     left     right    up       left
@@ -67,13 +75,17 @@ namespace UserInput {
             AnalogIO *ioAnalog = nullptr;
             int ioAnalogButtonNo[5];
 
+            // MATRIX KEYPAD
+            MatrixKeypad *ioMatrixKeypad = nullptr;
+
         //
         // INIT
         //
         public:
 
             void assignKeys( DigitalIO *okayKey, DigitalIO *leftAndUpKey, DigitalIO *rightAndDownKey ) {
-                usingDigitalKeys = true;
+                deviceType = dDigital;
+                // usingDigitalKeys = true;
                 ioDigital[0] = okayKey;
                 ioDigital[1] = leftAndUpKey;
                 ioDigital[2] = rightAndDownKey;
@@ -84,7 +96,8 @@ namespace UserInput {
 
             void assignKeys( DigitalIO *okayKey,
             DigitalIO *leftKey, DigitalIO *rightKey, DigitalIO *upKey, DigitalIO *downKey ) {
-                usingDigitalKeys = true;
+                deviceType = dDigital;
+                // usingDigitalKeys = true;
                 ioDigital[0] = okayKey;
                 ioDigital[1] = leftKey;
                 ioDigital[2] = rightKey;
@@ -96,7 +109,8 @@ namespace UserInput {
             void assignKeys( AnalogIO &analogKey,
             int okayKeyValue,
             int leftKeyValue, int rightKeyValue, int upKeyValue, int downKeyValue ) {
-                usingDigitalKeys = false;
+                deviceType = dAnalog;
+                // usingDigitalKeys = false;
                 this->ioAnalog = &analogKey;
                 ioAnalogButtonNo[0] = okayKeyValue;
                 ioAnalogButtonNo[1] = leftKeyValue;
@@ -106,9 +120,29 @@ namespace UserInput {
                 checkCommonKeys();
             }
 
+
+            void assignKeys( MatrixKeypad &matrixKeypad,
+            int okayKeyId,
+            int leftKeyId, int rightKeyId, int upKeyId, int downKeyId ) {
+                deviceType = dMatrixKeypad;
+                // usingDigitalKeys = false;
+                this->ioMatrixKeypad = &matrixKeypad;
+                ioAnalogButtonNo[0] = okayKeyId;
+                ioAnalogButtonNo[1] = leftKeyId;
+                ioAnalogButtonNo[2] = rightKeyId;
+                ioAnalogButtonNo[3] = upKeyId;
+                ioAnalogButtonNo[4] = downKeyId;
+                checkCommonKeys();
+            }
+
             // allow UpLeft, UpRight, DownLeft, DownRight
             bool allowDiagonals = false;
-        
+
+            // void addDevice( DigitalIO key, uint16_t keyId ) {}
+            // void allowSimulaneous( uint16_t keyId1, uint16_t keyId2 ) {}
+            // void addDevice( AnalogIO key ) {}
+            // void analogMapping( uint8_t analogButtonNo, uint16_t keyId ) {}
+
         private:
 
             // special handling for common keys for left/up and right/down:
@@ -121,12 +155,21 @@ namespace UserInput {
             bool commonDownRight = false;
 
             void checkCommonKeys() {
-                if ( usingDigitalKeys ) {
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
                     commonUpLeft    = ( ioDigital[1] == ioDigital[3] );
                     commonDownRight = ( ioDigital[2] == ioDigital[4] );
-                } else {
+                    break;
+                case dAnalog:
                     commonUpLeft    = ( ioAnalog->getButtonValue(ioAnalogButtonNo[1]) == ioAnalog->getButtonValue(ioAnalogButtonNo[3]) );
                     commonDownRight = ( ioAnalog->getButtonValue(ioAnalogButtonNo[2]) == ioAnalog->getButtonValue(ioAnalogButtonNo[4]) );
+                    break;
+                case dMatrixKeypad:
+                    commonUpLeft    = ( ioAnalogButtonNo[1] == ioAnalogButtonNo[3] );
+                    commonDownRight = ( ioAnalogButtonNo[2] == ioAnalogButtonNo[4] );
+                    break;
                 }
             }
 
@@ -135,40 +178,69 @@ namespace UserInput {
         //
         public:
 
-            // inline Keys getContinuousInput( Keys allowedKeys = Keys::All ) {
-            //     return getInput( allowedKeys, false );
-            // }
-
-            Keys getContinuousKey( Keys allowedKeys = Keys::All ) {
-                Keys input = Keys::None;
-                if ( usingDigitalKeys ) {
-                    for( int i=0 ; i<5 ; i++ ) {
-                        if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
-                            input = static_cast<Keys>( input | (1<<i) );
-                    }
-                } else {                    
-                    int8_t buttonNo = ioAnalog->getContinuousKey();
-                    if ( buttonNo != 0 ) {
-                        for( int i = 0 ; i < 5 ; i++ ) {
-                            if ( ioAnalogButtonNo[i] == buttonNo ) {
-                                input = static_cast<Keys>( input | (1<<i) );
-                                break;
-                            }
-                        }
-                    }
-                }
-                return processKeysCore( allowedKeys, input, false );
-            }
-
             Keys getKeyDown( Keys allowedKeys = Keys::All ) {
                 Keys input = Keys::None;
-                if ( usingDigitalKeys ) {
+                int8_t buttonNo;
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
                     for( int i=0 ; i<5 ; i++ ) {
                         if ( ioDigital[i] != nullptr && ioDigital[i]->getKeyDown() )
                             input = static_cast<Keys>( input | (1<<i) );
                     }
-                } else {                    
-                    int8_t buttonNo = ioAnalog->getKeyDown();
+                    break;
+                case dAnalog:
+                    buttonNo = ioAnalog->getKeyDown();
+                    if ( buttonNo != 0 ) {
+                        for( int i = 0 ; i < 5 ; i++ ) {
+                            if ( ioAnalogButtonNo[i] == buttonNo ) {
+                                input = static_cast<Keys>( input | (1<<i) );
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case dMatrixKeypad:
+                    buttonNo = ioMatrixKeypad->getKeyDown();
+                    if ( buttonNo != 0 ) {
+                        for( int i = 0 ; i < 5 ; i++ ) {
+                            if ( ioAnalogButtonNo[i] == buttonNo ) {
+                                input = static_cast<Keys>( input | (1<<i) );
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                return processKeysCore( allowedKeys, input, false );
+            }
+
+            Keys getContinuousKey( Keys allowedKeys = Keys::All ) {
+                Keys input = Keys::None;
+                int8_t buttonNo;
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
+                    for( int i=0 ; i<5 ; i++ ) {
+                        if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
+                            input = static_cast<Keys>( input | (1<<i) );
+                    }
+                    break;
+                case dAnalog:
+                    buttonNo = ioAnalog->getContinuousKey();
+                    if ( buttonNo != 0 ) {
+                        for( int i = 0 ; i < 5 ; i++ ) {
+                            if ( ioAnalogButtonNo[i] == buttonNo ) {
+                                input = static_cast<Keys>( input | (1<<i) );
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case dMatrixKeypad:
+                    buttonNo = ioMatrixKeypad->getContinuousKey();
                     if ( buttonNo != 0 ) {
                         for( int i = 0 ; i < 5 ; i++ ) {
                             if ( ioAnalogButtonNo[i] == buttonNo ) {
@@ -180,48 +252,32 @@ namespace UserInput {
                 }
                 return processKeysCore( allowedKeys, input, false );
             }
-
-            // Keys getInput( Keys allowedKeys = Keys::All, bool issueWaitForKeyUp = true ) {
-            //     Keys input = Keys::None;
-            //     if ( usingDigitalKeys ) {
-            //         for( int i=0 ; i<5 ; i++ ) {
-            //             if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
-            //                 input = static_cast<Keys>( input | (1<<i) );
-            //         }
-            //     } else {                    
-            //         int8_t buttonNo = ioAnalog->getContinuousKey();
-            //         if ( buttonNo != 0 ) {
-            //             for( int i = 0 ; i < 5 ; i++ ) {
-            //                 if ( ioAnalogButtonNo[i] == buttonNo ) {
-            //                     input = static_cast<Keys>( input | (1<<i) );
-            //                     break;
-            //                 }
-            //             }
-            //         }
-            //     }
-            //     return processKeysCore( allowedKeys, input, issueWaitForKeyUp );
-            // }
 
             Keys getRepeatingKey( bool okayKeyAlsoRepeating, Keys allowedKeys = Keys::All ) {
                 return getRepeatingKey( allowedKeys, okayKeyAlsoRepeating );
             }
 
-            Keys getRepeatingKey( Keys allowedKeys = Keys::All, bool okayKeyAlsoRepeating = false ) {
-                // if repeating from DigitalIO is used, cannot do diagonal repeating
+            Keys getRepeatingKey( Keys allowedKeys = Keys::All, bool okayKeyAlsoRepeating = false ) {                
                 Keys input = Keys::None;
-                if ( usingDigitalKeys ) {
+                int8_t buttonNo;
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
                     // if ( ioDigital[0] != nullptr && ioDigital[0]->getStatus() )
                     //     input = Okay;
                     // for( int i=1 ; i<5 ; i++ ) {
                     //     if ( ioDigital[i] != nullptr && ioDigital[i]->getRepeating() )
                     //         input = static_cast<Keys>( input | (1<<i) );
                     // }
+                    // if repeating from DigitalIO is used, cannot do diagonal repeating
                     for( int i=0 ; i<5 ; i++ ) {
                         if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
                             input = static_cast<Keys>( input | (1<<i) );
                     }
-                } else {
-                    int8_t buttonNo = ioAnalog->getRepeatingKey();
+                    break;
+                case dAnalog:
+                    buttonNo = ioAnalog->getRepeatingKey();
                     if ( buttonNo != 0 ) {
                         for( int i = 0 ; i < 5 ; i++ ) {
                             if ( ioAnalogButtonNo[i] == buttonNo ) {
@@ -230,59 +286,35 @@ namespace UserInput {
                             }
                         }
                     }
+                    break;
+                case dMatrixKeypad:
+                    buttonNo = ioMatrixKeypad->getRepeatingKey();
+                    if ( buttonNo != 0 ) {
+                        for( int i = 0 ; i < 5 ; i++ ) {
+                            if ( ioAnalogButtonNo[i] == buttonNo ) {
+                                input = static_cast<Keys>( input | (1<<i) );
+                                break;
+                            }
+                        }
+                    }
+                    break;
                 }
 
                 Keys r = processKeysCore( allowedKeys, input, false );
-                if ( usingDigitalKeys ) {
+                if ( deviceType == dDigital ) {
+                // if ( usingDigitalKeys ) {
                     r = static_cast<Keys>( debouncer.getRepeatingKey( r ) );
                 }
                 if ( r == Okay && !okayKeyAlsoRepeating ) {
-                    if ( usingDigitalKeys )
-                        ioDigital[0]->flagWaitForKeyup();
-                    else
-                        ioAnalog->flagWaitForKeyup();
+                    switch( deviceType ) {
+                    case dNone:                                             break;
+                    case dDigital:      ioDigital[0]  ->flagWaitForKeyup(); break;
+                    case dAnalog:       ioAnalog      ->flagWaitForKeyup(); break;
+                    case dMatrixKeypad: ioMatrixKeypad->flagWaitForKeyup(); break;
+                    }
                 }
                 return r;
             }
-
-            // Keys getRepeatingKey( Keys allowedKeys = Keys::All, bool issueWaitForKeyUpToOkayKey = true ) {
-            //     // if repeating from DigitalIO is used, cannot do diagonal repeating
-            //     Keys input = Keys::None;
-            //     if ( usingDigitalKeys ) {
-            //         // if ( ioDigital[0] != nullptr && ioDigital[0]->getStatus() )
-            //         //     input = Okay;
-            //         // for( int i=1 ; i<5 ; i++ ) {
-            //         //     if ( ioDigital[i] != nullptr && ioDigital[i]->getRepeating() )
-            //         //         input = static_cast<Keys>( input | (1<<i) );
-            //         // }
-            //         for( int i=0 ; i<5 ; i++ ) {
-            //             if ( ioDigital[i] != nullptr && ioDigital[i]->getContinuousKey() )
-            //                 input = static_cast<Keys>( input | (1<<i) );
-            //         }
-            //     } else {
-            //         int8_t buttonNo = ioAnalog->getRepeatingKey();
-            //         if ( buttonNo != 0 ) {
-            //             for( int i = 0 ; i < 5 ; i++ ) {
-            //                 if ( ioAnalogButtonNo[i] == buttonNo ) {
-            //                     input = static_cast<Keys>( input | (1<<i) );
-            //                     break;
-            //                 }
-            //             }
-            //         }
-            //     }
-
-            //     Keys r = processKeysCore( allowedKeys, input, false );
-            //     if ( usingDigitalKeys ) {
-            //         r = static_cast<Keys>( debouncer.getRepeating( r ) );
-            //     }
-            //     if ( r == Okay && issueWaitForKeyUpToOkayKey ) {
-            //         if ( usingDigitalKeys )
-            //             ioDigital[0]->flagWaitForKeyup();
-            //         else
-            //             ioAnalog->flagWaitForKeyup();
-            //     }
-            //     return r;
-            // }
 
         private:
 
@@ -315,19 +347,31 @@ namespace UserInput {
             // }
 
             bool isOkayPressed( bool issueWaitForKeyUp = true ) {
-                if ( usingDigitalKeys ) {
-                    bool okay = ( ioDigital[0] != nullptr && ioDigital[0]->getStatus() );
+                bool okay;
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
+                    okay = ( ioDigital[0] != nullptr && ioDigital[0]->getStatus() );
                     if ( okay && issueWaitForKeyUp ) ioDigital[0]->flagWaitForKeyup();
                     return okay;
-                } else {
-                    bool okay = ( ioAnalog->getContinuousKey() == ioAnalogButtonNo[0] );
+                case dAnalog:
+                    okay = ( ioAnalog->getContinuousKey() == ioAnalogButtonNo[0] );
                     if ( okay && issueWaitForKeyUp ) ioAnalog->flagWaitForKeyup();
-                    return okay;                    
+                    return okay;
+                case dMatrixKeypad:
+                    okay = ( ioMatrixKeypad->getContinuousKey() == ioAnalogButtonNo[0] );
+                    if ( okay && issueWaitForKeyUp ) ioMatrixKeypad->flagWaitForKeyup();
+                    return okay;
                 }
+                return false;
             }
 
             void waitUntilNothingIsPressed() {
-                if ( usingDigitalKeys ) {
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
                     while ( true ) {
                         Keys input = Keys::None;
                         for( int i=0 ; i<5 ; i++ ) {
@@ -336,11 +380,19 @@ namespace UserInput {
                         }
                         if ( input == 0 ) break;
                     }
-                } else {
+                    break;
+                case dAnalog:
                     while( true ) {
                         if ( ioAnalog->getContinuousKey() == ioAnalog->debouncer.inactiveState )
                             break;
                     }
+                    break;
+                case dMatrixKeypad:
+                    while( true ) {
+                        if ( ioMatrixKeypad->getContinuousKey() == ioMatrixKeypad->debouncer.inactiveState )
+                            break;
+                    }
+                    break;
                 }
             }
 
@@ -360,26 +412,25 @@ namespace UserInput {
                 //    O - if 1, send flag to okay button
                 //    L - if 1, send flag to left button
                 //    ...
-                if ( usingDigitalKeys ) {
+                switch( deviceType ) {
+                case dNone:
+                    break;
+                case dDigital:
                     for( int i = 0 ; i < 5 ; i++ ) {
                         if ( (input & 1) != 0 )
                             ioDigital[i]->flagWaitForKeyup();
                         input >>= 1;
-                    }                                   
-                } else if ( input != Keys::None ) {
-                    ioAnalog->flagWaitForKeyup();
+                    }
+                    break;
+                case dAnalog:
+                    if ( input != Keys::None )
+                        ioAnalog->flagWaitForKeyup();
+                    break;
+                case dMatrixKeypad:
+                    if ( input != Keys::None )
+                        ioMatrixKeypad->flagWaitForKeyup();
+                    break;
                 }
-            }
-
-            uint8_t countBits( uint8_t input ) {
-                // count number of "1" bits
-                uint8_t bits = 0;
-                for( int i = 0 ; i < 5 ; i++ ) {
-                    if ( (input & 1) == 1 )
-                        bits++;
-                    input >>= 1;
-                }
-                return bits;
             }
 
             uint8_t removeCommonKeys( uint8_t input ) {
@@ -406,7 +457,7 @@ namespace UserInput {
                 //      bit 4 - up    key status (U)
                 //      bit 5 - down  key status (D)
 
-                uint8_t numberOfButtonsPressed = countBits( input );
+                uint8_t numberOfButtonsPressed = countBits( static_cast<uint16_t>( input ) );
                 //Serial.printf( "bits on: %d\n", numberOfBitsOn );
 
                 switch( numberOfButtonsPressed ) {
@@ -480,6 +531,12 @@ namespace UserInput {
     int okayKeyValue,
     int leftKeyValue, int rightKeyValue, int upKeyValue, int downKeyValue ) {
         core.assignKeys( analogKey, okayKeyValue, leftKeyValue, rightKeyValue, upKeyValue, downKeyValue );
+    }
+
+    inline static void assignKeys( MatrixKeypad &matrixKeypad,
+    int okayKeyId,
+    int leftKeyId, int rightKeyId, int upKeyId, int downKeyId ) {
+        core.assignKeys( matrixKeypad, okayKeyId, leftKeyId, rightKeyId, upKeyId, downKeyId );
     }
 
     inline static void allowDiagonals() {

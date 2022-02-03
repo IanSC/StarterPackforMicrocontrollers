@@ -82,6 +82,7 @@
 #pragma once
 // #include <Arduino.h>
 #include <stdint.h>
+#include <spUtility.h>
 
 namespace StarterPack {
 
@@ -103,8 +104,13 @@ class Debouncer {
     private:
 
         Settings *settings = &defaultSettings;
+        bool mustDeleteSettings = false;
 
     public:
+
+        ~Debouncer() {
+            if ( mustDeleteSettings ) delete settings;
+        }
 
         //int actualState = false;                    // actual physical state of the button
         int debouncedState = false;                 // state to consider taken into account debouncing and confirmation logic
@@ -115,7 +121,18 @@ class Debouncer {
         // uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
         // uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
 
+        void initializeCustomSettings() {
+            this->settings = new Settings;
+            mustDeleteSettings = true;
+        }
+        
+        inline Settings* getSettings() {
+            return settings;
+        }
+
         void changeSettings( Settings &settings ) {
+            if ( mustDeleteSettings ) delete this->settings;
+            mustDeleteSettings = false;
             this->settings = &settings;
         }
 
@@ -218,24 +235,28 @@ class Debouncer {
         //     while repeating, new key is pressed
         //  must separate debounce and repeat since can overlap
         
-        // #define DEBUG_TRACE(x)   x;
+        //#define DEBUG_TRACE(x)   x;
         #define DEBUG_TRACE(x)   ;
 
         enum modes {
-            mIdle,
+            mIdle = 0,
             mConfirm,
             mDebouncing
         };
         modes mode = mIdle;
 
         // will confirm before debounce
-        union startingTimesUnion {
+        union 
+        // struct
+        startingTimesUnion {
             uint32_t confirmStartTime;
             uint32_t debouncingStartTime;
         };
         startingTimesUnion startingTimes;
 
-        union keyToMonitorUnion {
+        union
+        // struct 
+        keyToMonitorUnion {
             int keyToConfirm = -1;
             int keyBeingRepeated;
         };
@@ -248,50 +269,55 @@ class Debouncer {
 
         int debounce( int currentState ) {
             switch( mode ) {
-            case mIdle: JUMP_IDLE:
-                if ( currentState == debouncedState ) {
-                    DEBUG_TRACE( Serial.print( "#" ) );
-                } else {
-                    repeatMode = rIdle;
-                    if ( settings->confirmStateTimeInMs == 0 ) {
-                        // no need to confirm
-                        DEBUG_TRACE( Serial.printf( "accepted: %d\n", currentState ) );
-                        updateState( currentState );
+            case mIdle: 
+                JUMP_IDLE: {
+                    if ( currentState == debouncedState ) {
+                        DEBUG_TRACE( Serial.print( "#" ) );
                     } else {
-                        // confirm first
-                        DEBUG_TRACE( Serial.printf( "to confirm: %d\n", currentState ) );
-                        keyToMonitor.keyToConfirm = currentState;
-                        startingTimes.confirmStartTime = millis();
-                        mode = mConfirm;
+                        repeatMode = rIdle;
+                        if ( settings->confirmStateTimeInMs == 0 ) {
+                            // no need to confirm
+                            DEBUG_TRACE( SerialPrintf( "accepted: %d\n", currentState ) );
+                            updateState( currentState );
+                        } else {
+                            // confirm first
+                            DEBUG_TRACE( SerialPrintf( "to confirm: %d\n", currentState ) );
+                            keyToMonitor.keyToConfirm = currentState;
+                            startingTimes.confirmStartTime = millis();
+                            mode = mConfirm;
+                        }
                     }
                 }
                 break;
-            case mConfirm:
-                if ( millis() - startingTimes.confirmStartTime >= settings->confirmStateTimeInMs ) {
-                    if ( keyToMonitor.keyToConfirm == currentState ) {
-                        // still same, confirmed
-                        DEBUG_TRACE( Serial.printf( "confirmed: %d\n", currentState ) );
-                        updateState( currentState );
+            case mConfirm: {
+                    if ( millis() - startingTimes.confirmStartTime >= settings->confirmStateTimeInMs ) {
+                        if ( keyToMonitor.keyToConfirm == currentState ) {
+                            // still same, confirmed
+                            DEBUG_TRACE( SerialPrintf( "confirmed: %d\n", currentState ) );
+                            updateState( currentState );
+                        } else {
+                            // different !!! confirm again or ignore ??? confirm...
+                            // if fed high frequency signal will go on forever confirming
+                            // and return the last confirmed state, which is technically 
+                            // still correct since new state cannot be confirmed
+                            DEBUG_TRACE( SerialPrintf( "reconfirm: %d\n", currentState ) );
+                            keyToMonitor.keyToConfirm = currentState;
+                            startingTimes.confirmStartTime = millis();
+                            // for now return same as before
+                        }
                     } else {
-                        // different !!! confirm again or ignore ??? confirm...
-                        // if fed high frequency signal will go on forever confirming
-                        // and return the last confirmed state, which is technically 
-                        // still correct since new state cannot be confirmed
-                        DEBUG_TRACE( Serial.printf( "reconfirm: %d\n", currentState ) );
-                        keyToMonitor.keyToConfirm = currentState;
-                        startingTimes.confirmStartTime = millis();
-                        // for now return same as before
+                        DEBUG_TRACE( SerialPrintf( "not confirmed: %d\n", currentState ) );
                     }
-                } else {
-                    DEBUG_TRACE( Serial.printf( "not confirmed: %d\n", currentState ) );
                 }
                 break;
-            case mDebouncing:
-                if ( isDebouncing() ) {
-                    DEBUG_TRACE( Serial.printf( "debounce: %d\n", currentState ) );
+            case mDebouncing: {
+                    if ( isDebouncing() ) {
+                        DEBUG_TRACE( SerialPrintf( "debounce: %d\n", currentState ) );
+                    } else {
+                        goto JUMP_IDLE;
+                    }
                     break;
                 }
-                goto JUMP_IDLE;
             }
 
             if ( waitForKeyupFlag ) {
@@ -302,7 +328,7 @@ class Debouncer {
                 //     check for 0:              ======= begin checking for 0's here
                 //     ignore 0's while still debouncing 1's
                 if ( debouncedState == inactiveState ) {
-                    DEBUG_TRACE( Serial.printf( "done waiting for keyup: %d\n", currentState ) );
+                    DEBUG_TRACE( SerialPrintf( "done waiting for keyup: %d\n", currentState ) );
                     waitForKeyupFlag = false;
                 } else {
                     DEBUG_TRACE( Serial.print( "w" ) );

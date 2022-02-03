@@ -134,6 +134,8 @@ public:
     CONS( floatIntFunction,   floatInt   )
     CONS( floatFloatFunction, floatFloat )
 
+    #undef CONS
+
     //
     // VOID
     //

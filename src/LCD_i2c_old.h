@@ -31,7 +31,7 @@
 //      }
 
 #pragma once
-#include <LCD_HD44780.h>
+#include <LCDInterface.h>
 #include <i2cHelper.h>
 
 //
@@ -58,7 +58,7 @@
 
 namespace StarterPack {
 
-class LCD_i2c : public LCD_HD44780 {
+class LCD_i2c_old : public LCDInterface {
 
         i2cHelper *_wireHelper;
         bool createdHelper = false;
@@ -66,7 +66,7 @@ class LCD_i2c : public LCD_HD44780 {
 
     public:
 
-        ~LCD_i2c() {
+        ~LCD_i2c_old() {
             if ( createdHelper ) delete _wireHelper;
         }
 
@@ -76,15 +76,15 @@ class LCD_i2c : public LCD_HD44780 {
         // when clear() is called, cursor does not automatically move to (0,0)
         bool resetCursorOnClear = false;
 
-        LCD_i2c( int16_t i2cAddress = -1 ) {
+        LCD_i2c_old( int16_t i2cAddress = -1 ) {
             // default to "Wire"
             init( Wire, i2cAddress );
         }
-        LCD_i2c( TwoWire &wire, int16_t i2cAddress = -1 ) {
+        LCD_i2c_old( TwoWire &wire, int16_t i2cAddress = -1 ) {
             // use specified wire
             init( wire, i2cAddress );
         }
-        LCD_i2c( i2cHelper &wireHelper, int16_t i2cAddress = -1 ) {
+        LCD_i2c_old( i2cHelper &wireHelper, int16_t i2cAddress = -1 ) {
             if ( i2cAddress == -1 )
                 this->_i2cAddress = i2cDefaultAddress;
             else
@@ -118,8 +118,8 @@ class LCD_i2c : public LCD_HD44780 {
     //
     private:
 
-        // uint8_t _displaycontrol;
-        // uint8_t _displaymode;
+        uint8_t _displaycontrol;
+        uint8_t _displaymode;
         uint8_t _backlightStatus = PIN_BACKLIGHT;
 
         inline void init( TwoWire &wire, int16_t i2cAddress = -1 ) {
@@ -129,12 +129,11 @@ class LCD_i2c : public LCD_HD44780 {
             createdHelper = true;
         }
 
-        // charDotSize dotSize; // copy when initialized, to use for recovery
-        // uint8_t rowAddress[4];
+        charDotSize dotSize; // copy when initialized, to use for recovery
+        uint8_t rowAddress[4];
 
     public:
 
-/*
         void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
 
             // When the display powers up, it is configured as follows:
@@ -192,7 +191,7 @@ class LCD_i2c : public LCD_HD44780 {
             else
                 _displayfunction |= lcd_1LINE;
 
-            / *
+            /*
             _backlightStatus = PIN_NOBACKLIGHT;
             uint8_t _displayfunction = lcd_4BITMODE | lcd_1LINE; // | lcd_5x8DOTS;
             if ( maxRows > 1 )
@@ -203,7 +202,7 @@ class LCD_i2c : public LCD_HD44780 {
             //    _displayfunction |= lcd_5x10DOTS;
             // up to the user to select
             _displayfunction |= dotSize;
-            * /
+            */
 
             // SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
             // according to datasheet, we need at least 40ms after power rises above 2.7V
@@ -238,7 +237,6 @@ class LCD_i2c : public LCD_HD44780 {
             home();
             //backlight();
         }
-        */
 
     //
     // VERIFY / RECOVERY
@@ -272,35 +270,20 @@ class LCD_i2c : public LCD_HD44780 {
     //
     // WRITE
     //
-    // public:
-
-    //     // #if defined(ARDUINO) && ARDUINO >= 100
-    //         inline size_t write( uint8_t value ) {
-    //             send( value, PIN_Rs );
-    //             return 1;
-    //         }
-    //     // #else
-    //     //     #include <WProgram.h>
-    //     //     inline void write( uint8_t value ) {
-    //     //         send( value, Rs );
-    //     //     }
-    //     // #endif
-
-    //
-    // USER COMMANDS
-    //
     public:
 
-        void backlightOn() {
-            _backlightStatus = PIN_BACKLIGHT;
-            expanderWrite(0);
-        }
-        void backlightOff() {
-            _backlightStatus = PIN_NOBACKLIGHT;
-            expanderWrite(0);
-        }
+        // #if defined(ARDUINO) && ARDUINO >= 100
+            inline size_t write( uint8_t value ) {
+                send( value, PIN_Rs );
+                return 1;
+            }
+        // #else
+        //     #include <WProgram.h>
+        //     inline void write( uint8_t value ) {
+        //         send( value, Rs );
+        //     }
+        // #endif
 
-/*
     //
     // USER COMMANDS
     //
@@ -427,19 +410,9 @@ class LCD_i2c : public LCD_HD44780 {
             for( int i = 0 ; i < 8 ; i++ )
                 write( pgm_read_byte_near( charmap++ ) );
         }
-*/
-
-    //
-    // CORE
-    //
 
         inline void command( uint8_t value ) {
             send(value, 0);
-        }
-
-        inline size_t write( uint8_t value ) {
-            send( value, PIN_Rs );
-            return 1;
         }
 
     //
@@ -512,7 +485,6 @@ class LCD_i2c : public LCD_HD44780 {
         static const uint8_t PIN_BACKLIGHT   = 0B00001000; // flags for backlight control
         static const uint8_t PIN_NOBACKLIGHT = 0B00000000;
 
-/*
         // commands
         static const uint8_t lcd_CLEARDISPLAY   = 0x01;
         static const uint8_t lcd_RETURNHOME     = 0x02;
@@ -542,7 +514,6 @@ class LCD_i2c : public LCD_HD44780 {
         static const uint8_t lcd_CURSORMOVE  = 0x00;
         static const uint8_t lcd_MOVERIGHT   = 0x04;
         static const uint8_t lcd_MOVELEFT    = 0x00;
-*/
 
 };
 

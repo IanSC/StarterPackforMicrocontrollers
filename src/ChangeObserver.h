@@ -144,6 +144,8 @@ public:
     CONS( voidFloatFunction , voidFloat , float   , vFloat  )
     CONS( voidDoubleFunction, voidDouble, double  , vDouble )
 
+    #undef CONS
+
     //
     // UPDATE
     //
@@ -169,6 +171,8 @@ public:
     UPDATE( uint32_t, vUInt32, voidUInt32Function, voidUInt32 )
     UPDATE( float   , vFloat , voidFloatFunction , voidFloat  )
     UPDATE( double  , vDouble, voidDoubleFunction, voidDouble )
+
+    #undef UPDATE
 
 //
 // STATIC
@@ -196,6 +200,8 @@ public:
     OBS( uint32Observer, voidUInt32Function, uint32_t, runVoidUInt32 )
     OBS( floatObserver , voidFloatFunction , float   , runVoidFloat  )
     OBS( doubleObserver, voidDoubleFunction, double  , runVoidDouble )
+
+    #undef OBS
 
     static void ReleaseObserver() {
         if ( CHG != nullptr ) delete CHG;

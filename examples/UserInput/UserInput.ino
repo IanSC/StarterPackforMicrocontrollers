@@ -6,9 +6,9 @@
 //  User Input
 //  ----------
 //  - helper to handle input buttons from user
-//  - digital or analog buttons
-//    see <DigitalIO.h> and <AnalogIO.h>
-//  - global scope, no need to create
+//  - digital, analog or matrix keypad buttons
+//    see <DigitalIO.h>, <AnalogIO.h> and <MatrixKeypad.h>
+//  - UserInput is global scope, no need to create
 
 #include <StarterPack.h> // include all
 #include <UserInput.h>   // ... or only those used in this project
@@ -23,6 +23,7 @@ namespace ui = StarterPack::UserInput;
 #define KEY_TYPE   2
 // 1 - digital keys
 // 2 - analog keys
+// 3 - matrix keypad
 
 #if KEY_TYPE == 1
 
@@ -38,6 +39,11 @@ namespace ui = StarterPack::UserInput;
     // analog buttons from LCD Keypad Shield
     // cannot get diagonals, only 1 key at a time
     AnalogIO aIO = AnalogIO( A0 );
+
+#elif KEY_TYPE == 3
+
+    // 4x3 Matrix Keypad
+    MatrixKeypad keypad = MatrixKeypad();
 
 #endif
 
@@ -69,6 +75,15 @@ void setup() {
         // assign button numbers to okay, left, right, up, down
         UserInput::assignKeys( aIO, 1, 2, 3, 4, 5 );
 
+    #elif KEY_TYPE == 3
+    
+        keypad.assignRows( 8, 7, 6, 5 );
+        keypad.assignColumns( 4, 3, 2 );
+        keypad.begin();
+
+        // assign button numbers to okay, left, right, up, down
+        UserInput::assignKeys( keypad, 12, 4, 6, 2, 8 );
+        
     #endif
 }
 

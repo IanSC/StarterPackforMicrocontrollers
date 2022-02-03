@@ -61,7 +61,7 @@ i2cHelper iHelper = i2cHelper( i2cAddress );
         Serial.print( counter++ );
         result = iHelper.readOneByte( dataAddress );
         if ( iHelper.lastError != i2cHelper::ERR_I2C_OK ) {
-            Serial.println( i2cHelper::errorMessage( err ) );
+            Serial.println( i2cHelper::errorMessage( iHelper.lastError ) );
         } else {
             Serial.println( result );
         }
