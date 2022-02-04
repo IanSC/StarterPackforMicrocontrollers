@@ -16,7 +16,7 @@
 using namespace StarterPack;
 
 const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-LCD_wired lcd = LCD_wired( rs, en, d4, d5, d6, d7 );
+LCD_wired lcd( rs, en, d4, d5, d6, d7 );
 
 uint8_t heartBitmap[8] = {
     0B00000,

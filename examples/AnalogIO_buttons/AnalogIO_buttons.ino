@@ -20,7 +20,7 @@
 using namespace StarterPack;
 
 // analog resistor network keys are connected to A0
-AnalogIO aIO = AnalogIO( A0 );
+AnalogIO aIO( A0 );
 
 void setup() {
     Serial.begin( 115200 );

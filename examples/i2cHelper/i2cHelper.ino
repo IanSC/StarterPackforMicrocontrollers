@@ -19,7 +19,7 @@ using namespace StarterPack;
 #define dataAddress 0x10
 
 // defaults to using "Wire"
-i2cHelper iHelper = i2cHelper( i2cAddress );
+i2cHelper iHelper( i2cAddress );
 
 //
 // SETUP

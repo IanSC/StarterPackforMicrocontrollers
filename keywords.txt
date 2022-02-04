@@ -4,17 +4,19 @@
 
 StarterPack	KEYWORD1
 AnalogIO	KEYWORD1
+ChangeObserver	KEYWORD1
 Debouncer	KEYWORD1
 DigitalIO	KEYWORD1
+i2cHelper	KEYWORD1
 LCD_i2c	KEYWORD1
 LCD_wired	KEYWORD1
 LCDBuffered_i2c	KEYWORD1
 LCDBuffered_wired	KEYWORD1
 #LCDBuffered	KEYWORD1
 #LCDInterface	KEYWORD1
+MatrixKeypad	KEYWORD1
 LCDUtility	KEYWORD1
 Throttle	KEYWORD1
-TwoWireHelper	KEYWORD1
 UserInput	KEYWORD1
 
 #==========
@@ -24,6 +26,9 @@ UserInput	KEYWORD1
 rawValue	KEYWORD3
 smoothValue	KEYWORD3
 value	KEYWORD3
+
+optionsEnum	LITERAL1
+NONE	LITERAL1
 NO_SMOOTHING	LITERAL1
 SMOOTHING	LITERAL1
 NO_PULLUP	LITERAL1
@@ -51,54 +56,91 @@ getKeyUp	KEYWORD2
 getRepeatingKey	KEYWORD2
 
 debouncer	KEYWORD3
-setActiveDebounceTimeInMs	KEYWORD2
-setInactiveDebounceTimeInMs	KEYWORD2
-setMinimumDebounceTimeInMs	KEYWORD2
-setConfirmStateTimeInMs	KEYWORD2
+#setActiveDebounceTimeInMs	KEYWORD2
+#setInactiveDebounceTimeInMs	KEYWORD2
+#setMinimumDebounceTimeInMs	KEYWORD2
+#setConfirmStateTimeInMs	KEYWORD2
 flagWaitForKeyup	KEYWORD2
 cancelDebouncing	KEYWORD2
-setRepeatDelayInMs	KEYWORD2
-setRepeatRateInMs	KEYWORD2
+#setRepeatDelayInMs	KEYWORD2
+#setRepeatRateInMs	KEYWORD2
 setInactiveButton	KEYWORD2
+
+#================
+# ChangeObserver
+#================
+
+byteObserver	KEYWORD2
+intObserver	KEYWORD2
+longObserver	KEYWORD2
+
+boolObserver	KEYWORD2
+int8Observer	KEYWORD2
+uint8Observer	KEYWORD2
+int16Observer	KEYWORD2
+uint16Observer	KEYWORD2
+int32Observer	KEYWORD2
+uint32Observer	KEYWORD2
+floatObserver	KEYWORD2
+doubleObserver	KEYWORD2
+
+update	KEYWORD2
+Me	KEYWORD2
+release	KEYWORD2
 
 #===========
 # Debouncer
 #===========
 
-actualState	KEYWORD3
-effectiveState	KEYWORD3
-
-inactiveState	KEYWORD3
-
 activeStatesDebounceInMs	KEYWORD3
 inactiveStateDebounceInMs	KEYWORD3
 minimumDebounceTimeInMs	KEYWORD3
 confirmStateTimeInMs	KEYWORD3
+repeatDelayInMs	KEYWORD3
+repeatRateInMs	KEYWORD3
 
+defaultSettings	KEYWORD3
+
+debouncedState	KEYWORD3
+inactiveState	KEYWORD3
+
+useCustomSettings	KEYWORD2
+getSettings	KEYWORD2
+assignSettings	KEYWORD2
 setInitialValue	KEYWORD2
-deactivate	KEYWORD2
-activate	KEYWORD2
+
+#deactivate	KEYWORD2
+#activate	KEYWORD2
 
 debounce	KEYWORD2
 
 flagWaitForKeyup	KEYWORD2
 cancelDebouncing	KEYWORD2
 
-updateLastValue	KEYWORD2
+getContinuousKey	KEYWORD2
 getKeyDown	KEYWORD2
 getKeyUp	KEYWORD2
-getRepeating	KEYWORD2
-repeatDelayInMs	KEYWORD3
-repeatRateInMs	KEYWORD3
+getRepeatingKey	KEYWORD2
 
 #===========
 # DigitalIO
 #===========
 
-actualState	KEYWORD3
-value	KEYWORD3
+optionsEnum	LITERAL1
+NONE	LITERAL1
+ACTIVE_HIGH	LITERAL1
+ACTIVE_LOW	LITERAL1
+NO_PULLUP	LITERAL1
+WITH_PULLUP	LITERAL1
+WITH_PULLDOWN	LITERAL1
+
+setOnChangeCallback KEYWORD2
+
 readStatus	KEYWORD2
 getStatus	KEYWORD2
+
+actualState	KEYWORD3
+value	KEYWORD3
 
 getContinuousKey	KEYWORD2
 getKeyDown	KEYWORD2
@@ -106,16 +148,266 @@ getKeyUp	KEYWORD2
 getRepeatingKey	KEYWORD2
 
 debouncer	KEYWORD2
-setActiveDebounceTimeInMs	KEYWORD2
-setInactiveDebounceTimeInMs	KEYWORD2
-setMinimumDebounceTimeInMs	KEYWORD2
-setConfirmStateTimeInMs	KEYWORD2
+#setActiveDebounceTimeInMs	KEYWORD2
+#setInactiveDebounceTimeInMs	KEYWORD2
+#setMinimumDebounceTimeInMs	KEYWORD2
+#setConfirmStateTimeInMs	KEYWORD2
 flagWaitForKeyup	KEYWORD2
 cancelDebouncing	KEYWORD2
-setRepeatDelayInMs	KEYWORD2
-setRepeatRateInMs	KEYWORD2
+#setRepeatDelayInMs	KEYWORD2
+#setRepeatRateInMs	KEYWORD2
 
-setOnChangeCallback KEYWORD2
+#===========
+# i2cHelper
+#===========
+
+ERR_I2C_OK	LITERAL1
+ERR_I2C_DEV	LITERAL1
+ERR_I2C_ACK	LITERAL1
+ERR_I2C_TIMEOUT	LITERAL1
+ERR_I2C_BUS	LITERAL1
+ERR_I2C_BUSY	LITERAL1
+ERR_I2C_MEMORY	LITERAL1
+ERR_I2C_CONTINUE	LITERAL1
+ERR_I2C_NO_BEGIN	LITERAL1
+
+ERR_I2C_WRITE	LITERAL1
+ERR_I2C_ENDTRANS	LITERAL1
+ERR_I2C_REQUEST	LITERAL1
+ERR_I2C_TIMEOUT2	LITERAL1
+
+setTimeoutInMs	KEYWORD2
+setFrequency	KEYWORD2
+errorMessage	KEYWORD2
+
+lastError	KEYWORD3
+clearLastError	KEYWORD2
+
+verify	KEYWORD2
+verifyWithError	KEYWORD2
+
+recoveryThrottleInMs	KEYWORD3
+recoverIfHasError	KEYWORD2
+
+endTransmission	KEYWORD2
+write	KEYWORD2
+available	KEYWORD2
+requestFrom	KEYWORD2
+
+readOneByte_i2c	KEYWORD2
+readOneByte	KEYWORD2
+readTwoBytes_DiffAddr_i2c	KEYWORD2
+readTwoBytes_DiffAddr	KEYWORD2
+readTwoBytes_SameAddr_HiLo_i2c	KEYWORD2
+readTwoBytes_SameAddr_LoHi_i2c	KEYWORD2
+
+writeOneByte_i2c	KEYWORD2
+writeOneByte	KEYWORD2
+writeAddrAndData_i2c	KEYWORD2
+writeAddrAndData	KEYWORD2
+
+#=====
+# LCD
+#=====
+
+maxColumns	KEYWORD3
+maxRows	KEYWORD3
+
+setTimeoutInMs	KEYWORD2
+setFrequency	KEYWORD2
+
+charDotSize	LITERAL1
+size5x8	LITERAL1
+size5x10	LITERAL1
+
+begin	KEYWORD2
+
+verify	KEYWORD2
+verifyWithError	KEYWORD2
+recoverIfHasError	KEYWORD2
+setRecoveryThrottleInMs	KEYWORD2
+reset	KEYWORD2
+
+isBuffered	KEYWORD2
+displayAll	KEYWORD2
+
+clear	KEYWORD2
+home	KEYWORD2
+setCursor	KEYWORD2
+backlightOn	KEYWORD2
+backlightOff	KEYWORD2
+displayOn	KEYWORD2
+displayOff	KEYWORD2
+moveCursorRight	KEYWORD2
+moveCursorLeft	KEYWORD2
+scrollDisplayLeft	KEYWORD2
+scrollDisplayRight	KEYWORD2
+leftToRight	KEYWORD2
+rightToLeft	KEYWORD2
+autoscrollOn	KEYWORD2
+autoscrollOff	KEYWORD2
+createChar	KEYWORD2
+
+backlight	KEYWORD2
+noBacklight	KEYWORD2
+display	KEYWORD2
+noDisplay	KEYWORD2
+cursor	KEYWORD2
+noCursor	KEYWORD2
+blink	KEYWORD2
+noBlink	KEYWORD2
+autoscroll	KEYWORD2
+noAutoscroll	KEYWORD2
+
+command	KEYWORD2
+write	KEYWORD2
+
+printCharsN	KEYWORD2
+printAt	KEYWORD2
+writeAt	KEYWORD2
+printStrAtLine	KEYWORD2
+printStrN	KEYWORD2
+clearLine	KEYWORD2
+printfAt	KEYWORD2
+
+#=========
+# LCD i2c
+#=========
+
+i2cDefaultAddress	KEYWORD3
+
+#==============
+# LCD Buffered
+#==============
+
+useSingleBuffer	KEYWORD2
+useDoubleBuffer	KEYWORD2
+
+setSemaphoreLockTimeoutInMs	KEYWORD2
+pauseUpdate	KEYWORD2
+resumeUpdate	KEYWORD2
+
+cursorAutoCarriageReturn	KEYWORD3
+cursorAutoJumpToStart	KEYWORD3
+
+virtualCursorChar	KEYWORD3
+cursorBlinkOnDurationInMs	KEYWORD3
+cursorBlinkOffDurationInMs	KEYWORD3
+
+setVirtualCursor	KEYWORD2
+
+updateDurationInMs	KEYWORD3
+setUpdateThrottleInMs	KEYWORD2
+getUpdateThrottleInMs	KEYWORD2
+
+update	KEYWORD2
+updateAllNow	KEYWORD2
+
+#===============
+# Matrix Keypad
+#===============
+
+assignRows	KEYWORD2
+assignRowsN	KEYWORD2
+assignColumns	KEYWORD2
+assignColumnsN	KEYWORD2
+
+begin	KEYWORD2
+serialDebug	KEYWORD2
+
+debouncer	KEYWORD3
+flagWaitForKeyup	KEYWORD2
+cancelDebouncing	KEYWORD2
+
+getContinuousKey	KEYWORD2
+getKeyDown	KEYWORD2
+getKeyUp	KEYWORD2
+getRepeatingKey	KEYWORD2
+
+initKeymap	KEYWORD2
+addKeymap	KEYWORD2
+getKeymap	KEYWORD2
+
+#====================
+# spBitPackedBoolean
+#====================
+
+slots	KEYWORD3
+reset	KEYWORD2
+set	KEYWORD2
+turnOn	KEYWORD2
+turnOff	KEYWORD2
+flip	KEYWORD2
+get	KEYWORD2
+
+#=============
+# spSemaphore
+#=============
+
+timeoutInMs	KEYWORD3
+take	KEYWORD2
+release	KEYWORD2
+
+#===========
+# spUtility
+#===========
+
+spMap	KEYWORD2
+spMapLong	KEYWORD2
+spMapFloat	KEYWORD2
+spLimit	KEYWORD2
+
+SerialPrintCharsN	KEYWORD2
+SerialPrintf	KEYWORD2
+SerialPrintStrN	KEYWORD2
+
+countBits	KEYWORD2
+
+#==========
+# Throttle
+#==========
+
+throttleInMs	KEYWORD3
+trigger	KEYWORD2
+triggerCheck	KEYWORD2
+
+Me	KEYWORD2
+release	KEYWORD2
+
+#===========
+# UserInput
+#===========
+
+Keys	LITERAL1
+None	LITERAL1
+Okay	LITERAL1
+Left	LITERAL1
+Right	LITERAL1
+Up	LITERAL1
+Down	LITERAL1
+UpLeft	LITERAL1
+UpRight	LITERAL1
+DownLeft	LITERAL1
+DownRight	LITERAL1
+LeftRight	LITERAL1
+UpDown	LITERAL1
+LeftRightOkay	LITERAL1
+UpDownOkay	LITERAL1
+All	LITERAL1
+
+displayKey	KEYWORD2
+
+assignKeys	KEYWORD2
+allowDiagonals	KEYWORD2
+disallowDiagonals	KEYWORD2
+
+isOkayPressed	KEYWORD2
+getKeyDown	KEYWORD2
+getContinuousKey	KEYWORD2
+getRepeatingKey	KEYWORD2
+waitUntilNothingIsPressed	KEYWORD2
+waitForAnyKey	KEYWORD2
+
 
 
 

@@ -25,18 +25,18 @@ using namespace StarterPack;
 #if CASE == 1
 
     // default to "Wire", address 0x27
-    LCDBuffered_i2c lcd = LCDBuffered_i2c(); // or LCD_i2c( 0x27 );
+    LCDBuffered_i2c lcd; // or lcd( 0x27 );
 
 #elif CASE == 2
 
     // for ESP32 only, use Wire1
-    LCDBuffered_i2c lcd = LCDBuffered_i2c( Wire1 );
+    LCDBuffered_i2c lcd( Wire1 );
 
 #elif CASE == 3
 
     // for ESP32 only, use Wire1
     // SDA=16, SCL=17
-    LCDBuffered_i2c lcd = LCDBuffered_i2c( Wire1 );
+    LCDBuffered_i2c lcd( Wire1 );
 
 #endif
 

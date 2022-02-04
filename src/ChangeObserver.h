@@ -203,7 +203,7 @@ public:
 
     #undef OBS
 
-    static void ReleaseObserver() {
+    static void release() {
         if ( CHG != nullptr ) delete CHG;
     }
 

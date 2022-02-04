@@ -19,9 +19,9 @@
 using namespace StarterPack;
 
 #if defined(ESP32)
-    AnalogIO aIO = AnalogIO( 15, AnalogIO::SMOOTHING );
+    AnalogIO aIO( 15, AnalogIO::SMOOTHING );
 #else
-    AnalogIO aIO = AnalogIO( A1, AnalogIO::SMOOTHING );
+    AnalogIO aIO( A1, AnalogIO::SMOOTHING );
 #endif
 
 int map( int value ) {

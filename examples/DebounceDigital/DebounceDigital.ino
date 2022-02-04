@@ -27,10 +27,10 @@ using namespace StarterPack;
 #define NOT_PRESSED HIGH
 #define PRESSED     LOW
 
-#define PIN         2
+#define PIN   2
 
-Debouncer db1 = Debouncer();
-Debouncer db2 = Debouncer();
+Debouncer db1;
+Debouncer db2;
 
 bool r0PreviousState;
 bool r1PreviousState;

@@ -145,8 +145,8 @@ class LCDBuffered : public LCDInterface {
             if ( mustDeletedLCD ) delete lcd;
         }
 
-        bool isBuffered() { return true; }
-        void displayAll() { updateAllNow(); }
+        inline bool isBuffered() { return true; }
+        inline void displayAll() { updateAllNow(); }
 
         LCDBuffered() {}
 

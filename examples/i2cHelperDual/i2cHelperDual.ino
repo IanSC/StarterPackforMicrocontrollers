@@ -21,12 +21,12 @@ using namespace StarterPack;
 #define dataAddress 0x0C
 
 // defaults to using "Wire"
-i2cHelper iHelper = i2cHelper( i2cAddress );
+i2cHelper iHelper( i2cAddress );
 
-LCD_i2c lcd = LCD_i2c( iHelper );
+LCD_i2c lcd( iHelper );
 
 //LCD_i2c lcd = LCD_i2c();
-//i2cHelper iHelper = i2cHelper( Wire1, i2cAddress );
+//i2cHelper iHelper( Wire1, i2cAddress );
 
 //
 // SETUP

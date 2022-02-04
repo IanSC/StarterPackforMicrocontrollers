@@ -1,3 +1,17 @@
+//======================================
+//  StarterPack ChangeObserver Example
+//  2022-01 isc
+//======================================
+//
+//  - demo of change observer
+//
+//  Circuit
+//  -------
+//  - potentiometer
+//  - connect center of potentiometer to A1
+//  - connect the other ends to VCC and GND
+//  - use Serial Plotter
+
 #include <StarterPack.h>
 using namespace StarterPack;
 
@@ -6,7 +20,7 @@ void Show( int a ) {
     Serial.print( "\t100\t0\n" );
 }
 
-ChangeObserver chg = ChangeObserver( &Show );
+ChangeObserver chg( &Show );
 
 void setup() {
     Serial.begin(115200);

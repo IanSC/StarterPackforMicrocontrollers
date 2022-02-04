@@ -17,148 +17,9 @@ using namespace StarterPack;
 
 #include <Arduino.h>
 
-// NOT FULLY TESTED: !!!
-// - R/W MODE
-// - 8-BIT PORT
-// - WRITE ROUTINES
-
-//
-// define these before calling header
-//
-// #define LCD_READ_WRITE_MODE       // R/W pin of LCD is used, otherwise R/W pin is hardwired as write (low)
-// #define LCD_USE_8BIT_PORT         // handle 8 bit data mode
-// #define LCD_INCLUDE_READ_ROUTINES // even in R/W mode, option to include reading routines
-
 namespace StarterPack {
 
 class LCD_HD44780 : public LCDInterface {
-
-    // // data port, in/out
-    // #if defined( LCD_USE_8BIT_PORT )
-    //     uint8_t LCD_DB0 = 0;
-    //     uint8_t LCD_DB1 = 0;
-    //     uint8_t LCD_DB2 = 0;
-    //     uint8_t LCD_DB3 = 0;
-    // #endif
-    // uint8_t LCD_DB4 = 0;
-    // uint8_t LCD_DB5 = 0;
-    // uint8_t LCD_DB6 = 0;
-    // uint8_t LCD_DB7 = 0;
-
-    // // always outputs
-    // uint8_t LCD_RS = 0;
-    // uint8_t LCD_E  = 0;
-
-    // #if defined( LCD_READ_WRITE_MODE )
-
-    //     uint8_t LCD_RW = 0;
-
-    //     bool dataPortIsOutput = true;
-    
-    //     void setDataPortToWrite( bool setAsOutput ) {
-    //         if ( dataPortIsOutput == setAsOutput ) return;
-    //         dataPortIsOutput = setAsOutput;
-    //         if ( dataPortIsOutput ) {
-    //             #if defined( LCD_USE_8BIT_PORT )
-    //                 pinMode( LCD_DB0, OUTPUT );
-    //                 pinMode( LCD_DB1, OUTPUT );
-    //                 pinMode( LCD_DB2, OUTPUT );
-    //                 pinMode( LCD_DB3, OUTPUT );
-    //             #endif
-    //             pinMode( LCD_DB4, OUTPUT );
-    //             pinMode( LCD_DB5, OUTPUT );
-    //             pinMode( LCD_DB6, OUTPUT );
-    //             pinMode( LCD_DB7, OUTPUT );
-    //         } else {
-    //             #if defined( LCD_USE_8BIT_PORT )
-    //                 pinMode( LCD_DB0, INPUT );
-    //                 pinMode( LCD_DB1, INPUT );
-    //                 pinMode( LCD_DB2, INPUT );
-    //                 pinMode( LCD_DB3, INPUT );
-    //             #endif
-    //             pinMode( LCD_DB4, INPUT );
-    //             pinMode( LCD_DB5, INPUT );
-    //             pinMode( LCD_DB6, INPUT );
-    //             pinMode( LCD_DB7, INPUT );
-    //         }
-    //     }
-
-    //     inline void setWriteMode() {
-    //         digitalWrite( LCD_RW, LOW );            
-    //     }
-    //     inline void setReadMode() {
-    //         digitalWrite( LCD_RW, HIGH );            
-    //     }
-
-    // #else
-
-    //     // write only, r/w of lcd hard wired to low
-    //     #define setWriteMode()        ;
-    //     #define setReadMode()         ;
-    //     #define setDataPortToWrite(x) ;
-
-    // #endif
-
-public:
-
-    // #if defined( LCD_USE_8BIT_PORT )
-    //     #if defined( LCD_READ_WRITE_MODE )
-    //         inline LCD_wired2( uint8_t rs, uint8_t rw, uint8_t enable,
-    //         uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
-    //             LCD_RS = rs; LCD_RW = rw; LCD_E = enable;
-    //             LCD_DB0 = d0; LCD_DB1 = d1; LCD_DB2 = d2; LCD_DB3 = d3;
-    //             LCD_DB4 = d4; LCD_DB5 = d5; LCD_DB6 = d6; LCD_DB7 = d7;
-    //             initPort();
-    //         }
-    //     #else    
-    //         inline LCD_wired2( uint8_t rs, uint8_t enable,
-    //         uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
-    //             LCD_RS = rs; LCD_E = enable;
-    //             LCD_DB0 = d0; LCD_DB1 = d1; LCD_DB2 = d2; LCD_DB3 = d3;
-    //             LCD_DB4 = d4; LCD_DB5 = d5; LCD_DB6 = d6; LCD_DB7 = d7;
-    //             initPort();
-    //         }
-    //     #endif        
-    // #else
-    //     #if defined( LCD_READ_WRITE_MODE )
-    //         inline LCD_wired2( uint8_t rs, uint8_t rw, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
-    //             LCD_RS = rs; LCD_RW = rw; LCD_E = enable;
-    //             LCD_DB4 = d4; LCD_DB5 = d5; LCD_DB6 = d6; LCD_DB7 = d7;
-    //             initPort();
-    //         }
-    //     #else
-    //         inline LCD_wired( uint8_t rs, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
-    //             LCD_RS = rs; LCD_E = enable;
-    //             LCD_DB4 = d4; LCD_DB5 = d5; LCD_DB6 = d6; LCD_DB7 = d7;
-    //             initPort();
-    //         }
-    //     #endif
-    // #endif
-
-    // inline void setTimeoutInMs( uint16_t timeOut ) {}
-    // inline void setFrequency( uint32_t frequency ) {}
-
-    // void initPort() {
-    //     // initialize port directions
-    //     pinMode( LCD_RS, OUTPUT );
-    //     pinMode( LCD_E, OUTPUT );
-    //     #if defined( LCD_READ_WRITE_MODE )
-    //         pinMode( LCD_RW, OUTPUT );
-    //         setDataPortToWrite( true );
-    //     #else
-    //         // default to data output
-    //         #if defined( LCD_USE_8BIT_PORT )
-    //             pinMode( LCD_DB0, OUTPUT );
-    //             pinMode( LCD_DB1, OUTPUT );
-    //             pinMode( LCD_DB2, OUTPUT );
-    //             pinMode( LCD_DB3, OUTPUT );
-    //         #endif
-    //         pinMode( LCD_DB4, OUTPUT );
-    //         pinMode( LCD_DB5, OUTPUT );
-    //         pinMode( LCD_DB6, OUTPUT );
-    //         pinMode( LCD_DB7, OUTPUT );
-    //     #endif
-    // }
 
     //
     // BEGIN
@@ -171,7 +32,7 @@ public:
         static const uint8_t LCD_FUNCTION_1_LINE  = 0b00000000;
         static const uint8_t LCD_FUNCTION_2_LINES = 0b00001000;
         
-        charDotSize dotSize; // copy when initialized, to use for recovery
+        charDotSize dotSize; // copy when initialized, to use for recovery/reset
         uint8_t rowAddress[4];
 
     public:
@@ -192,7 +53,9 @@ public:
             //         line0     line1     line2     line3     notes
             // 1       00-4F                                   80 characters
             // 2       00-27     40-67                         40 characters each
-            // 4       00-[c-1]  40-[+c]   [c]-yy    xx-zz     ?? characters each
+            // 4       00 ...    40 ...    00+c ...  40+c ...
+            // note: LiquidCrystal_I2C.h is incorrect (works for 20-column LCD only)
+            //       LiquidCrystal.h is correct
             rowAddress[0] = 0x00;
             rowAddress[1] = 0x40;
             rowAddress[2] = 0x00 + maxColumns;
@@ -201,8 +64,6 @@ public:
             unsigned char com = LCD_FUNCTION_MODE | dotSize;
             if ( maxRows > 1 )
                 com = com | LCD_FUNCTION_2_LINES;
-    
-            // DELAY_30_mSec();
     
             #if defined( LCD_USE_8BIT_PORT )
                 com = com | LCD_FUNCTION_8_BIT;
@@ -226,18 +87,7 @@ public:
     // VERIFY / RECOVERY
     //
 
-        // no way to detect errors
-        // also if reconnected will still work unless power is removed
-        // in which case will revert to 8-bit mode
-        
-        // inline bool     verify()            { return true; }
-        // inline ERROR_NO verifyWithError()   { return 0; }
-        // inline bool     recoverIfHasError() { return false; }
-        // inline void     setRecoveryThrottleInMs( uint16_t delay ) {}
-
-        // void reset() {
-        //     begin( maxColumns, maxRows, dotSize );
-        // }
+        // based on implementation
 
     //
     // USER COMMANDS
@@ -250,15 +100,16 @@ public:
         
     public:
 
+        // based on implementation:
+        //     void backlightOn()  {}
+        //     void backlightOff() {}
+
         // https://en.wikipedia.org/wiki/Hitachi_HD44780_LCD_controller
         // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/6019/24/HD44780.html
         
         inline void setCursor( uint8_t col, uint8_t row ) {
             command( LCD_SET_DDRAM_ADDR | ( rowAddress[row && 0b11] + col ) );
         }
-
-        // inline void backlightOn()  {} // not supported
-        // inline void backlightOff() {}
     
         inline void clear() {
             command( LCD_CLEAR );

@@ -861,6 +861,8 @@ public:
         return &staticRunnerBool;
     }
 
+private:
+
     static void staticVoidRunner() {
         if ( TT != nullptr )
             TT->trigger();
@@ -874,7 +876,9 @@ public:
         return false;
     }
 
-    static void staticRelease() {
+public:
+
+    static void release() {
         if ( TT != nullptr ) delete TT;        
     }
     

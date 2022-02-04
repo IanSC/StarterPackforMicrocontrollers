@@ -16,15 +16,15 @@
 using namespace StarterPack;
 
 const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-LCD_wired lcd = LCD_wired( rs, en, d4, d5, d6, d7 );
+LCD_wired lcd( rs, en, d4, d5, d6, d7 );
 
-AnalogIO aIO = AnalogIO( A0 );
+AnalogIO aIO( A0 );
 
 //
 // SETUP
 //
 
-    Throttle tt = Throttle( &backgroundProcess, 1000 );
+    Throttle tt( &backgroundProcess, 1000 );
     
     void setup() {
         Serial.begin( 115200 );
@@ -44,7 +44,7 @@ AnalogIO aIO = AnalogIO( A0 );
 // LOOP
 //
 
-    LCDUtility::blink imAlive = LCDUtility::blink( lcd, 15, 0 );
+    LCDUtility::blink imAlive( lcd, 15, 0 );
 
     int counter = 0;
     bool backgroundProcess() {

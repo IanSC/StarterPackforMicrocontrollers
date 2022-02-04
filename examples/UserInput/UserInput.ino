@@ -28,22 +28,22 @@ namespace ui = StarterPack::UserInput;
 #if KEY_TYPE == 1
 
     // digital buttons
-    DigitalIO okayKey  = DigitalIO( 2, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-    DigitalIO leftKey  = DigitalIO( 3, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-    DigitalIO rightKey = DigitalIO( 4, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-    DigitalIO upKey    = DigitalIO( 5, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-    DigitalIO downKey  = DigitalIO( 6, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+    DigitalIO okayKey ( 2, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+    DigitalIO leftKey ( 3, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+    DigitalIO rightKey( 4, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+    DigitalIO upKey   ( 5, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+    DigitalIO downKey ( 6, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
     
 #elif KEY_TYPE == 2
 
     // analog buttons from LCD Keypad Shield
     // cannot get diagonals, only 1 key at a time
-    AnalogIO aIO = AnalogIO( A0 );
+    AnalogIO aIO( A0 );
 
 #elif KEY_TYPE == 3
 
     // 4x3 Matrix Keypad
-    MatrixKeypad keypad = MatrixKeypad();
+    MatrixKeypad keypad ;
 
 #endif
 

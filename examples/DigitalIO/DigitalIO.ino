@@ -16,10 +16,10 @@
 #include <DigitalIO.h>   // ... or only those used in this project
 using namespace StarterPack;
 
-DigitalIO dIO1 = DigitalIO( 2, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-DigitalIO dIO2 = DigitalIO( 3, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-DigitalIO dIO3 = DigitalIO( 4, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-DigitalIO dIO4 = DigitalIO( 5, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO1( 2, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO2( 3, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO3( 4, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO4( 5, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
 
 void setup() {
     Serial.begin( 115200 );

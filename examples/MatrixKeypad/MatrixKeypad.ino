@@ -14,7 +14,7 @@
 #include <MatrixKeypad.h> // ... or only those used in this project
 using namespace StarterPack;
 
-MatrixKeypad keypad = MatrixKeypad();
+MatrixKeypad keypad;
 
 //
 // SETUP

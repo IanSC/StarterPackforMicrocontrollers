@@ -17,8 +17,8 @@ using namespace StarterPack;
 #define PIN_WITH_INTERRUPT 2
 #define ANY_PIN            3
 
-DigitalIO dIO1 = DigitalIO( PIN_WITH_INTERRUPT, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
-DigitalIO dIO2 = DigitalIO( ANY_PIN,            DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO1( PIN_WITH_INTERRUPT, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
+DigitalIO dIO2( ANY_PIN,            DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
 
 void onInterrupt() {
     dIO1.readStatus();
@@ -29,8 +29,12 @@ void setup() {
     Serial.println( "hello" );
 
     attachInterrupt( digitalPinToInterrupt( PIN_WITH_INTERRUPT  ), onInterrupt, FALLING );
-    dIO1.setActiveDebounceTimeInMs( 3000 ); // default 50
-    dIO2.setActiveDebounceTimeInMs( 3000 ); // default 50
+
+    // set global debounce for all
+    Debouncer::defaultSettings.activeStatesDebounceInMs = 3000; // default 50
+    
+    // dIO1.setActiveDebounceTimeInMs( 3000 ); // default 50
+    // dIO2.setActiveDebounceTimeInMs( 3000 ); // default 50
 }
 
 void loop() {

@@ -31,11 +31,11 @@ void B(bool v)  { Serial.print( "*" ); }
 void C(int v)   { Serial.print( "-" ); }
 void D(float v) { Serial.print( "." ); }
 
-Throttle tt = Throttle( &heavyFunction, 1000 );
-Throttle a = Throttle( &A, 100 );
-Throttle b = Throttle( &B, 200 );
-Throttle c = Throttle( &C, 300 );
-Throttle d = Throttle( &D, 400 );
+Throttle tt( &heavyFunction, 1000 );
+Throttle a( &A, 100 );
+Throttle b( &B, 200 );
+Throttle c( &C, 300 );
+Throttle d( &D, 400 );
 
 void setup() {
     Serial.begin( 115200 );

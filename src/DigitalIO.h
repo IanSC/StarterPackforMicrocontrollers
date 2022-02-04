@@ -109,7 +109,7 @@ class DigitalIO {
         uint16_t activeDebounceTime, uint16_t inactiveDebounceTime = 50 )
         : DigitalIO( pin, options ) {
             // custom debounce time
-            debouncer.initializeCustomSettings();
+            debouncer.useCustomSettings();
             debouncer.getSettings()->activeStatesDebounceInMs = activeDebounceTime;
             debouncer.getSettings()->inactiveStateDebounceInMs = inactiveDebounceTime;
         }

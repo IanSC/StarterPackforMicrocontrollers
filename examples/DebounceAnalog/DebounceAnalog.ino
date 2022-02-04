@@ -19,8 +19,8 @@
 #include <Debouncer.h>
 using namespace StarterPack;
 
-AnalogIO aIO = AnalogIO( A1, AnalogIO::SMOOTHING );
-Debouncer db = Debouncer();
+AnalogIO aIO( A1, AnalogIO::SMOOTHING );
+Debouncer db;
 
 void setup() {
     Serial.begin( 115200 );

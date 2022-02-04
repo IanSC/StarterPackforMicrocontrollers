@@ -107,7 +107,7 @@ class LCD_i2c : public LCD_HD44780 {
     //
     // USER COMMANDS
     //
-    public:
+    private:
 
         uint8_t _backlightStatus = PIN_BACKLIGHT;
 

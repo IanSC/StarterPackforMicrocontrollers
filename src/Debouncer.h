@@ -121,7 +121,8 @@ class Debouncer {
         // uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
         // uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
 
-        void initializeCustomSettings() {
+        void useCustomSettings() {
+            if ( mustDeleteSettings ) return; // already customized
             this->settings = new Settings;
             mustDeleteSettings = true;
         }
@@ -130,7 +131,7 @@ class Debouncer {
             return settings;
         }
 
-        void changeSettings( Settings &settings ) {
+        void assignSettings( Settings &settings ) {
             if ( mustDeleteSettings ) delete this->settings;
             mustDeleteSettings = false;
             this->settings = &settings;

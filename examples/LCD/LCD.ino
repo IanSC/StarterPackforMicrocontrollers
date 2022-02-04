@@ -28,12 +28,12 @@ using namespace StarterPack;
         #if !defined( LCD_Buffered )
         
             const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-            LCD_wired lcd = LCD_wired( rs, en, d4, d5, d6, d7 );
+            LCD_wired lcd( rs, en, d4, d5, d6, d7 );
             
         #else
         
             const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-            LCDBuffered_wired lcd = LCDBuffered_wired( rs, en, d4, d5, d6, d7 );
+            LCDBuffered_wired lcd( rs, en, d4, d5, d6, d7 );
             
         #endif
             
@@ -41,11 +41,11 @@ using namespace StarterPack;
     
         #if !defined( LCD_Buffered )
         
-            LCD_i2c lcd = LCD_i2c();
+            LCD_i2c lcd;
         
         #else
         
-            LCDBuffered_i2c lcd = LCDBuffered_i2c();
+            LCDBuffered_i2c lcd;
             
         #endif
     #endif

@@ -57,15 +57,15 @@ using namespace StarterPack;
     #if defined( LCD_Wired )
 
         const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
-        LCD_wired lcdDirect = LCD_wired( rs, en, d4, d5, d6, d7 );
+        LCD_wired lcdDirect( rs, en, d4, d5, d6, d7 );
             
     #elif defined( LCD_I2C )
     
-        LCD_i2c lcdDirect = LCD_i2c();
+        LCD_i2c lcdDirect;
         
     #endif
 
-    LCDBuffered lcd = LCDBuffered( lcdDirect );
+    LCDBuffered lcd( lcdDirect );
 
 //
 // SETUP
