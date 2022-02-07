@@ -177,7 +177,7 @@ class AnalogIO {
             a = a | b; return a;
         }
 
-        AnalogIO( uint8_t pin, optionsEnum options = NONE, intIntFunction mapFunction = nullptr, voidIntFunction onChange = nullptr ) {
+        AnalogIO( uint8_t pin, optionsEnum options = optionsEnum::NONE, intIntFunction mapFunction = nullptr, voidIntFunction onChange = nullptr ) {
 
             PIN = pin;
             useSmoothing = ( ( options & optionsEnum::SMOOTHING ) == optionsEnum::SMOOTHING );

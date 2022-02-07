@@ -35,7 +35,7 @@ void setup() {
     lcd.begin(16,2);
     lcd.createChar( 0, heartBitmap );
 
-    lcd.printStrAtLine( 0, "hello" );
+    lcd.printStrAtRow( 0, "hello" );
     lcd.setCursor( 3, 1 );
     lcd.print( "there" );
     lcd.write( 0 );

@@ -265,8 +265,8 @@ class LCDInterface : public Print {
         */
 
         // print string at start of line then fill with space to end
-        void printStrAtLine( uint8_t lineNo, const char *str ) {
-            setCursor( 0, lineNo );
+        void printStrAtRow( uint8_t row, const char *str ) {
+            setCursor( 0, row );
             // what me worry? printf( "%.*s", maxColumns, str );
             print( str );
             int len = maxColumns - strlen( str );
@@ -282,10 +282,18 @@ class LCDInterface : public Print {
         }
 
         // clear whole line
-        void clearLine( uint8_t lineNo ) {                
-            setCursor( 0, lineNo );
+        void clearRow( uint8_t row ) {                
+            setCursor( 0, row );
             printCharsN( ' ', maxColumns );
         }
+
+        // can't use - cursor position not tracked
+        // inline virtual uint8_t currentColumn() = 0;
+        // void clearToEOL() {
+        //     uint8_t c = maxColumns - currentColumn();
+        //     if ( c > 0 )
+        //         printCharsN( ' ', maxColumns - currentColumn() );
+        // }
 
         #if defined(ESP32)
             template <typename ... Ts>
@@ -307,7 +315,16 @@ class LCDInterface : public Print {
                 print( buffer );
             }
         #endif
-        
+
+        void printfAtRow( uint8_t row, const char *format, ... ) {
+            char buffer[maxColumns+1];
+            va_list args;
+            va_start( args, format );
+            vsnprintf( buffer, maxColumns, format, args );
+            va_end( args );
+            printStrAtRow( row, buffer );
+        }
+
     //
     // ALIAS
     //

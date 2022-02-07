@@ -111,7 +111,7 @@ using namespace StarterPack;
         //
         counter = 0;
         lcdDirect.clear();
-        lcdDirect.printStrAtLine( 0, "Buffered" );
+        lcdDirect.printStrAtRow( 0, "Buffered" );
         SerialPrintf( "   Buffered           %d = ", testNo );
         start = millis();
         while( counter < 0xFFFF ) {
@@ -126,7 +126,7 @@ using namespace StarterPack;
         //
         counter = 0;
         lcdDirect.clear();
-        lcdDirect.printStrAtLine( 0, "Throttled" );
+        lcdDirect.printStrAtRow( 0, "Throttled" );
         SerialPrintf( "   Throttled          %d = ", testNo );
         start = millis();
         while( counter < 0xFFFF ) {
@@ -140,7 +140,7 @@ using namespace StarterPack;
         //
         counter = 0;
         lcdDirect.clear();
-        lcdDirect.printStrAtLine( 0, "Buffer/Throttled" );
+        lcdDirect.printStrAtRow( 0, "Buffer/Throttled" );
         SerialPrintf( "   Buffered/Throttled %d = ", testNo );
         start = millis();
         while( counter < 0xFFFF ) {
@@ -207,7 +207,7 @@ using namespace StarterPack;
         //
         counter = 0;
         lcdDirect.clear();
-        lcdDirect.printStrAtLine( 0, "Buffered" );
+        lcdDirect.printStrAtRow( 0, "Buffered" );
         SerialPrintf( "Buffered              %d = ", 4 );
         start = millis();
         while( counter < 0xFFFF ) {
@@ -222,7 +222,7 @@ using namespace StarterPack;
         //
         counter = 0;
         lcdDirect.clear();
-        lcdDirect.printStrAtLine( 0, "Direct" );
+        lcdDirect.printStrAtRow( 0, "Direct" );
         Serial.print( "Direct                  = " );
         start = millis();
         while( counter < 0xFFFF ) {

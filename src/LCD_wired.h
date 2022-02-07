@@ -247,6 +247,15 @@ public:
             
         #else
     
+            void sendNibble( uint8_t nibble ) {
+                // send lower nibble
+                digitalWrite( LCD_RS, LOW );
+                setWriteMode();
+                setDataPortToWrite( true );
+                LCD_putNibble( nibble );
+                pulse();
+            }
+
             void LCD_putNibble( uint8_t ch ) {
                 // easier to convert to fastDigitalWrite()
                 // assume HIGH==1, LOW==0

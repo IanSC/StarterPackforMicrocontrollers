@@ -19,18 +19,26 @@
 #include <Debouncer.h>
 using namespace StarterPack;
 
-AnalogIO aIO( A1, AnalogIO::SMOOTHING );
+#if defined( ESP32 )
+    int pin = 15;
+#else
+    int pin = A1;
+#endif
+
+AnalogIO aIO( pin, AnalogIO::SMOOTHING );
+
 Debouncer db;
 
 void setup() {
     Serial.begin( 115200 );
     Serial.println( "hello" );
 
-    // this only affects debouncing of analog buttons
-    // not analog signals
-    //aIO.debouncer.activeStatesDebounceInMs = 1000;
+    // affects all debouncers (global setttings)
+    //Debouncer::defaultSettings.activeStatesDebounceInMs = 1000;
 
-    db.activeStatesDebounceInMs = 1000;
+    // for specific debouncers only
+    db.useCustomSettings();
+    db.getSettings()->activeStatesDebounceInMs = 1000;    
 }
 
 void loop() {

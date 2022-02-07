@@ -58,7 +58,7 @@ uint8_t heartBitmap[8] = {
 
 void lcdGreetings() {
     lcd.createChar( 0, heartBitmap );
-    lcd.printStrAtLine( 0, "hello" );
+    lcd.printStrAtRow( 0, "hello" );
     lcd.setCursor( 3, 1 );
     lcd.print( "there" );
     lcd.write( 0 );

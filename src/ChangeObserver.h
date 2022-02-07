@@ -1,62 +1,52 @@
 //  2022/01 - isc
 //
-//  Throttle
-//  --------
-//  - throttle executing a function
-//    to avoid overwhelming resources
+//  Change Observer
+//  ---------------
+//  monitors a value for changes
 //
 //  To Use
 //
-//      Throttle( &function, throttleTimeInMs )
+//      ChangeObserver( &function, initialValue )
+//          supported function: void function( * )
 //
-//          supported functions:
-//              void FUNC()
-//              bool FUNC()
+//      update( value )
+//          run function if value has changed
 //
-//      update()      run function every throttleTimeInMs only
-//      updateNow()   run function immediately
+//      Example:
+//          void showResults( int value ) {
+//              Serial.println( value );
+//          }
+//          ChangeObserver c( &showResults );
+//          void loop() {
+//              int pot = analogRead( A0 );
+//              c.Update( pot );
+//          }
 //
 //  Static Version
 //
-//      - helper for wrapping callbacks without creating instances
+//      - wrapper for functions to be passed to other long running functions
+//        without creating instances
 //      - can only be used one at a time
 //        ex. not allowed:
-//            execute( Throttle::Me( &process1, 100 ), Throttle::Me( &process2, 100 ) );
+//            execute( ChangeObserver::Me( &process1 ), ChangeObserver::Me( &process2 ) );
 //
-//      void process() {
-//          // ...
-//      }
-//      void execute( voidVoidFunction func ) {
-//          while( true ) {
-//             // ... do stuff, break
-//             if ( func != nullptr ) func();    
+//      Example:
+//          void showResults( int value ) {
+//              Serial.println( value );
 //          }
-//      }
-//      void loop() {
-//          execute( &process );                      // process() gets called every iteration
-//          execute( Throttle::Me( &process, 100 ) ); // process() gets called every 100ms
-//      }
-//
-//  Example
-//
-//      int counter = 0;
-//      void process() {
-//          lcd.setCursor( 0, 0 );
-//          lcd.print( counter++ );
-//          int v = analogRead(A0);
-//          lcd.setCursor( 0, 1 );
-//          lcd.print( v );
-//      }
-//
-//      Throttle tt = Throttle( &process, 1000 );
-//
-//      void setup() {
-//          tt.updateNow();
-//      }
-//      void loop() {
-//          // process() will get called every 1000 ms only
-//          tt.update();
-//      }
+//          void process( voidIntFunction func ) {
+//              while( true ) {
+//                  int pot = analogRead( A0 );
+//                  // ... do stuff, break
+//                  if ( func != nullptr ) func( pot );
+//              }
+//          }
+//          void loop() {
+//              // BEFORE: showResults() gets called every iteration
+//              process( &showResults );
+//              // AFTER: showResults() gets called only if value changes
+//              process( ChangeObserver::Me( &showResults ) );
+//          }
 
 #pragma once
 #include <Arduino.h>
@@ -69,7 +59,12 @@ class ChangeObserver {
     // applicable ???
     // https://stackoverflow.com/questions/9625526/check-at-compile-time-if-template-argument-is-void
     
-private:
+// private:
+public:
+    typedef void (*voidByteFunction  ) (byte    ); // void function( byte     )
+    typedef void (*voidIntFunction   ) (int     ); // void function( int      )
+    typedef void (*voidLongFunction  ) (long    ); // void function( long     )
+
     typedef void (*voidBoolFunction  ) (bool    ); // void function( bool     )
     typedef void (*voidInt8Function  ) (int8_t  ); // void function( int8_t   )
     typedef void (*voidUInt8Function ) (uint8_t ); // void function( uint8_t  )
@@ -86,14 +81,14 @@ public:
     typedef bool (*longObserver  ) (long    );     // bool function( long     )
 
     typedef bool (*boolObserver  ) (bool    );     // bool function( bool     )
-    typedef bool (*int8Observer  ) (int8_t  );     // void function( int8_t   )
-    typedef bool (*uint8Observer ) (uint8_t );     // void function( uint8_t  )
-    typedef bool (*int16Observer ) (int16_t );     // void function( int16_t  )
-    typedef bool (*uint16Observer) (uint16_t);     // void function( uint16_t )
-    typedef bool (*int32Observer ) (int32_t );     // void function( int32_t  )
-    typedef bool (*uint32Observer) (uint32_t);     // void function( uint32_t )
-    typedef bool (*floatObserver ) (float   );     // void function( float    )
-    typedef bool (*doubleObserver) (double  );     // void function( double   )
+    typedef bool (*int8Observer  ) (int8_t  );     // bool function( int8_t   )
+    typedef bool (*uint8Observer ) (uint8_t );     // bool function( uint8_t  )
+    typedef bool (*int16Observer ) (int16_t );     // bool function( int16_t  )
+    typedef bool (*uint16Observer) (uint16_t);     // bool function( uint16_t )
+    typedef bool (*int32Observer ) (int32_t );     // bool function( int32_t  )
+    typedef bool (*uint32Observer) (uint32_t);     // bool function( uint32_t )
+    typedef bool (*floatObserver ) (float   );     // bool function( float    )
+    typedef bool (*doubleObserver) (double  );     // bool function( double   )
 
 private:
 
@@ -180,15 +175,14 @@ public:
 public:
 
     #define OBS(outSig,inSig,dataType,runnerName)\
-    public: static outSig Me( inSig f, dataType initialValue = -1 ) {\
+    public: static inSig Me( inSig f, dataType initialValue = -1 ) {\
         if ( CHG != nullptr ) delete CHG;\
         CHG = new ChangeObserver( f, initialValue );\
         return &runnerName;\
     }\
-    private: static bool runnerName( dataType value ) {\
+    private: static void runnerName( dataType value ) {\
         if ( CHG != nullptr )\
-            return CHG->update( value );\
-        return false;\
+            CHG->update( value );\
     }
 
     OBS( boolObserver  , voidBoolFunction  , bool    , runVoidBool   )

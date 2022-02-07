@@ -36,8 +36,19 @@ class LCD_HD44780 : public LCDInterface {
         uint8_t rowAddress[4];
 
     public:
-        
-        inline void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
+
+        void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
+            delay( 50 );
+            beginCore( maxColumns, maxRows, dotSize );
+        }
+
+    protected:
+
+        virtual void sendNibble( uint8_t nibble ) {
+            // nibble on lower bits
+        };
+
+        inline void beginCore( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
             // initialize LCD
             //  - set number of bits
             //  - cursor movement and style
@@ -68,10 +79,30 @@ class LCD_HD44780 : public LCDInterface {
             #if defined( LCD_USE_8BIT_PORT )
                 com = com | LCD_FUNCTION_8_BIT;
                 command( com );
+                // delayMicroseconds(100);
             #else
                 com = com | LCD_FUNCTION_4_BIT;
-                command( com );
-                command( com );
+
+                // NOT WORKING
+                // according to datasheet, send command 2x
+                // used to work but failed ???
+                //command( com ); command( com );
+
+                // kinda works... but sometimes glitches
+                // from power on okay, if resetting mpu, glitches
+                // https://www.handsonembedded.com/lcd16x2-hd44780-tutorial-6/
+                // https://exploreembedded.com/wiki/Interfacing_LCD_in_4-bit_mode_with_8051
+                // sendNibble( 0x02 );
+
+                // use this if you are having problems
+                // original LiquidCrystal_I2C
+                // sendNibble( 0x03 ); delayMicroseconds(4500);
+                // sendNibble( 0x03 ); delayMicroseconds(4500);
+                // sendNibble( 0x03 ); delayMicroseconds(150);
+                // sendNibble( 0x02 );
+
+                command( (0x03 << 4) | 0x03 ); command( (0x03 << 4) | 0x02 );
+                
             #endif
             
             // default for entryMode: move cursor to right, no screen shifting
@@ -108,7 +139,8 @@ class LCD_HD44780 : public LCDInterface {
         // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/6019/24/HD44780.html
         
         inline void setCursor( uint8_t col, uint8_t row ) {
-            command( LCD_SET_DDRAM_ADDR | ( rowAddress[row && 0b11] + col ) );
+            row = row % maxRows;
+            command( LCD_SET_DDRAM_ADDR | ( rowAddress[row] + col ) );
         }
     
         inline void clear() {

@@ -143,6 +143,11 @@ class LCD_i2c : public LCD_HD44780 {
     //
     private:
 
+        void sendNibble( uint8_t nibble ) {
+            // send lower nibble
+            sendCore( nibble << 4 );
+        }
+
         void send( uint8_t value, uint8_t mode ) {
             uint8_t hiNibble = value & 0xF0;
             uint8_t loNibble = ( value << 4 ) & 0xF0;
@@ -152,6 +157,7 @@ class LCD_i2c : public LCD_HD44780 {
 
         void sendCore( uint8_t value ) {
             value |= _backlightStatus;
+            //expanderWrite( value );
             expanderWrite( value | PIN_EN ); // EN high - send together
             delayMicroseconds( 1 );          // enable pulse must be >450ns
             expanderWrite( value );          // EN low

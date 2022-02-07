@@ -36,8 +36,8 @@ void setup() {
     lcd.begin(16,2);
     lcd.createChar( 0, heartBitmap );
 
-    lcd.printStrAtLine( 0, "ABCDEFGHIJKLMNOP" );
-    lcd.printStrAtLine( 1, "abcdefghijklmnop" );
+    lcd.printStrAtRow( 0, "ABCDEFGHIJKLMNOP" );
+    lcd.printStrAtRow( 1, "abcdefghijklmnop" );
 
     // see trickle in action
     // use only a bit of processor time
@@ -62,7 +62,7 @@ void setup() {
     lcd.updateDurationInMs = 10; // restore default
 
     lcd.clear();
-    lcd.printStrAtLine( 0, "hello" );
+    lcd.printStrAtRow( 0, "hello" );
     lcd.setCursor( 3, 1 );
     lcd.print( "there" );
     lcd.write( 0 );

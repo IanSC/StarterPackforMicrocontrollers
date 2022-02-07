@@ -80,7 +80,7 @@ class DigitalIO {
             a = a | b; return a;
         }
 
-        DigitalIO( const uint8_t pin, optionsEnum options = ACTIVE_HIGH ) { //}, // WITH_PULLUP | ACTIVE_LOW,
+        DigitalIO( const uint8_t pin, optionsEnum options = optionsEnum::ACTIVE_HIGH ) { //}, // WITH_PULLUP | ACTIVE_LOW,
         // uint16_t activeDebounceTime = 50, uint16_t inactiveDebounceTime = 50 ) {
             PIN = pin;
             if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )

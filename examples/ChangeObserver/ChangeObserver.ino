@@ -27,7 +27,11 @@ void setup() {
 }
 
 void loop() {
-    int value = analogRead( A1 );
+    #if defined( ESP32 )
+        int value = analogRead( 15 );
+    #else
+        int value = analogRead( A1 );
+    #endif
     value = map( value, 0, 1023, -2, 102 );
     if ( value < 0 ) value = 0;
     if ( value > 100 ) value = 100;
