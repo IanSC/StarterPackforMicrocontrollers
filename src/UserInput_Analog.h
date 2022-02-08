@@ -32,10 +32,10 @@ class UserInputAnalog : public UserInputCommon {
             buttonNo[SLOT_DOWN ] = downKeyValue;
         }
 
-        UserInputAnalog( AnalogIO &analogKey, uint8_t keyNo, int value ) {
-            if ( keyNo > MAX_KEYS ) return;
+        UserInputAnalog( AnalogIO &analogKey, int analogButtonId, uint8_t slot ) {
             this->aIO = &analogKey;
-            buttonNo[keyNo] = value;
+            if ( slot < MAX_KEYS )
+                buttonNo[slot] = analogButtonId;
         }
 
         void addKey( int analogButtonId, Keys key ) {
@@ -45,6 +45,11 @@ class UserInputAnalog : public UserInputCommon {
             uint8_t bitPosition = __builtin_ctzl( key );
             if ( bitPosition > MAX_KEYS ) return;
             buttonNo[bitPosition] = analogButtonId;
+        }
+
+        void addKey( int analogButtonId, uint8_t slot ) {
+            if ( slot < MAX_KEYS )
+                buttonNo[slot] = analogButtonId;
         }
 
     //

@@ -40,6 +40,10 @@ class UserInputDigital : public UserInputCommon {
         }
 
         UserInputDigital( DigitalIO &dIO, Keys key ) {
+            addKey( dIO, key );
+        }
+
+        void addKey( DigitalIO &dIO, Keys key ) {
             uint8_t numberOfBits = countBits( static_cast<uint16_t>( key ) );
             if ( numberOfBits != 1 ) return;
             // https://stackoverflow.com/a/31393298

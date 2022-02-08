@@ -192,8 +192,8 @@ class MatrixKeypad {
             s->minimumDebounceTimeInMs = minimum;
         }
 
-        inline void flagWaitForKeyup() { debouncer.flagWaitForKeyup();       }
-        inline void cancelDebouncing() { debouncer.cancelDebouncing();       }
+        inline void flagWaitForKeyup() { debouncer.flagWaitForKeyup(); }
+        inline void cancelDebouncing() { debouncer.cancelDebouncing(); }
 
         uint8_t getContinuousKey() {
             return debouncer.getContinuousKey( getKeymap( readRaw() ) );

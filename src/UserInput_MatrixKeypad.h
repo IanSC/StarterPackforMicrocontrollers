@@ -33,10 +33,10 @@ class UserInputMatrixKeypad : public UserInputCommon {
             // checkCommonKeys();
         }
 
-        UserInputMatrixKeypad( MatrixKeypad &matrixKeypad, uint8_t keyNo, int value ) {
-            if ( keyNo > MAX_KEYS ) return;
+        UserInputMatrixKeypad( MatrixKeypad &matrixKeypad, int keypadId, uint8_t slot ) {
             this->keypad = &matrixKeypad;
-            buttonId[keyNo] = value;
+            if ( slot < MAX_KEYS )
+                buttonId[slot] = keypadId;
         }
 
         void addKey( int keypadValue, Keys key ) {
@@ -45,6 +45,11 @@ class UserInputMatrixKeypad : public UserInputCommon {
             // https://stackoverflow.com/a/31393298
             uint8_t bitPosition = __builtin_ctzl( key );
             buttonId[bitPosition] = keypadValue;
+        }
+        
+        void addKey( int keypadValue, uint8_t slot ) {
+            if ( slot < MAX_KEYS )
+                buttonId[slot] = keypadValue;
         }
         
     private:
