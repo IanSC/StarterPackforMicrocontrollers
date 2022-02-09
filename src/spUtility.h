@@ -4,7 +4,7 @@
 namespace StarterPack {
 
 //
-// CONVERTERS
+// MAP CONVERTERS
 //
 
     // template <typename TType>
@@ -73,7 +73,16 @@ namespace StarterPack {
     }
 
 //
+// STRING
 //
+
+    bool isCharInString( uint8_t key, char *list ) {
+        if ( list == nullptr ) return false;
+        return ( strchr( list, key ) != nullptr );
+    }
+
+//
+// BITS
 //
 
     template <typename TType>
@@ -86,6 +95,23 @@ namespace StarterPack {
             input >>= 1;
         }
         return bits;
+    }
+
+    uint8_t first1BitOccurence( uint32_t input ) {
+        if ( input == 0 ) return 0;
+        #if defined(__GNUC__)
+            // https://stackoverflow.com/a/31393298
+            // https://stackoverflow.com/questions/28166565/detect-gcc-as-opposed-to-msvc-clang-with-macro
+            // https://www.geeksforgeeks.org/builtin-functions-gcc-compiler/
+            return __builtin_ctzl( input ) + 1;
+        #else
+            uint8_t r = 1;
+            while( ( input & 1 ) == 0 ) {
+                input >>= 1;
+                r++;
+            }
+            return r;
+        #endif
     }
 
 }

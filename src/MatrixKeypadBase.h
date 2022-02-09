@@ -1,49 +1,46 @@
 #pragma once
 #include <stdint.h>
+#include <stdarg.h>
 #include <Arduino.h>
+
 // #include <spUtility.h>
+// #include <spBitPackedBoolean.h>
 // using namespace StarterPack;
 
-// #include <stdarg.h>
-
-// #include "Debouncer.h"
-
-// #include <spBitPackedBoolean.h>
-#include <MatrixKeypadBase.h>
-#include <UserInputDeviceBase.h>
+// #include <UserInputCommon2.h>
+#include <Debouncer.h>
 
 namespace StarterPack {
 
-class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
+class MatrixKeypadBase {
 
     // MAX 32 BUTTONS because of spBitPackedBoolean
 
-    // protected:
+    protected:
 
-    //     uint8_t rowCount = 0; uint8_t *rowPinList = nullptr;
-    //     uint8_t colCount = 0; uint8_t *colPinList = nullptr;
-    //     bool sendViaRows = true;
-    //     uint8_t sendPinCount = 0; uint8_t *sendPinList = nullptr;
-    //     uint8_t recvPinCount = 0; uint8_t *recvPinList = nullptr;
+        uint8_t rowCount = 0; uint8_t *rowPinList = nullptr;
+        uint8_t colCount = 0; uint8_t *colPinList = nullptr;
+        bool sendViaRows = true;
+        uint8_t sendPinCount = 0; uint8_t *sendPinList = nullptr;
+        uint8_t recvPinCount = 0; uint8_t *recvPinList = nullptr;
 
-    //     // bool driveHighScanning = true;
-    //     uint8_t activeState = LOW;
+        // bool driveHighScanning = true;
+        uint8_t activeState = LOW;
 
     //
     // INIT
     //
     public:
 
-        MatrixKeypad() {
-            // initMatrixDebouncers();
+        MatrixKeypadBase() {
+            initMatrixDebouncers();
         }
 
-        ~MatrixKeypad() {
-            // if ( rowPinList != nullptr ) delete rowPinList;
-            // if ( colPinList != nullptr ) delete colPinList;
+        ~MatrixKeypadBase() {
+            if ( rowPinList != nullptr ) delete rowPinList;
+            if ( colPinList != nullptr ) delete colPinList;
         }
 
-/*
         // user convenience, don't know how to count number of args without so much extra code
         // https://stackoverflow.com/questions/2124339/c-preprocessor-va-args-number-of-arguments/2124385#2124385
         // 1 to 10 pins
@@ -119,16 +116,16 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
                 sendViaRows = true;
             }
             setOutputPinsStandby( 0, sendPinCount - 1 );
-            // for ( uint8_t i = 0 ; i < sendPinCount; i++ )
-            //     setOutputPinStandy( sendPinList[i] );
             if ( driveLowScanning ) {
-                // will set LOW send pins
-                // pullup HIGH receive pins
+                // will set to LOW the send pins when scanning
+                // pullup HIGH the receive pins
                 for ( uint8_t i = 0 ; i < recvPinCount; i++ )
                     pinMode( recvPinList[i], INPUT_PULLUP );
             } else {
-                // will set HIGH send pins 
-                // pulldown LOW receive pins (if possible)
+                // will set to HIGH the send pins when scanning
+                // pulldown LOW the receive pins (if possible)
+                // if no internal pulldown, must put externally
+                //    otherwise it will be floating and would not work
                 #if defined(ESP32)
                     for ( uint8_t i = 0 ; i < recvPinCount; i++ )
                         pinMode( recvPinList[i], INPUT_PULLDOWN );
@@ -151,21 +148,21 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
                 Serial.println( colPinList[i] );
             }
         }
-*/
+
     //
     // KEYMAP
     //
-    
+    /*
     private:
 
-        // const char *keyMap = nullptr;
+        const char *keyMap = nullptr;
 
     public:
 
-        // inline void assignKeymap( const char *keyMap ) {
-        //     this->keyMap = keyMap;
-        // }
-/*
+        inline void assignKeymap( const char *keyMap ) {
+            this->keyMap = keyMap;
+        }
+
         uint8_t getKeymap( const uint32_t keyBitmap ) {
             if ( keyBitmap == 0 ) return 0;
             if ( countBits( keyBitmap ) > 1 ) return 0;
@@ -216,7 +213,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
     //
     // DEBOUNCER
     //
-    //public:
+    // public:
 
         // Debouncer debouncer;
 
@@ -230,190 +227,124 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
         // inline void flagWaitForKeyup() { debouncer.flagWaitForKeyup(); }
         // inline void cancelDebouncing() { debouncer.cancelDebouncing(); }
     
-        // void flagWaitForKeyup( char *keysPressed ) { debouncer.flagWaitForKeyup(); }
         // void flagWaitForKeyup( char key ) { debouncer.flagWaitForKeyup(); }
+        // void flagWaitForKeyupMulti( char *keysPressed ) { debouncer.flagWaitForKeyup(); }
 
+/*
     //
     // KEYS
     //
     protected:
 
-        // uint8_t allenKey( char *allowedKeys = nullptr ) {
-        //     uint32_t keyBitmap = readRaw();
-        //     char *keyList = getKeymapsForMultiKey32( keyBitmap );
-        //     return processKeysCore( allowedKeys, keyList, false );
-        // }
-
-    public:
-
-        // char *getContinuousKeys( char *allowedKeys = nullptr ) {
-        //     uint32_t keyBitmap = readRaw();
-        //     char *keyList = getKeymapsForMultiKey32( keyBitmap );
-        //     if ( allowedKeys != nullptr )
-        //         removeDisallowedKeys( allowedKeys, keyList );
-        //     return keyList;
-        // }
-
-        // uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
-        //     return debouncer.getContinuousKey( allenKey( allowedKeys ) );
-        //     // faster but cannot combine keys:            
-        //     // uint8_t key = debouncer.getContinuousKey( getKeymap( readRaw() ) );
-        //     // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-        //     //     return 0;
-        //     // return key;
-        // }
-
-        // uint8_t getKeyDown( char *allowedKeys = nullptr ) {
-        //     return debouncer.getKeyDown( allenKey( allowedKeys ) );
-        //     // uint8_t key = debouncer.getKeyDown( getKeymap( readRaw() ) );
-        //     // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-        //     //     return 0;
-        //     // return key;
-        // }
-
-        // uint8_t getKeyUp( char *allowedKeys = nullptr ) {
-        //     return debouncer.getKeyUp( allenKey( allowedKeys ) );
-        //     // uint8_t key = debouncer.getKeyUp( getKeymap( readRaw() ) );
-        //     // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-        //     //     return 0;
-        //     // return key;
-        // }
-
-        // uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
-        //     return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-        //     // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-        //     // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-        //     //     return 0;
-        //     // return key;
-        // }
-
-        // uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {
-        //     uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-        //     if ( key == nonRepeatingKey )
-        //         debouncer.flagWaitForKeyup();
-        //     // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );            
-        //     // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-        //     //     return 0;
-        //     // if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-        //     //     debouncer.fl();
-        //     return key;
-        // }
-
-        // uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
-        //     uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-        //     if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-        //         debouncer.flagWaitForKeyup();
-        //     // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );            
-        //     // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-        //     //     return 0;
-        //     // if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-        //     //     debouncer.fl();
-        //     return key;
-        // }
-    
-    //
-    // FASTER VERSION - no combining of keys
-    //
-    // - no key filtering
-    //   allowedKeys are ignored
-    // - no combining of keys
-    //
-    protected:
-
         uint8_t allenKey( char *allowedKeys = nullptr ) {
-            uint8_t key = getKeymap( readRaw() ) ;
-            if ( allowedKeys != nullptr && !isCharInString( key, allowedKeys ) )
-                return 0;
-            return key;
+            uint32_t keyBitmap = readRaw();
+            char *keyList = getKeymaps( keyBitmap );
+            return processKeysCore( allowedKeys, keyList, false );
         }
 
     public:
 
         char *getContinuousKeys( char *allowedKeys = nullptr ) {
-            static char buffer[2] = " ";
-            buffer[0] = getContinuousKey();
-            return buffer;
+            uint32_t keyBitmap = readRaw();
+            char *keyList = getKeymaps( keyBitmap );
+            if ( allowedKeys != nullptr )
+                removeDisallowedKeys( allowedKeys, keyList );
+            return keyList;
         }
 
         uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
             return debouncer.getContinuousKey( allenKey( allowedKeys ) );
-            // return debouncer.getContinuousKey( getKeymap( readRaw() ) );
+            // faster but cannot combine keys:            
+            // uint8_t key = debouncer.getContinuousKey( getKeymap( readRaw() ) );
+            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
+            //     return 0;
+            // return key;
         }
 
         uint8_t getKeyDown( char *allowedKeys = nullptr ) {
             return debouncer.getKeyDown( allenKey( allowedKeys ) );
-            // return debouncer.getKeyDown( getKeymap( readRaw() ) );
+            // uint8_t key = debouncer.getKeyDown( getKeymap( readRaw() ) );
+            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
+            //     return 0;
+            // return key;
+        }
+
+        uint8_t getKeyUp( char *allowedKeys = nullptr ) {
+            return debouncer.getKeyUp( allenKey( allowedKeys ) );
+            // uint8_t key = debouncer.getKeyUp( getKeymap( readRaw() ) );
+            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
+            //     return 0;
+            // return key;
         }
 
         uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
-            return debouncer.getKeyUp( allenKey( allowedKeys ) );
-            // return debouncer.getKeyUp( getKeymap( readRaw() ) );
-        }
-
-        uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {
-            uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
+            return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-            if ( key == nonRepeatingKey ) debouncer.flagWaitForKeyup();
-            return key;
+            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
+            //     return 0;
+            // return key;
         }
 
         uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-            if ( nonRepeatingKeys != nullptr && isCharInString( key, nonRepeatingKeys ) )
+            if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
                 debouncer.flagWaitForKeyup();
+            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );            
+            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
+            //     return 0;
+            // if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
+            //     debouncer.fl();
             return key;
         }
+    
+    //
+    // FAST - no key filtering, no combining of keys
+    //
 
-    //
-    // DEBOUNCER
-    //
-    // protected:
+        char *getContinuousKeysFast() { return getKeymaps( readRaw() ); }
+        uint8_t getContinuousKeyFast() { return debouncer.getContinuousKey( getKeymap( readRaw() ) ); }
+        uint8_t getKeyDownFast() { return debouncer.getKeyDown( getKeymap( readRaw() ) ); }
+        uint8_t getRepeatingKeyFast() { return debouncer.getKeyUp( getKeymap( readRaw() ) ); }
+        uint8_t getRepeatingKeyExceptFast( uint8_t exception ) {
+            uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
+            if ( key == exception ) debouncer.flagWaitForKeyup();
+            return key;
+        }
+        virtual uint8_t getRepeatingKeyExceptFast( char *nonRepeatingKeys ) {
+            uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
+            if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
+                debouncer.flagWaitForKeyup();
+            return key;            
+        }
+
     public:
 
-        void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
-        // void flagWaitForKeyupMulti( char *keysPressed ) override { debouncer.flagWaitForKeyup(); }
 
-    //     void flagWaitForKeyup( char key ) override { debouncer.flagWaitForKeyup(); }
-    //     //void flagWaitForKeyup( char *keysPressed ) override { debouncer.flagWaitForKeyup(); }
+        // spBitPackedBoolean bits;
+
+        uint32_t readRaw() {
+            bits.reset();
+            if ( sendPinCount == 0 || recvPinCount == 0 )
+                return -1;
+            DEBUG_TRACE( Serial.println( "START" ) );
+            DEBUG_TRACE( step = 3 );
+            readHelper( 0, sendPinCount - 1 );
+            return bits.data;
+        }
+        */
 
     //
     // READ DEVICE
     //
-    public:
-
-        uint8_t readRaw() {
-            readScanCode = 0;
-            multiplePress = false;
-            if ( sendPinCount == 0 || recvPinCount == 0 )
-                return -1;
-            readMatrixCore( 0, sendPinCount - 1 );
-            if ( multiplePress )
-                return 0;
-            else
-                return readScanCode;
-        }
-        
     protected:
 
-        uint8_t readScanCode = 0;
-        bool multiplePress = false;
-
-        void recordScanCode( uint8_t scanCode ) {
-            if ( readScanCode == 0 )
-                readScanCode = scanCode + 1;
-            else
-                multiplePress = true;
-        }
-
-/*
         // #define DEBUG_TRACE(x)   x;
         #define DEBUG_TRACE(x)   ;
-        DEBUG_TRACE( uint8_t step = 0 );
+        DEBUG_TRACE( uint8_t step = 3 );
 
         virtual void recordScanCode( uint8_t scanCode ) = 0;
 
-        void readHelper( uint8_t sendFrom, uint8_t sendTo ) {
+        void readMatrixCore( uint8_t sendFrom, uint8_t sendTo ) {
             setOutputPinsActive( sendFrom, sendTo );
             bool active = scanInputs( sendFrom, sendTo );
             if ( active ) {
@@ -434,7 +365,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
                         scanInputs( sendFrom, mid );
                         setOutputPinsStandby( sendFrom, mid );
                     } else
-                        readHelper( sendFrom, mid );
+                        readMatrixCore( sendFrom, mid );
 
                     // read upper half
                     if ( mid+1 == sendTo ) {
@@ -442,7 +373,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
                         scanInputs( mid+1, sendTo );
                         setOutputPinsStandby( mid+1, sendTo );
                     } else
-                        readHelper( mid+1, sendTo );
+                        readMatrixCore( mid+1, sendTo );
                     DEBUG_TRACE( step -= 3 );
                 }
             } else {
@@ -515,7 +446,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
         }
 
     //
-    // DEBOUNCE
+    // MATRIX DEBOUNCE
     //
     public:
 
@@ -553,7 +484,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
             //if ( scanCode != 6 ) return state;
             for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
                 if ( dbScanCode[i] == scanCode ) {
-                    / *
+                    /*
                     if ( scanCode == 6 ) {
                         // StarterPack::Debouncer::modes modeB4 = db[i].mode;
                         int stateB4 = db[i].debouncedState;
@@ -570,7 +501,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
                         }
                         return stateAfter;
                     }
-                    * /
+                    */
                     return db[i].debounce( state );
                 }
             }
@@ -605,7 +536,7 @@ class MatrixKeypad : public MatrixKeypadBase, public UserInputDeviceBase {
             }
             return state;
         }
-*/
+
 };
 
 }

@@ -266,6 +266,7 @@ class LCDInterface : public Print {
 
         // print string at start of line then fill with space to end
         void printStrAtRow( uint8_t row, const char *str ) {
+            if ( str == nullptr ) return;
             setCursor( 0, row );
             // what me worry? printf( "%.*s", maxColumns, str );
             print( str );
@@ -275,6 +276,7 @@ class LCDInterface : public Print {
 
         // print first N characters of string
         void printStrN( const char *str, uint8_t N ) {
+            if ( str == nullptr ) return;
             while( N > 0 && *str != 0 ) {
                 print( *str++ );
                 N--;

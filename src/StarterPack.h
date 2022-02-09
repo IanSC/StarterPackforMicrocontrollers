@@ -12,7 +12,10 @@
 #include <UserInput.h>
 #include <UserInput_Analog.h>
 #include <UserInput_Digital.h>
-#include <UserInput_MatrixKeypad.h>
+//#include <UserInput_MatrixKeypad.h>
+
+#include <MatrixKeypad.h>
+#include <MatrixKeypadMulti.h>
 
 #include <LCD_wired.h>
 #include <LCDBuffered_wired.h>

@@ -393,7 +393,7 @@ class Debouncer {
     //
     // DEBOUNCE
     //
-    private:
+    public:
 
         // uint32_t debouncingStartTime;
         
@@ -413,6 +413,8 @@ class Debouncer {
             }
             return false;
         }
+
+    private:
 
         void updateState( int currentState ) {
             if ( currentState != debouncedState ) {

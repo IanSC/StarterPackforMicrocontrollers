@@ -37,6 +37,8 @@ class LCD_HD44780 : public LCDInterface {
 
     public:
 
+        ~LCD_HD44780() {}
+
         void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
             delay( 50 );
             beginCore( maxColumns, maxRows, dotSize );
