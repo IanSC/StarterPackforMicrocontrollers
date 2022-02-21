@@ -3,16 +3,11 @@
 #include <stdarg.h>
 #include <Arduino.h>
 
-// #include <spUtility.h>
-// #include <spBitPackedBoolean.h>
-// using namespace StarterPack;
-
-// #include <UserInputCommon2.h>
 #include <Debouncer.h>
 
 namespace StarterPack {
 
-class MatrixKeypadBase {
+class MatrixKeypadCore {
 
     // MAX 32 BUTTONS because of spBitPackedBoolean
 
@@ -32,11 +27,11 @@ class MatrixKeypadBase {
     //
     public:
 
-        MatrixKeypadBase() {
+        MatrixKeypadCore() {
             initMatrixDebouncers();
         }
 
-        ~MatrixKeypadBase() {
+        ~MatrixKeypadCore() {
             if ( rowPinList != nullptr ) delete rowPinList;
             if ( colPinList != nullptr ) delete colPinList;
         }
@@ -150,199 +145,15 @@ class MatrixKeypadBase {
         }
 
     //
-    // KEYMAP
-    //
-    /*
-    private:
-
-        const char *keyMap = nullptr;
-
-    public:
-
-        inline void assignKeymap( const char *keyMap ) {
-            this->keyMap = keyMap;
-        }
-
-        uint8_t getKeymap( const uint32_t keyBitmap ) {
-            if ( keyBitmap == 0 ) return 0;
-            if ( countBits( keyBitmap ) > 1 ) return 0;
-            // https://stackoverflow.com/a/31393298
-            uint8_t bitPosition = __builtin_ctzl( keyBitmap );
-            if ( keyMap == nullptr )
-                return bitPosition + 1;
-            if ( strlen( keyMap ) < bitPosition )
-                return bitPosition + 1;
-            // Serial.print( "bitPosition=" );
-            // Serial.println( bitPosition );
-            return keyMap[ bitPosition ];
-        }
-
-        char *getKeymaps( uint32_t keyBitmap ) {
-
-            static char buffer[33];
-
-            if ( keyBitmap == 0 ) return nullptr;
-            if ( keyMap == nullptr ) {
-                buffer[0] = getKeymap( keyBitmap );
-                buffer[1] = 0;
-                return buffer;
-            }
-
-            uint8_t mapLen = strlen( keyMap );
-            char *p = buffer;
-            uint8_t mapIndex = 0;
-
-            // get keyMap for each bit pressed
-            // combine as string
-            while( keyBitmap != 0 ) {
-                if ( mapIndex >= mapLen )
-                    break;
-                if ( (keyBitmap & 1) != 0 ) {
-                    // key pressed, add keyMap
-                    *p = keyMap[mapIndex];
-                    p++;
-                }
-                mapIndex++;
-                keyBitmap >>= 1;
-            }
-            *p = 0;
-            return buffer;
-        }
-        */
-
-    //
-    // DEBOUNCER
-    //
-    // public:
-
-        // Debouncer debouncer;
-
-        // void setDebounceTimeInMs( uint16_t activeState = 50, uint16_t inactiveState = 50, uint16_t minimum = 50 ) {
-        //     Debouncer::Settings *s = debouncer.getSettings();
-        //     s->activeStatesDebounceInMs = activeState;
-        //     s->inactiveStateDebounceInMs = inactiveState;
-        //     s->minimumDebounceTimeInMs = minimum;
-        // }
-
-        // inline void flagWaitForKeyup() { debouncer.flagWaitForKeyup(); }
-        // inline void cancelDebouncing() { debouncer.cancelDebouncing(); }
-    
-        // void flagWaitForKeyup( char key ) { debouncer.flagWaitForKeyup(); }
-        // void flagWaitForKeyupMulti( char *keysPressed ) { debouncer.flagWaitForKeyup(); }
-
-/*
-    //
-    // KEYS
-    //
-    protected:
-
-        uint8_t allenKey( char *allowedKeys = nullptr ) {
-            uint32_t keyBitmap = readRaw();
-            char *keyList = getKeymaps( keyBitmap );
-            return processKeysCore( allowedKeys, keyList, false );
-        }
-
-    public:
-
-        char *getContinuousKeys( char *allowedKeys = nullptr ) {
-            uint32_t keyBitmap = readRaw();
-            char *keyList = getKeymaps( keyBitmap );
-            if ( allowedKeys != nullptr )
-                removeDisallowedKeys( allowedKeys, keyList );
-            return keyList;
-        }
-
-        uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
-            return debouncer.getContinuousKey( allenKey( allowedKeys ) );
-            // faster but cannot combine keys:            
-            // uint8_t key = debouncer.getContinuousKey( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
-        }
-
-        uint8_t getKeyDown( char *allowedKeys = nullptr ) {
-            return debouncer.getKeyDown( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getKeyDown( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
-        }
-
-        uint8_t getKeyUp( char *allowedKeys = nullptr ) {
-            return debouncer.getKeyUp( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getKeyUp( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
-        }
-
-        uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
-            return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
-        }
-
-        uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
-            uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-            if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-                debouncer.flagWaitForKeyup();
-            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );            
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-            //     debouncer.fl();
-            return key;
-        }
-    
-    //
-    // FAST - no key filtering, no combining of keys
-    //
-
-        char *getContinuousKeysFast() { return getKeymaps( readRaw() ); }
-        uint8_t getContinuousKeyFast() { return debouncer.getContinuousKey( getKeymap( readRaw() ) ); }
-        uint8_t getKeyDownFast() { return debouncer.getKeyDown( getKeymap( readRaw() ) ); }
-        uint8_t getRepeatingKeyFast() { return debouncer.getKeyUp( getKeymap( readRaw() ) ); }
-        uint8_t getRepeatingKeyExceptFast( uint8_t exception ) {
-            uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-            if ( key == exception ) debouncer.flagWaitForKeyup();
-            return key;
-        }
-        virtual uint8_t getRepeatingKeyExceptFast( char *nonRepeatingKeys ) {
-            uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-            if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-                debouncer.flagWaitForKeyup();
-            return key;            
-        }
-
-    public:
-
-
-        // spBitPackedBoolean bits;
-
-        uint32_t readRaw() {
-            bits.reset();
-            if ( sendPinCount == 0 || recvPinCount == 0 )
-                return -1;
-            DEBUG_TRACE( Serial.println( "START" ) );
-            DEBUG_TRACE( step = 3 );
-            readHelper( 0, sendPinCount - 1 );
-            return bits.data;
-        }
-        */
-
-    //
     // READ DEVICE
     //
     protected:
 
+        virtual void recordScanCode( uint8_t scanCode ) = 0;
+
         // #define DEBUG_TRACE(x)   x;
         #define DEBUG_TRACE(x)   ;
         DEBUG_TRACE( uint8_t step = 3 );
-
-        virtual void recordScanCode( uint8_t scanCode ) = 0;
 
         void readMatrixCore( uint8_t sendFrom, uint8_t sendTo ) {
             setOutputPinsActive( sendFrom, sendTo );
@@ -404,7 +215,7 @@ class MatrixKeypadBase {
             }
         }
 
-        inline bool scanInputs( uint8_t sendFrom, uint8_t sendTo ) {
+        bool scanInputs( uint8_t sendFrom, uint8_t sendTo ) {
             DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
             DEBUG_TRACE( Serial.println( "scanning" ) );
             if ( sendFrom == sendTo ) {
@@ -414,9 +225,9 @@ class MatrixKeypadBase {
                         uint8_t scanCode = sendFrom * recvPinCount + recvPin;
                         bool state = ( digitalRead( recvPinList[recvPin] ) == activeState );
                         if ( state )
-                            state = debounce( scanCode, state );
+                            state = debounceMatrix( scanCode, state );
                         else
-                            state = debounceExisting( scanCode, state );
+                            state = debounceMatrixExisting( scanCode, state );
                         if ( state ) {
                             DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
                             DEBUG_TRACE( SerialPrintf( "SET %d\n", scanCode ) );
@@ -428,9 +239,9 @@ class MatrixKeypadBase {
                         uint8_t scanCode = recvPin * sendPinCount + sendFrom;
                         bool state = ( digitalRead( recvPinList[recvPin] ) == activeState );
                         if ( state )
-                            state = debounce( scanCode, state );
+                            state = debounceMatrix( scanCode, state );
                         else
-                            state = debounceExisting( scanCode, state );
+                            state = debounceMatrixExisting( scanCode, state );
                         if ( state ) recordScanCode( scanCode );
                     }
                 }
@@ -444,6 +255,8 @@ class MatrixKeypadBase {
             }
             return false;
         }
+
+        #undef DEBUG_TRACE
 
     //
     // MATRIX DEBOUNCE
@@ -477,31 +290,27 @@ class MatrixKeypadBase {
                 db[i].assignSettings( *db[0].getSettings() );
         }
 
-        bool debounce( uint8_t scanCode, bool state ) {
-            // return state;
-            // Serial.println( scanCode );
-            // return state;
-            //if ( scanCode != 6 ) return state;
+        bool debounceMatrix( uint8_t scanCode, bool state ) {
             for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
                 if ( dbScanCode[i] == scanCode ) {
-                    /*
-                    if ( scanCode == 6 ) {
-                        // StarterPack::Debouncer::modes modeB4 = db[i].mode;
-                        int stateB4 = db[i].debouncedState;
-                        // bool keyupFlagB4 = db[i].waitForKeyupFlag;
-                        bool stateAfter = db[i].debounce( state );
-                        if ( state && !stateAfter ) {
-                            SerialPrintf( "T-->F %d\n", i );
-                            // SerialPrintf( "  0Mode: %d\n", modeB4 );
-                            SerialPrintf( "  0debouncedState: %d\n", stateB4 );
-                            // SerialPrintf( "  0waitForKeyupFlag: %d\n", keyupFlagB4 );
-                            // SerialPrintf( "  Mode: %d\n", db[i].mode );
-                            SerialPrintf( "  debouncedState: %d\n", db[i].debouncedState );
-                            // SerialPrintf( "  waitForKeyupFlag: %d\n", db[i].waitForKeyupFlag );
-                        }
-                        return stateAfter;
-                    }
-                    */
+                    
+                    // if ( scanCode == 6 ) {
+                    //     // StarterPack::Debouncer::modes modeB4 = db[i].mode;
+                    //     int stateB4 = db[i].debouncedState;
+                    //     // bool keyupFlagB4 = db[i].waitForKeyupFlag;
+                    //     bool stateAfter = db[i].debounce( state );
+                    //     if ( state && !stateAfter ) {
+                    //         SerialPrintf( "T-->F %d\n", i );
+                    //         // SerialPrintf( "  0Mode: %d\n", modeB4 );
+                    //         SerialPrintf( "  0debouncedState: %d\n", stateB4 );
+                    //         // SerialPrintf( "  0waitForKeyupFlag: %d\n", keyupFlagB4 );
+                    //         // SerialPrintf( "  Mode: %d\n", db[i].mode );
+                    //         SerialPrintf( "  debouncedState: %d\n", db[i].debouncedState );
+                    //         // SerialPrintf( "  waitForKeyupFlag: %d\n", db[i].waitForKeyupFlag );
+                    //     }
+                    //     return stateAfter;
+                    // }
+                    
                     return db[i].debounce( state );
                 }
             }
@@ -511,26 +320,12 @@ class MatrixKeypadBase {
             if ( dbPos >= DEBOUNCER_COUNT ) dbPos = 0;
             dbScanCode[pos] = scanCode;
             db[pos].setInitialValue( state );
-            // SerialPrintf( "DB Used %d for %d\n", pos, scanCode );
-            // bool yy = db[pos].debounce( state );
-            // if ( state && !yy ) {
-            //     Serial.print( "T-->Fq " );
-            //     Serial.println( pos );
-            // }
-            // return yy;
             return db[pos].debounce( state );
         }
 
-        bool debounceExisting( uint8_t scanCode, bool state ) {
-            // return state;
+        bool debounceMatrixExisting( uint8_t scanCode, bool state ) {
             for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
                 if ( dbScanCode[i] == scanCode ) {
-                    // if ( scanCode == 6 ) {
-                    //     bool xx = db[i].debounce( state );
-                    //     if ( state && !xx)
-                    //         Serial.println(xx);
-                    //     return xx;
-                    // }
                     return db[i].debounce( state );
                 }
             }

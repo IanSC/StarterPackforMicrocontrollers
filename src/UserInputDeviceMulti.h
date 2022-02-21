@@ -1,15 +1,16 @@
 #pragma once
-#include <UserInputDeviceBase.h>
+#include <UserInputDevice.h>
 #include <spUtility.h>
 
 namespace StarterPack {
 
-class UserInputDeviceMulti : public UserInputDeviceBase {
+class UserInputDeviceMulti : public UserInputDevice {
 
     public:
 
         ~UserInputDeviceMulti() {
-            deleteCombinedKeys();
+            delete_NextLinkedList( combinedList_2Keys );
+            // deleteCombinedKeys();
         }
 
     //
@@ -21,17 +22,26 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
             // uint32_t keyBitmap = readBitmapRaw();
             // char *keyList = getKeymapsForMultiKey32( keyBitmap );
             // return processKeysCore( allowedKeys, keyList, false );
-            return processKeysCore( allowedKeys, readKeyList(), false );
+            return processKeysCore( allowedKeys, readMappedKeyList(), false );
         }
 
     public:
 
-        virtual char *readKeyList() = 0;
+        // return mapped key number
+        uint8_t readMappedKey() {
+            // get 1st and only key
+            char *keys = readMappedKeyList();
+            if ( keys == nullptr ) return 0;
+            uint8_t l = strlen( keys );
+            if ( l != 1 ) return 0;
+            return keys[0];
+        }
+
+        // return string containing all mapped key values
+        virtual char *readMappedKeyList() = 0;
 
         char *getContinuousKeys( char *allowedKeys = nullptr ) {
-            // uint32_t keyBitmap = readBitmapRaw();
-            // char *keyList = getKeymapsForMultiKey32( keyBitmap );
-            char *keyList = readKeyList();
+            char *keyList = readMappedKeyList();
             if ( allowedKeys != nullptr )
                 removeDisallowedKeys( allowedKeys, keyList );
             return keyList;
@@ -39,64 +49,38 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
 
         uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
             return debouncer.getContinuousKey( allenKey( allowedKeys ) );
-            // faster but cannot combine keys:            
-            // uint8_t key = debouncer.getContinuousKey( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
         }
 
         uint8_t getKeyDown( char *allowedKeys = nullptr ) {
             return debouncer.getKeyDown( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getKeyDown( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
         }
 
         uint8_t getKeyUp( char *allowedKeys = nullptr ) {
             return debouncer.getKeyUp( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getKeyUp( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
         }
 
         uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
             return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
-            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // return key;
         }
 
         uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             if ( key == nonRepeatingKey )
-                debouncer.flagWaitForKeyup();
-            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );            
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-            //     debouncer.fl();
+                flagWaitForKeyupSpecific( key );
             return key;
         }
 
         uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             if ( nonRepeatingKeys != nullptr && isCharInString( key, nonRepeatingKeys ) )
-                debouncer.flagWaitForKeyup();
-            // uint8_t key = debouncer.getRepeatingKey( getKeymap( readRaw() ) );            
-            // if ( allowedKeys != nullptr && !isIncludedInList( key, allowedKeys ) )
-            //     return 0;
-            // if ( nonRepeatingKeys != nullptr && isIncludedInList( key, nonRepeatingKeys ) )
-            //     debouncer.fl();
+                flagWaitForKeyupSpecific( key );
             return key;
         }
 
     //
     // KEYMAP
     //
+    /*
     protected:
 
         uint8_t getKeymapForMultiKey32( uint32_t keyBitmap ) {
@@ -140,14 +124,13 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
             }
             *p = 0;
             return buffer;
-        }
+        }*/
 
     //
     // DEBOUNCER
     //
     public:
 
-        // virtual void flagWaitForKeyupMulti( char *keysPressed ) = 0;
         virtual void flagWaitForKeyupMulti( char *keys ) = 0;
 
     protected:
@@ -168,21 +151,24 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
         };
         combined_2Keys *combinedList_2Keys = nullptr;
 
-        void deleteCombinedKeys() {
-            if ( combinedList_2Keys == nullptr ) {
-                while( combinedList_2Keys->next != nullptr ) {
-                    // slow but avoid recursion
-                    combined_2Keys *p1 = combinedList_2Keys;
-                    combined_2Keys *p2 = p1->next;
-                    while ( p2->next != nullptr ) {
-                        p1 = p2;
-                        p2 = p2->next;
-                    }
-                    delete p2;
-                    p1->next = nullptr;
-                }
-            }
-        }
+        // void deleteCombinedKeys() {
+        //     if ( combinedList_2Keys != nullptr ) {
+        //         while( combinedList_2Keys->next != nullptr ) {
+        //             // slow but avoids recursion
+        //             combined_2Keys *p1 = combinedList_2Keys;
+        //             combined_2Keys *p2 = p1->next;
+        //             while ( p2->next != nullptr ) {
+        //                 p1 = p2;
+        //                 p2 = p2->next;
+        //             }
+        //             // Serial.print( "delete: " );
+        //             // Serial.println( p2->result );
+        //             delete p2;
+        //             p1->next = nullptr;
+        //         }
+        //         delete combinedList_2Keys;
+        //     }
+        // }
 
     public:
 
@@ -204,6 +190,10 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
     protected:
 
         uint8_t processKeysCore( char *allowedKeys, char *keysPressed, bool issueWaitForKeyUp ) {
+
+            // filter keysPressed by allowed keys
+            //    if an actual key is pressed it will be ignored
+            // combine multiple keys into single key
 
             if ( keysPressed == nullptr ) return 0;
             if ( allowedKeys != nullptr )
@@ -235,12 +225,8 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
             }
         }
 
-        // bool isIncludedInList( uint8_t key, char *list ) {
-        //     if ( list == nullptr ) return false;
-        //     return ( strchr( list, key ) != nullptr );
-        // }
-
         void removeDisallowedKeys( char *allowedKeys, char *keysPressed ) {
+
             // ex.     allowedKeys = "12345"
             //         keysPressed = "1829"
             //     ==> keysPressed = "12";
@@ -250,23 +236,16 @@ class UserInputDeviceMulti : public UserInputDeviceBase {
             //    return;
             // }
 
-//            Serial.println( "removeDisallowedKeys:" );
-//            Serial.println( allowedKeys );
-//            Serial.println( keysPressed );
-
             char *checking = keysPressed;
             char *accepted = keysPressed;
             while ( *checking != 0 ) {
                 if ( strchr( allowedKeys, *checking ) != nullptr ) {
-//                    Serial.print( "accepted:" );
-//                    Serial.println( *checking );
                     *accepted = *checking;
                     accepted++;
                 }
                 checking++;
             }
             *accepted = 0;
-//            Serial.println( keysPressed );
         }
 
 };

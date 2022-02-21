@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 #include <stdarg.h>
 
 namespace StarterPack {
@@ -64,6 +65,18 @@ namespace StarterPack {
         Serial.print( buffer );
     }
 
+    void SerialPrintfln( const char *format, ... ) {
+        // how to pass to SerialPrintf() without template
+        // since it does not work in Arduino
+        const uint8_t maxChars = 100;
+        char buffer[maxChars+1];
+        va_list args;
+        va_start( args, format );
+        vsnprintf(buffer, maxChars, format, args);
+        va_end( args );
+        Serial.println( buffer );
+    }
+
     void SerialPrintStrN( const char *str, uint8_t N ) {
         // print first N characters of string
         while( N > 0 && *str != 0 ) {
@@ -112,6 +125,56 @@ namespace StarterPack {
             }
             return r;
         #endif
+    }
+
+//
+// LINKED LIST
+//
+
+    // delete "next-linked" list
+    // class A {
+    //    ...
+    //    A* next;
+    // }
+    template<class T>
+    void delete_NextLinkedList( T *head ) {
+        if ( head == nullptr ) return;
+        while( head->next != nullptr ) {
+            // slow but avoids recursion
+            T *p1 = head;
+            T *p2 = p1->next;
+            while ( p2->next != nullptr ) {
+                p1 = p2;
+                p2 = p2->next;
+            }
+            delete p2;
+            p1->next = nullptr;
+        }
+        delete head;
+    }
+
+    // delete "next-linked" list
+    // class A {
+    //    ...
+    //    bool skipDelete;
+    //    A* next;
+    // }
+    template<class T>
+    void delete_NextLinkedListWithSkip( T *head ) {
+        if ( head == nullptr ) return;
+        while( head->next != nullptr ) {
+            // slow but avoids recursion
+            T *p1 = head;
+            T *p2 = p1->next;
+            while ( p2->next != nullptr ) {
+                p1 = p2;
+                p2 = p2->next;
+            }
+            if ( !p2->skipDelete )
+                delete p2;
+            p1->next = nullptr;
+        }
+        delete head;
     }
 
 }

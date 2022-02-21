@@ -94,7 +94,8 @@ class Debouncer {
             uint16_t activeStatesDebounceInMs = 50;     // debouncing keyDown time
             uint16_t inactiveStateDebounceInMs = 50;    // debouncing keyUp time
             uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
-            uint16_t confirmStateTimeInMs = 0;          // time delay to confirm a state
+            uint16_t confirmActiveStateTimeInMs = 0;    // time delay to confirm keyDown time
+            uint16_t confirmInactiveStateTimeInMs = 0;  // time delay to confirm keyUp time
             uint16_t repeatDelayInMs = 400;
             uint16_t repeatRateInMs  = 250;
         };
@@ -273,24 +274,138 @@ class Debouncer {
             case mIdle: 
                 JUMP_IDLE: {
                     if ( currentState == debouncedState ) {
-                        DEBUG_TRACE( Serial.print( "#" ) );
+                        // DEBUG_TRACE( Serial.print( "#" ) );
                     } else {
                         repeatMode = rIdle;
-                        if ( settings->confirmStateTimeInMs == 0 ) {
-                            // no need to confirm
-                            DEBUG_TRACE( SerialPrintf( "accepted: %d\n", currentState ) );
-                            updateState( currentState );
+                        if ( currentState == inactiveState ) {
+                            // keyUp
+                            if ( settings->confirmInactiveStateTimeInMs == 0 ) {
+                                // no need to confirm
+                                // DEBUG_TRACE( SerialPrintf( "accepted: %d\n", currentState ) );
+                                updateState( currentState );
+                            } else {
+                                // confirm first
+                                // DEBUG_TRACE( SerialPrintf( "to confirm: %d\n", currentState ) );
+                                keyToMonitor.keyToConfirm = currentState;
+                                startingTimes.confirmStartTime = millis();
+                                mode = mConfirm;
+                            }
                         } else {
-                            // confirm first
-                            DEBUG_TRACE( SerialPrintf( "to confirm: %d\n", currentState ) );
-                            keyToMonitor.keyToConfirm = currentState;
-                            startingTimes.confirmStartTime = millis();
-                            mode = mConfirm;
+                            // keyDown
+                            if ( settings->confirmActiveStateTimeInMs == 0 ) {
+                                // no need to confirm
+                                DEBUG_TRACE( SerialPrintf( "accepted: %d\n", currentState ) );
+                                updateState( currentState );
+                            } else {
+                                // confirm first
+                                DEBUG_TRACE( SerialPrintf( "to confirm: %d\n", currentState ) );
+                                keyToMonitor.keyToConfirm = currentState;
+                                startingTimes.confirmStartTime = millis();
+                                mode = mConfirm;
+                            }
                         }
+                        // if ( settings->confirmStateTimeInMs == 0 ) {
+                        //     // no need to confirm
+                        //     DEBUG_TRACE( SerialPrintf( "accepted: %d\n", currentState ) );
+                        //     updateState( currentState );
+                        // } else {
+                        //     // confirm first
+                        //     DEBUG_TRACE( if ( currentState != 0 ) )
+                        //     DEBUG_TRACE(    SerialPrintf( "to confirm: %d\n", currentState ) );
+                        //     keyToMonitor.keyToConfirm = currentState;
+                        //     startingTimes.confirmStartTime = millis();
+                        //     mode = mConfirm;
+                        // }
                     }
                 }
                 break;
             case mConfirm: {
+                    // confirm:
+                    // - inactive state
+                    //   if keyUp, check time
+                    //   now a keyDown, new confirmation
+                    // - active state
+                    //   if same key, check time
+                    //   if different key, new confirmation
+                    //   if keyUp, abort confirmation
+                    uint32_t now = millis();
+                    if ( keyToMonitor.keyToConfirm == inactiveState ) {                        
+                        // confirming keyUp
+                        if ( currentState == inactiveState ) {
+                            // ... still keyUp
+                            if ( now - startingTimes.confirmStartTime >= settings->confirmInactiveStateTimeInMs ) {
+                                // confirmed
+                                // DEBUG_TRACE( SerialPrintf( "confirmed: %d\n", currentState ) );
+                                updateState( currentState );
+                            } else {
+                                // still confirming, return debouncedState for now
+                                // DEBUG_TRACE( SerialPrintf( "not yet confirmed: %d\n", currentState ) );
+                            }
+                        } else {
+                            // ... a key was pressed
+                            DEBUG_TRACE( SerialPrintf( "new to confirm: %d\n", currentState ) );
+                            keyToMonitor.keyToConfirm = currentState;
+                            startingTimes.confirmStartTime = now;                            
+                        }
+                    } else {
+                        // confirming keyDown
+                        if ( keyToMonitor.keyToConfirm == currentState ) {
+                            // ... still same key
+                            if ( now - startingTimes.confirmStartTime >= settings->confirmActiveStateTimeInMs ) {
+                                // confirmed
+                                DEBUG_TRACE( SerialPrintf( "confirmed: %d\n", currentState ) );
+                                updateState( currentState );
+                            } else {
+                                // still confirming, return debouncedState for now
+                                DEBUG_TRACE( SerialPrintf( "not yet confirmed: %d\n", currentState ) );
+                            }                        
+                        } else if ( currentState == inactiveState ) {
+                            // ... released (or jittle during press), meaning not confirmed
+                            debouncedState = currentState;
+                            goto JUMP_IDLE;
+                        } else {
+                            // ... another key pressed (or analog button not yet stable)
+
+                            // different !!! confirm again or ignore ??? confirm...
+                            // if fed high frequency signal will go on forever confirming
+                            // and return the last confirmed state, which is technically 
+                            // still correct since new state cannot be confirmed
+                            DEBUG_TRACE( SerialPrintf( "new to confirm: %d\n", currentState ) );
+                            keyToMonitor.keyToConfirm = currentState;
+                            startingTimes.confirmStartTime = now;
+                        }
+                    }
+                    // if ( keyToMonitor.keyToConfirm == currentState ) {
+                    //     // still same
+                    //     if ( now - startingTimes.confirmStartTime >= settings->confirmStateTimeInMs ) {
+                    //         // confirmed
+                    //         DEBUG_TRACE( SerialPrintf( "confirmed: %d\n", currentState ) );
+                    //         updateState( currentState );
+                    //     } else {
+                    //         // still confirming
+                    //         // will return debouncedState
+                    //         DEBUG_TRACE( SerialPrintf( "not yet confirmed: %d\n", currentState ) );
+                    //     }
+                    // } else {
+                    //     if ( currentState == inactiveState ) {
+                    //         // released or jittle during press ...
+                    //         debouncedState = currentState;
+                    //         goto JUMP_IDLE;
+                    //     } else {
+                    //         // pressed another key or analog button not yet stable
+
+                    //         // different !!! confirm again or ignore ??? confirm...
+                    //         // if fed high frequency signal will go on forever confirming
+                    //         // and return the last confirmed state, which is technically 
+                    //         // still correct since new state cannot be confirmed
+
+                    //         DEBUG_TRACE( SerialPrintf( "new to confirm: %d\n", currentState ) );
+                    //         keyToMonitor.keyToConfirm = currentState;
+                    //         startingTimes.confirmStartTime = now;
+                    //         // for now return same as before
+                    //     }
+                    // }
+                    /*
                     if ( millis() - startingTimes.confirmStartTime >= settings->confirmStateTimeInMs ) {
                         if ( keyToMonitor.keyToConfirm == currentState ) {
                             // still same, confirmed
@@ -307,13 +422,14 @@ class Debouncer {
                             // for now return same as before
                         }
                     } else {
-                        DEBUG_TRACE( SerialPrintf( "not confirmed: %d\n", currentState ) );
+                        DEBUG_TRACE( SerialPrintf( "not yet confirmed: %d\n", currentState ) );
                     }
+                    */
                 }
                 break;
             case mDebouncing: {
                     if ( isDebouncing() ) {
-                        DEBUG_TRACE( SerialPrintf( "debounce: %d\n", currentState ) );
+                        DEBUG_TRACE( if ( currentState != 0 ) SerialPrintf( "debounce: %d\n", currentState ) );
                     } else {
                         goto JUMP_IDLE;
                     }

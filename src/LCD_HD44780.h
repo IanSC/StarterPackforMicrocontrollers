@@ -12,10 +12,8 @@
 //      lcd.begin( 16, 2 );
 
 #pragma once
-#include <LCDInterface.h>
-using namespace StarterPack;
-
 #include <Arduino.h>
+#include <LCDInterface.h>
 
 namespace StarterPack {
 

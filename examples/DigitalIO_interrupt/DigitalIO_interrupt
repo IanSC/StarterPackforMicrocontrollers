@@ -20,7 +20,7 @@ using namespace StarterPack;
 DigitalIO dIO1( PIN_WITH_INTERRUPT, DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
 DigitalIO dIO2( ANY_PIN,            DigitalIO::ACTIVE_LOW | DigitalIO::WITH_PULLUP );
 
-void onInterrupt() {
+void IRAM_ATTR onInterrupt() {
     dIO1.readStatus();
 }
 

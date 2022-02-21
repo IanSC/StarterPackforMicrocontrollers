@@ -4,11 +4,11 @@
 
 namespace StarterPack {
 
-class UserInputDeviceBase {
+class UserInputDevice {
 
     public:
 
-        virtual ~UserInputDeviceBase() {}
+        virtual ~UserInputDevice() {}
 
     //
     // KEYS
@@ -17,11 +17,24 @@ class UserInputDeviceBase {
 
         virtual char *getContinuousKeys( char *allowedKeys = nullptr ) = 0;
 
-        virtual uint8_t getContinuousKey( char *allowedKeys = nullptr )  = 0;
+        virtual uint8_t getContinuousKey( char *allowedKeys = nullptr ) = 0;
         virtual uint8_t getKeyDown( char *allowedKeys = nullptr ) = 0;
+        virtual uint8_t getKeyUp( char *allowedKeys = nullptr ) = 0;
         virtual uint8_t getRepeatingKey( char *allowedKeys = nullptr ) = 0;
         virtual uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) = 0;
         virtual uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) = 0;
+
+    //
+    // CORE
+    //
+
+        // return mapped key number
+        // eg. '1', '2', '3'
+        virtual uint8_t readMappedKey() = 0;
+
+        // return string containing all mapped key values
+        // eg. "123ABC"
+        virtual char *readMappedKeyList() = 0;
 
     //
     // KEYMAP
@@ -54,7 +67,7 @@ class UserInputDeviceBase {
     //
     public:
 
-        bool isKeyPressed( char key, bool issueWaitForKeyUp = true ) {
+        bool isKeyPressed( uint8_t key, bool issueWaitForKeyUp = true ) {
             if ( getContinuousKey() == key ) {
                 if ( issueWaitForKeyUp )
                     flagWaitForKeyupSpecific( key );
@@ -69,12 +82,41 @@ class UserInputDeviceBase {
             }
         }
 
-        void waitForAnyKey() {
+        uint8_t waitForAnyKeyOnly() {
+            // wait for key, don't check if released already
             waitUntilNothingIsPressed();
             while ( true ) {
-                if ( getKeyDown() != 0 ) return;
+                uint8_t key = getKeyDown();
+                if ( key != 0 ) return key;
             }
         }
+
+        inline uint8_t waitForAnyKey() {
+            // wait for key, then wait for its release
+            waitUntilNothingIsPressed();
+            while ( true ) {
+                uint8_t key = getKeyUp();
+                if ( key != 0 ) return key;
+            }            
+            // return getKeyUp();
+            // auto key = waitForAnyKeyOnly();
+            // waitUntilNothingIsPressed();
+            // return key;
+        }
+
+        // uint8_t waitForAnyKey() {
+        //     waitUntilNothingIsPressed();
+        //     while ( true ) {
+        //         uint8_t key = getKeyDown();
+        //         if ( key != 0 ) return key;
+        //     }
+        // }
+
+        // uint8_t waitForAnyKeyAndRelease() {
+        //     auto key = waitForAnyKey();
+        //     waitUntilNothingIsPressed();
+        //     return key;
+        // }
 
     //
     // DEBOUNCER
@@ -84,20 +126,31 @@ class UserInputDeviceBase {
         Debouncer debouncer;
 
         void setDebounceTimeInMs( uint16_t activeState = 50, uint16_t inactiveState = 50, uint16_t minimum = 50 ) {
+            debouncer.useCustomSettings();
             Debouncer::Settings *s = debouncer.getSettings();
             s->activeStatesDebounceInMs = activeState;
             s->inactiveStateDebounceInMs = inactiveState;
             s->minimumDebounceTimeInMs = minimum;
         }
 
+        void setConfirmStateTimeInMs( uint16_t confirmActiveStateTimeInMs = 0, uint16_t confirmInactiveStateTimeInMs = 0 ) {
+            debouncer.useCustomSettings();
+            Debouncer::Settings *s = debouncer.getSettings();
+            s->confirmActiveStateTimeInMs = confirmActiveStateTimeInMs;
+            s->confirmInactiveStateTimeInMs = confirmInactiveStateTimeInMs;
+        }
+
+        void setRepeatDelayAndRateInMs( uint16_t repeatDelay = 400, uint16_t repeatRate = 250 ) {
+            debouncer.useCustomSettings();
+            Debouncer::Settings *s = debouncer.getSettings();
+            s->repeatDelayInMs = repeatDelay;
+            s->repeatRateInMs = repeatRate;
+        }
+
         void flagWaitForKeyup() { debouncer.flagWaitForKeyup(); }
         void cancelDebouncing() { debouncer.cancelDebouncing(); }
 
         virtual void flagWaitForKeyupSpecific( uint8_t key ) = 0;
-
-    protected:
-
-        // virtual void flagWaitForKeyup( char *keysPressed ) = 0;
 
 };
 

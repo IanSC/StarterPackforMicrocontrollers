@@ -17,7 +17,6 @@
 
 #pragma once
 #include <LCD_HD44780.h>
-using namespace StarterPack;
 
 // NOT FULLY TESTED: !!!
 // - R/W mode

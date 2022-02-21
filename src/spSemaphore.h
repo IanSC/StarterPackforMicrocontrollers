@@ -55,7 +55,15 @@ public:
         }
         if ( timeoutInMs == 0 )
             timeoutInMs = this->timeoutInMs;
-
+        if ( timeoutInMs == 0 ) {
+            while( true ) {
+                while ( token != 0 && token != id ) ;
+                token = id;
+                if ( token == id )
+                    return true;
+            }
+        }
+        
         uint32_t start = millis();
         while( true ) {
             while ( token != 0 && token != id ) {

@@ -106,6 +106,7 @@
 //          }
 
 #pragma once
+#include <stdint.h>
 
 #if defined(ESP32)
     #include <Arduino.h>
@@ -118,6 +119,9 @@ namespace StarterPack {
 typedef uint8_t ERROR_NO;
 
 class LCDBuffered : public LCDInterface {
+
+    // for testing:
+    friend char* LCDBuffered_internalAccess( LCDBuffered *lcd, uint8_t dataToGet );
 
     protected:
 
@@ -187,7 +191,7 @@ class LCDBuffered : public LCDInterface {
     //
     // BUFFERS
     //
-    private:
+    protected:
     
         uint16_t bufferSize = 0;
 
@@ -310,139 +314,6 @@ class LCDBuffered : public LCDInterface {
         }
 
     //
-    // TESTS
-    //
-    public:
-
-        void runSpeedTest() {
-
-            // do not simply select the fastest time
-            // it depends on available processor time and least amount of data sent to the LCD
-            // - for fast data change, increase throttle time, so overwritten changes are not sent
-            // - for faster reaction time, ex. pots, decrease or remove throttle
-            // - for LCDs with fast updates (ex. hardwired) and fast data changes,
-            //   increase throtle time to avoid displaying all changes
-            // key is for changes to overlap before sending to screen
-            //
-            // for this test, higher number tests gets slower
-            // eg. 0 to  999, is 3 characters max
-            //     0 to 9999, is not only 10x more, but also more characters
-
-            const bool doubleB = true;
-            const bool singleB = false;
-            Serial.println( "TEST START" );
-            
-            // ESP32 RESULT
-
-            // time to send full screen data
-            memset( userBuffer, 'A', bufferSize );
-            memset( screenData, ' ', bufferSize );
-            updateDurationInMs = 5000;
-            uint32_t start = millis();
-            updateAllNow();
-//            Serial.printf( "Full Screen = %lu\n", millis() - start ); // 22ms
-            Serial.print( "Full Screen = " );
-            Serial.println( millis() - start ); // 22ms
-            Serial.println();
-            updateDurationInMs = 10;
-
-            cursorAutoCarriageReturn = true;
-            cursorAutoJumpToStart = true;
-
-            runSpeedTestSolo( doubleB,   0,   1000, false ); //  2,128
-            runSpeedTestSolo( singleB,   0,   1000, false ); //  2,118
-            runSpeedTestSolo( doubleB,   0,   2000, false ); //  6,184
-            runSpeedTestSolo( singleB,   0,   2000, false ); //  6,163
-            runSpeedTestSolo( doubleB,   0,   5000, false ); // 18,341
-            runSpeedTestSolo( singleB,   0,   5000, false ); // 18,288
-            Serial.println();
-
-            runSpeedTestSolo( doubleB,  10,   1000, false ); //     31
-            runSpeedTestSolo( singleB,  10,   1000, false ); //     25
-            runSpeedTestSolo( doubleB,  10,  10000, false ); //    320
-            runSpeedTestSolo( singleB,  10,  10000, false ); //    149
-            runSpeedTestSolo( doubleB,  50,  10000, false ); //    
-            runSpeedTestSolo( singleB,  50,  10000, false ); //    
-            runSpeedTestSolo( doubleB, 100,  10000, false ); //    
-            runSpeedTestSolo( singleB, 100,  10000, false ); //    
-            runSpeedTestSolo( doubleB, 200,  10000, false ); //    
-            runSpeedTestSolo( singleB, 200,  10000, false ); //    
-            //runSpeedTestSolo( doubleB,  10, 100000, false ); //  3,160
-            //runSpeedTestSolo( singleB,  10, 100000, false ); //  1,422
-            Serial.println();
-            /*
-            runSpeedTestSolo( doubleB,  10, 500000, false ); // 16,894
-            runSpeedTestSolo( singleB,  10, 500000, false ); //  7,777
-            runSpeedTestSolo( doubleB,  50, 500000, false ); //  7,114
-            runSpeedTestSolo( singleB,  50, 500000, false ); //  3,356
-            runSpeedTestSolo( doubleB, 100, 500000, false ); //  6,053
-            runSpeedTestSolo( singleB, 100, 500000, false ); //  2,814
-            runSpeedTestSolo( doubleB, 200, 500000, false ); //  5,491
-            runSpeedTestSolo( singleB, 200, 500000, false ); //  2,564
-            Serial.println();
-            */
-            Serial.println( "TEST END" );
-        }
-
-        void runSpeedTestSolo( bool doubleBuffer, uint16_t throttleInMs, uint32_t count, bool showResults ) {
-            if ( doubleBuffer )
-                useDoubleBuffer();
-            else
-                useSingleBuffer();
-            setUpdateThrottleInMs( throttleInMs );
-
-            // pauseUpdate();
-            clear();
-            // resumeUpdate();
-            updateAllNow();
-
-            cursorOn();
-            cursorBlinkOn();
-            setVirtualCursor(7,0);
-
-            uint32_t start = millis();
-            uint32_t n = 0;
-            while( n <= count ) {
-                // pauseUpdate();
-                print( n++ );
-                print( '.' );
-                // resumeUpdate();
-                update();
-            }
-            updateAllNow();
-            uint32_t elapsed = millis() - start;
-
-            delay( 1000 );
-            if ( doubleBuffer )
-                Serial.print( "Double / " );
-            else
-                Serial.print( "Single / " );
-            Serial.print( throttleInMs );
-            Serial.print( " / " );
-            Serial.print( count );
-            Serial.print( " = " );
-            Serial.println( elapsed );
-//            Serial.printf( "%dms / %d = %d\n", throttleInMs, count, elapsed );
-            if ( showResults ) {
-                Serial.println( "userBuffer" );
-                debug( userBuffer );
-                Serial.println( "btsBuffer" );
-                debug( btsBuffer );
-                Serial.println( "screenData" );
-                debug( screenData );
-            }
-        }
-
-        void debug( char *buffer ) {
-            uint8_t ptr = 0;
-            for( int i = 0 ; i < maxRows ; i++ ) {
-                for( int j = 0 ; j < maxColumns ; j++ )
-                    Serial.write( buffer[ ptr++ ] );
-                Serial.println();
-            }
-        }
-
-    //
     // USER'S UPDATES
     //
     private:
@@ -478,7 +349,7 @@ class LCDBuffered : public LCDInterface {
         //          db.update();
         //      }
 
-        void setSemaphoreLockTimeoutInMs( uint8_t waitingTime ) {
+        void setSemaphoreLockTimeoutInMs( uint16_t waitingTime ) {
             // semLockTimeout = portTICK_PERIOD_MS * waitingTime;
             userBufferSem.timeoutInMs = waitingTime;
         }
@@ -580,7 +451,7 @@ class LCDBuffered : public LCDInterface {
 
         void clear() {
             memset( userBuffer, ' ', bufferSize );
-            setCursor( 0, 0 );                
+            setCursor( 0, 0 );
         }
 
         inline void home() {
@@ -600,14 +471,14 @@ class LCDBuffered : public LCDInterface {
         inline void displayOff()   { lcd->displayOff();   }
 
         inline void moveCursorRight() { cursorForward(); }
-        inline void moveCursorLeft()  { cursorBackward(); }        
+        inline void moveCursorLeft()  { cursorBackward(); }
 
         void scrollDisplayLeft() {
             // ABCDE
             // BCDE_
             char *from = userBuffer+1;
             char *to   = userBuffer;
-            for( int i = 0 ; i < maxRows ; i++ ) {
+            for( uint8_t i = 0 ; i < maxRows ; i++ ) {
                 memmove( to, from, maxColumns-1 );
                 userBuffer[(i+1)*maxColumns-1] = ' ';
                 from += maxColumns;
@@ -618,12 +489,12 @@ class LCDBuffered : public LCDInterface {
             // ABCDE
             // _ABCD
             char *from = userBuffer;
-            char *to   = userBuffer+1;                
-            for( int i = 0 ; i < maxRows ; i++ ) {
+            char *to   = userBuffer+1;
+            for( uint8_t i = 0 ; i < maxRows ; i++ ) {
                 memmove( to, from, maxColumns-1 );
                 userBuffer[i*maxColumns] = ' ';
                 from += maxColumns;
-                to += maxColumns;                    
+                to += maxColumns;
             }
         }
 
@@ -638,6 +509,111 @@ class LCDBuffered : public LCDInterface {
 
         inline void command( uint8_t value ) { lcd->command( value ); }
 
+    //
+    // ADDITIONAL FUNCTIONALITIES
+    //
+    public:
+
+        void scrollDisplayUp( bool clearLastRow = true ) {
+            for( uint8_t i = 0 ; i+1 < maxRows ; i++ )
+                memcpy( userBuffer + i*maxColumns, userBuffer + (i+1)*maxColumns, maxColumns );
+            if ( clearLastRow )
+                memset( userBuffer + (maxRows-1)*maxColumns, ' ', maxColumns );
+        }
+
+        void scrollDisplayDown( bool clearTopRow = true ) {
+            for( int i = maxRows-1 ; i >= 1 ; i-- )
+                memcpy( userBuffer + i*maxColumns, userBuffer + (i-1)*maxColumns, maxColumns );
+            if ( clearTopRow )
+                memset( userBuffer, ' ', maxColumns );
+        }
+
+        inline bool checkToBounds( uint8_t &col1, uint8_t &row1, uint8_t &col2, uint8_t &row2 ) {
+            if ( col1 > col2 ) { auto t=col1; col1=col2; col2=t; }
+            if ( row1 > col2 ) { auto t=row1; row1=col2; col2=t; }
+            // CASE (1) - adjust to bounds
+            if ( col1 < 0 ) col1 = 0;
+            if ( row1 < 0 ) row1 = 0;
+            if ( col2 >= maxColumns ) col2 = maxColumns - 1; // if maxColumns=0 crash
+            if ( row2 >= maxRows ) row2 = maxRows - 1;       // if maxRows=0 crash
+            // CASE (2) exit if out of bounds
+            // if ( col1 < 0 || row1 < 0 ) return false;
+            // if ( col2 >= maxColumns || row2 >= maxRows ) return false;
+            return true;
+        }
+
+        void scrollWindowLeft( uint8_t col1, uint8_t row1, uint8_t col2, uint8_t row2 ) {
+            if ( !checkToBounds( col1, row1, col2, row2 ) ) return;
+
+            char *from = userBuffer + row1*maxColumns+col1+1;
+            char *to   = userBuffer + row1*maxColumns+col1;
+            uint8_t count = col2 - col1;
+            char *spaceChar = userBuffer + row1*maxColumns+col2;
+
+            for( uint8_t i = row1 ; i <= row2 ; i++ ) {
+                memmove( to, from, count );
+                from += maxColumns;
+                to += maxColumns;
+                *spaceChar = ' ';
+                spaceChar += maxColumns;
+            }
+        }
+
+        void scrollWindowRight( uint8_t col1, uint8_t row1, uint8_t col2, uint8_t row2 ) {
+            if ( !checkToBounds( col1, row1, col2, row2 ) ) return;
+
+            char *from = userBuffer + row1*maxColumns+col1;
+            char *to   = userBuffer + row1*maxColumns+col1+1;
+            uint8_t count = col2 - col1;
+            char *spaceChar = userBuffer + row1*maxColumns+col1;
+            
+            for( uint8_t i = row1 ; i <= row2 ; i++ ) {
+                memmove( to, from, count );
+                from += maxColumns;
+                to += maxColumns;
+                *spaceChar = ' ';
+                spaceChar += maxColumns;
+            }
+        }
+
+        void scrollWindowUp( uint8_t col1, uint8_t row1, uint8_t col2, uint8_t row2, bool clearLastRow = true ) {
+            if ( !checkToBounds( col1, row1, col2, row2 ) ) return;
+
+            char *from = userBuffer + (row1+1)*maxColumns+col1;
+            char *to   = userBuffer + row1*maxColumns+col1;
+            uint8_t count = col2 - col1 + 1;
+
+            for( uint8_t i = row1 ; i+1 <= row2 ; i++ ) {
+                memcpy( to, from, count );
+                from += maxColumns;
+                to += maxColumns;
+            }
+            if ( clearLastRow )
+                memset( to, ' ', count );
+        }
+
+        void scrollWindowDown( uint8_t col1, uint8_t row1, uint8_t col2, uint8_t row2, bool clearLastRow = true ) {
+            if ( !checkToBounds( col1, row1, col2, row2 ) ) return;
+
+            char *from = userBuffer + (row2-1)*maxColumns+col1;
+            char *to   = userBuffer + row2*maxColumns+col1;
+            uint8_t count = col2 - col1 + 1;
+
+            for( uint8_t i = row2 ; i > row1 ; i-- ) {
+                memcpy( to, from, count );
+                from -= maxColumns;
+                to -= maxColumns;
+            }
+            if ( clearLastRow )
+                memset( to, ' ', count );
+        }
+
+        void clearToEOL() {
+            // clear whereever the cursor is to end-of-line
+            if ( offscreen ) return;
+            printCharsN( ' ', maxColumns - userCursorX );
+        }
+        
     //
     // VIRTUAL CURSOR
     //
@@ -667,8 +643,8 @@ class LCDBuffered : public LCDInterface {
     public:
 
         char virtualCursorChar = 0xFF;             // cursor character
-        uint16_t cursorBlinkOnDurationInMs  = 600; // blinking duration
-        uint16_t cursorBlinkOffDurationInMs = 400;
+        uint16_t cursorBlinkOnDurationInMs  = 400; // blinking duration
+        uint16_t cursorBlinkOffDurationInMs = 600; //    ON better shorter than OFF to not obscure text
 
         void setVirtualCursor( uint8_t col, uint8_t row ) {
             vCursorX = col; vCursorY = row;
@@ -678,8 +654,9 @@ class LCDBuffered : public LCDInterface {
             isCursorOn = true;
             // virtualCursor = vcTurnOn(virtualCursor,cCursorOn);
             // if blink is on next update on immediately
-            cursorLastBlinkUpdate = millis() - cursorBlinkOnDurationInMs - cursorBlinkOffDurationInMs;
-            cursorIsDisplayed = false;
+            // do not reset: if user toggles it will appear to be always on
+            // cursorLastBlinkUpdate = millis() - cursorBlinkOnDurationInMs - cursorBlinkOffDurationInMs;
+            // cursorIsDisplayed = false;
         }
         inline void cursorOff() {
             isCursorOn = false;
@@ -690,8 +667,9 @@ class LCDBuffered : public LCDInterface {
             // virtualCursor = vcTurnOn(virtualCursor,cBlinking);
             // if on:  next update off immediately
             // if off: not visible right now anyways
-            cursorLastBlinkUpdate = millis() - cursorBlinkOnDurationInMs - cursorBlinkOffDurationInMs;
-            cursorIsDisplayed = true;
+            // do not reset: if user toggles it will appear to be always on
+            // cursorLastBlinkUpdate = millis() - cursorBlinkOnDurationInMs - cursorBlinkOffDurationInMs;
+            // cursorIsDisplayed = true;
         }
         inline void cursorBlinkOff() {
             isCursorBlinking = false;
@@ -925,5 +903,254 @@ class LCDBuffered : public LCDInterface {
         }
 
 };
+
+//
+// TEST
+//
+
+    void TEST_scroll( LCDBuffered *lcd ) {
+        lcd->printStrAtRow( 0, "0AAA-567890123456789" );
+        lcd->printStrAtRow( 1, "0BBB-567890123456789" );
+        lcd->printStrAtRow( 2, "0CCC-567890123456789" );
+        lcd->printStrAtRow( 3, "0DDD-567890123456789" );
+        lcd->displayAll();
+        delay(2000);
+
+        lcd->scrollDisplayUp();
+        lcd->displayAll();
+        delay(2000);
+
+        lcd->scrollDisplayDown();
+        lcd->displayAll();
+        delay(3000);
+
+        lcd->scrollDisplayLeft();
+        lcd->displayAll();
+        delay(2000);
+
+        lcd->scrollDisplayRight();
+        lcd->displayAll();
+        delay(2000);
+    }
+
+    void TEST_windowScroll( LCDBuffered *lcd ) {
+        //
+        // LEFT
+        //
+        lcd->printStrAtRow( 0, "01234567890123456789" );
+        lcd->printStrAtRow( 1, "01234hellohey3456789" );
+        lcd->printStrAtRow( 2, "01234hellohey3456789" );
+        lcd->printStrAtRow( 3, "01234567890123456789" );
+        lcd->displayAll();
+        delay(1000);
+
+        for( int i = 0 ; i < 5 ; i++ ) {
+            lcd->scrollWindowLeft( 5, 1, 12, 2 );
+            // lcd->scrollWindowRight( 2, 0, 20, 3 );
+
+            lcd->displayAll();
+            delay(1000);
+        }
+
+        //
+        // RIGHT
+        //
+        lcd->printStrAtRow( 0, "01234567890123456789" );
+        lcd->printStrAtRow( 1, "01234hellohey3456789" );
+        lcd->printStrAtRow( 2, "01234hellohey3456789" );
+        lcd->printStrAtRow( 3, "01234567890123456789" );
+        lcd->displayAll();
+        delay(1000);
+
+        for( int i = 0 ; i < 5 ; i++ ) {
+            lcd->scrollWindowRight( 5, 1, 12, 2 );
+            // lcd->scrollWindowRight( 2, 0, 20, 3 );
+            lcd->displayAll();
+            delay(1000);
+        }
+
+        //
+        // UP
+        //
+        lcd->printStrAtRow( 0, "01234567890123456789" );
+        lcd->printStrAtRow( 1, "01234hellohey3456789" );
+        lcd->printStrAtRow( 2, "01234hiheybye3456789" );
+        lcd->printStrAtRow( 3, "01234heythere3456789" );
+        lcd->displayAll();
+        delay(1000);
+
+        for( int i = 0 ; i < 3 ; i++ ) {
+            lcd->scrollWindowUp( 5, 1, 12, 3 );
+            lcd->displayAll();
+            delay(1000);
+        }
+        lcd->scrollWindowUp( 5, 0, 12, 0 );
+        lcd->displayAll();
+        delay(1000);
+
+        //
+        // DOWN
+        //
+        lcd->printStrAtRow( 0, "01234567890123456789" );
+        lcd->printStrAtRow( 1, "01234hellohey3456789" );
+        lcd->printStrAtRow( 2, "01234hiheybye3456789" );
+        lcd->printStrAtRow( 3, "01234heythere3456789" );
+        lcd->displayAll();
+        delay(1000);
+
+        for( int i = 0 ; i < 3 ; i++ ) {
+            lcd->scrollWindowDown( 5, 1, 12, 3 );
+            lcd->displayAll();
+            delay(1000);
+        }
+        lcd->scrollWindowDown( 5, 0, 12, 0 );
+        lcd->displayAll();
+        delay(1000);
+    }
+
+//
+// SPEED TEST
+//
+
+    char* LCDBuffered_internalAccess( LCDBuffered *lcd, uint8_t dataToGet ) {
+        switch( dataToGet ) {
+        case 0: return lcd->userBuffer;
+        case 1: return lcd->btsBuffer;
+        case 2: return lcd->screenData;
+        }
+        return nullptr;
+    }
+
+    void TEST_bufferedSpeedDisplay( LCDBuffered *lcd, char *buffer ) {
+        uint8_t ptr = 0;
+        for( int i = 0 ; i < lcd->maxRows ; i++ ) {
+            for( int j = 0 ; j < lcd->maxColumns ; j++ )
+                Serial.write( buffer[ ptr++ ] );
+            Serial.println();
+        }
+    }
+
+    void TEST_bufferedSpeedCore( LCDBuffered *lcd, bool doubleBuffer, uint16_t throttleInMs, uint32_t count, bool showResults ) {
+        if ( doubleBuffer )
+            lcd->useDoubleBuffer();
+        else
+            lcd->useSingleBuffer();
+        lcd->setUpdateThrottleInMs( throttleInMs );
+
+        // pauseUpdate();
+        lcd->clear();
+        // resumeUpdate();
+        lcd->updateAllNow();
+
+        lcd->cursorOn();
+        lcd->cursorBlinkOn();
+        lcd->setVirtualCursor(7,0);
+
+        uint32_t start = millis();
+        uint32_t n = 0;
+        while( n <= count ) {
+            // pauseUpdate();
+            lcd->print( n++ );
+            lcd->print( '.' );
+            // resumeUpdate();
+            lcd->update();
+        }
+        lcd->updateAllNow();
+        uint32_t elapsed = millis() - start;
+
+        delay( 1000 );
+        if ( doubleBuffer )
+            Serial.print( "Double / " );
+        else
+            Serial.print( "Single / " );
+        Serial.print( throttleInMs );
+        Serial.print( " / " );
+        Serial.print( count );
+        Serial.print( " = " );
+        Serial.println( elapsed );
+        // Serial.printf( "%dms / %d = %d\n", throttleInMs, count, elapsed );
+        if ( showResults ) {
+            Serial.println( "userBuffer" );
+            TEST_bufferedSpeedDisplay( lcd, LCDBuffered_internalAccess( lcd, 0 ) );
+            Serial.println( "btsBuffer" );
+            TEST_bufferedSpeedDisplay( lcd, LCDBuffered_internalAccess( lcd, 1 ) );
+            Serial.println( "screenData" );
+            TEST_bufferedSpeedDisplay( lcd, LCDBuffered_internalAccess( lcd, 2 ) );
+        }
+    }
+
+    void TEST_bufferedSpeed( LCDBuffered *lcd ) {
+
+        // do not simply select the fastest time
+        // it depends on available processor time and least amount of data sent to the LCD
+        // - for fast data change, increase throttle time, so overwritten changes are not sent
+        // - for faster reaction time, ex. pots, decrease or remove throttle
+        // - for LCDs with fast updates (ex. hardwired) and fast data changes,
+        //   increase throtle time to avoid displaying all changes
+        // key is for changes to overlap before sending to screen
+        //
+        // for this test, higher number tests gets slower
+        // eg. 0 to  999, is 3 characters max
+        //     0 to 9999, is not only 10x more, but also more characters
+
+        const bool doubleB = true;
+        const bool singleB = false;
+        Serial.println( "TEST START" );
+        
+        // ESP32 RESULT
+
+        // time to send full screen data
+        // make sure it's different
+        lcd->clear();
+        lcd->displayAll();
+        for( int i = 0 ; i < lcd->maxColumns ; i++ ) {
+            lcd->setCursor( 0, i );
+            lcd->printCharsN( 'A', lcd->maxColumns );
+        }
+        // memset( userBuffer, 'A', bufferSize );
+        // memset( screenData, ' ', bufferSize );
+        lcd->updateDurationInMs = 5000;
+        uint32_t start = millis();
+        lcd->updateAllNow();
+        SerialPrintfln( "Full Screen = %lu", millis() - start ); // 22ms
+        lcd->updateDurationInMs = 10;
+
+        lcd->cursorAutoCarriageReturn = true;
+        lcd->cursorAutoJumpToStart = true;
+
+        TEST_bufferedSpeedCore( lcd, doubleB,   0,   1000, false ); //  2,128
+        TEST_bufferedSpeedCore( lcd, singleB,   0,   1000, false ); //  2,118
+        TEST_bufferedSpeedCore( lcd, doubleB,   0,   2000, false ); //  6,184
+        TEST_bufferedSpeedCore( lcd, singleB,   0,   2000, false ); //  6,163
+        TEST_bufferedSpeedCore( lcd, doubleB,   0,   5000, false ); // 18,341
+        TEST_bufferedSpeedCore( lcd, singleB,   0,   5000, false ); // 18,288
+        Serial.println();
+
+        TEST_bufferedSpeedCore( lcd, doubleB,  10,   1000, false ); //     31
+        TEST_bufferedSpeedCore( lcd, singleB,  10,   1000, false ); //     25
+        TEST_bufferedSpeedCore( lcd, doubleB,  10,  10000, false ); //    320
+        TEST_bufferedSpeedCore( lcd, singleB,  10,  10000, false ); //    149
+        TEST_bufferedSpeedCore( lcd, doubleB,  50,  10000, false ); //    
+        TEST_bufferedSpeedCore( lcd, singleB,  50,  10000, false ); //    
+        TEST_bufferedSpeedCore( lcd, doubleB, 100,  10000, false ); //    
+        TEST_bufferedSpeedCore( lcd, singleB, 100,  10000, false ); //    
+        TEST_bufferedSpeedCore( lcd, doubleB, 200,  10000, false ); //    
+        TEST_bufferedSpeedCore( lcd, singleB, 200,  10000, false ); //    
+        //TEST_bufferedSpeedCore( lcd, doubleB,  10, 100000, false ); //  3,160
+        //TEST_bufferedSpeedCore( lcd, singleB,  10, 100000, false ); //  1,422
+        Serial.println();
+        /*
+        TEST_bufferedSpeedCore( lcd, doubleB,  10, 500000, false ); // 16,894
+        TEST_bufferedSpeedCore( lcd, singleB,  10, 500000, false ); //  7,777
+        TEST_bufferedSpeedCore( lcd, doubleB,  50, 500000, false ); //  7,114
+        TEST_bufferedSpeedCore( lcd, singleB,  50, 500000, false ); //  3,356
+        TEST_bufferedSpeedCore( lcd, doubleB, 100, 500000, false ); //  6,053
+        TEST_bufferedSpeedCore( lcd, singleB, 100, 500000, false ); //  2,814
+        TEST_bufferedSpeedCore( lcd, doubleB, 200, 500000, false ); //  5,491
+        TEST_bufferedSpeedCore( lcd, singleB, 200, 500000, false ); //  2,564
+        Serial.println();
+        */
+        Serial.println( "TEST END" );
+    }
 
 }

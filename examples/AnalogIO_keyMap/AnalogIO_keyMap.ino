@@ -19,6 +19,8 @@
 #include <Throttle.h>
 using namespace StarterPack;
 
+namespace ui = StarterPack::UserInterface;
+
 // analog resistor network keys are connected to A0
 AnalogIO aIO( A0 );
 
@@ -34,57 +36,53 @@ void setup() {
     //  228 - up key
     //  430 - down key
     aIO.initButtons( 1022, 834, 642, 14, 228, 430 );
+
+    // 5 buttons, so 5 keys
+    // don't forget the null
+    constexpr char map[] = { ui::cENTER, ui::cLEFT, ui::cRIGHT, ui::cUP, ui::cDOWN, NULL };
+    aIO.assignKeymap( map );
+    // aIO.assignKeymap( ui::keyMap( ui::cENTER, ui::cLEFT, ui::cRIGHT, ui::cUP, ui::cDOWN ) );
+
+    // assign to global key handler used is used by other modules
+    // such as LCDUtility, LCDMenu etc.
+    ui::assignKeyHandler( aIO );
     
     // to play around:
     //aIO.setRepeatDelayInMs( 1000 ); // default 400
     //aIO.setRepeatRateInMs (  500 ); // default 250
 }
 
-int counter[6];
-char name[6] = { 'X', 'S', 'L', 'R', 'U', 'D' };
-
-void report() {
-    for( int i=1 ; i<=5; i++ ) {
-        Serial.print( " / " );
-        Serial.print( name[i] );
-        Serial.print( '=' );
-        Serial.print( counter[i] );
-    }
-    Serial.println();
-}
-
-// serial port might get overwhelmed by report()
-// ... so update only every 100ms
-Throttle tt = Throttle( &report, 100 );
-
 void loop() {
 
-    byte buttonNo;
+    uint8_t key = ui::getKeyDown();
 
     // try each case: 1, 2, 3 or 4
-    byte caseNo = 1;
+    uint8_t caseNo = 1;
 
     switch( caseNo ) {
     case 1:
-        // detect when key is pressed
-        buttonNo = aIO.getKeyDown();
+        // get continuous feedback
+        key = ui::getContinuousKey();
         break;
     case 2:
-        // detect when key is released
-        buttonNo = aIO.getKeyUp();
+        // detect when key is pressed
+        key = ui::getKeyDown();
         break;
     case 3:
-        // get repeated results while pressed
-        buttonNo = aIO.getRepeatingKey();
+        // detect when key is released
+        key = ui::getKeyUp();
         break;
     case 4:
-        // get continuous feedback
-        buttonNo = aIO.getContinuousKey();
+        // get repeated results while pressed
+        key = ui::getRepeatingKey();
         break;
     }
 
-    // R.I.P. counter[0]...
-    counter[buttonNo]++;
-
-    tt.trigger();
+    switch( key ) {
+    case ui::cENTER: Serial.println( "time to enter" ); break;
+    case ui::cLEFT:  Serial.println( "sudden left" ); break;
+    case ui::cRIGHT: Serial.println( "sudden right" ); break;
+    case ui::cUP:    Serial.println( "somethings coming up" ); break;
+    case ui::cDOWN:  Serial.println( "going downtown" ); break;
+    }
 }

@@ -117,6 +117,7 @@
 #pragma once
 #include <Debouncer.h>
 #include <limits.h>
+#include <UserInputDevice1Key.h>
 
     #if defined(ESP32)
         // FOR ESP32 NATIVE READ
@@ -141,7 +142,7 @@ namespace StarterPack {
 typedef int  (*intIntFunction) (int); // int function( int )
 typedef void (*voidIntFunction)(int); // void function( int )
 
-class AnalogIO {
+class AnalogIO : public UserInputDevice1Key {
 
 //
 // INIT
@@ -543,10 +544,37 @@ class AnalogIO {
             //     Serial.printf( "%d = %d - %d\n", buttonList[i].value, buttonList[i].from, buttonList[i].to );
 
             // do initial read, otherwise debouncer will give wrong value 1st time
-            debouncer.setInitialValue( readButtonCore() );
+            debouncer.setInitialValue( readMappedKey() );
 
             // by default was set to false (assume = 0) already
             //buttonDebouncer.inactiveState = inactiveButton;
+        }
+
+    //
+    // TEST
+    //
+    public:
+
+        void showAverageADCValueToSerial( uint16_t unpressedValue = 0 ) {
+
+            // pinMode( PIN, INPUT );
+            uint32_t total = 0;
+            uint16_t cnt = 0;
+
+            while( true ) {
+                auto v = analogRead( PIN );
+                if ( v == unpressedValue ) {
+                    total = 0;
+                    cnt = 0;
+                } else {
+                    total += v;
+                    cnt++;
+                    // Serial.print( analogRead(15) );
+                    Serial.print( "average: " );
+                    Serial.println( (double)total / (double)cnt );
+                }
+                delay( 20 );
+            }
         }
 
     //
@@ -564,22 +592,35 @@ class AnalogIO {
     //         return value;
     //     }
 
-    private:
+    public:
 
-        int8_t readButtonCore() {
+        uint8_t readMappedKey() {
             readRaw();
             for ( int i = 0 ; i < buttonCount; i++ ) {
                 if ( buttonList[i].from <= rawValue && rawValue <= buttonList[i].to ) {
-                    return debouncer.debounce( i );
+                    return debouncer.debounce( getKeymap( i ) );
                 }
             }
             // Serial.println( "GOT INVALID VALUE" );
             // do not debounce invalid button
-            return debouncer.inactiveState;
+            return debouncer.inactiveState;            
         }
+
+        // int8_t readButtonCore() {
+        //     readRaw();
+        //     for ( int i = 0 ; i < buttonCount; i++ ) {
+        //         if ( buttonList[i].from <= rawValue && rawValue <= buttonList[i].to ) {
+        //             return debouncer.debounce( i );
+        //         }
+        //     }
+        //     // Serial.println( "GOT INVALID VALUE" );
+        //     // do not debounce invalid button
+        //     return debouncer.inactiveState;
+        // }
 
     public:
 
+/*
         int8_t getContinuousKey() {
             value = readButtonCore();
             value = debouncer.getContinuousKey( value );
@@ -610,18 +651,26 @@ class AnalogIO {
             handleOnChanged();
             return value;
         }
+*/
 
-        // direct access to debouncer being used
-        Debouncer debouncer;
+        // // direct access to debouncer being used
+        // // Debouncer debouncer;
 
-        // inline void setActiveDebounceTimeInMs  ( uint16_t time ) { debouncer.activeStatesDebounceInMs  = time; }
-        // inline void setInactiveDebounceTimeInMs( uint16_t time ) { debouncer.inactiveStateDebounceInMs = time; }
-        // inline void setMinimumDebounceTimeInMs ( uint16_t time ) { debouncer.minimumDebounceTimeInMs   = time; }
-        // inline void setConfirmStateTimeInMs    ( uint16_t time ) { debouncer.confirmStateTimeInMs      = time; }
-        inline void flagWaitForKeyup()                    { debouncer.flagWaitForKeyup();       }
-        inline void cancelDebouncing()                    { debouncer.cancelDebouncing();       }
-        // inline void setRepeatDelayInMs( uint16_t delay )  { debouncer.repeatDelayInMs = delay;  }
-        // inline void setRepeatRateInMs( uint16_t rate )    { debouncer.repeatRateInMs = rate;    }
+        // // inline void setActiveDebounceTimeInMs  ( uint16_t time ) { debouncer.activeStatesDebounceInMs  = time; }
+        // // inline void setInactiveDebounceTimeInMs( uint16_t time ) { debouncer.inactiveStateDebounceInMs = time; }
+        // // inline void setMinimumDebounceTimeInMs ( uint16_t time ) { debouncer.minimumDebounceTimeInMs   = time; }
+        // // inline void setConfirmStateTimeInMs    ( uint16_t time ) { debouncer.confirmStateTimeInMs      = time; }
+        // inline void flagWaitForKeyup()                    { debouncer.flagWaitForKeyup();       }
+        // inline void cancelDebouncing()                    { debouncer.cancelDebouncing();       }
+        // // inline void setRepeatDelayInMs( uint16_t delay )  { debouncer.repeatDelayInMs = delay;  }
+        // // inline void setRepeatRateInMs( uint16_t rate )    { debouncer.repeatRateInMs = rate;    }
+
+    //
+    // DEBOUNCER
+    //
+    public:
+
+        void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
 
         inline void setInactiveButton( uint8_t buttonNo ) { debouncer.inactiveState = buttonNo; }
 

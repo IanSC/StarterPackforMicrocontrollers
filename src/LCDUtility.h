@@ -10,9 +10,7 @@
 #include <LCDInterface.h>
 #include <spUtility.h>
 #include <Throttle.h>
-
-#include <UserInput.h>
-namespace ui = StarterPack::UserInput;
+#include <UserInterface.h>
 
 namespace StarterPack {
 
@@ -41,12 +39,11 @@ namespace LCDUtility {
 
         private:
 
-            LCDInterface *lcd;
+            // LCDInterface *lcd;
 
             uint8_t    row;               // lcd row to use
             const char **options;         // pointer to array of string
             int8_t     optionCount;       // number of items
-            bool       crossover = false; // allow crossover between 1st/last items
 
             uint8_t    *itemLen;          // length of each option
             uint8_t    *posInLayout;      // position of each option if arranged as one long string
@@ -64,6 +61,8 @@ namespace LCDUtility {
             uint8_t selectedLeftLocation  = 0; // left position of selected item on screen
             uint8_t selectedRightLocation = 0; // right position of selected item on screen
 
+            bool    crossover = false;         // allow crossover between 1st/last items
+
             ~chooser() {
                 delete itemLen;
                 delete posInLayout;
@@ -78,29 +77,13 @@ namespace LCDUtility {
 
         public:
 
-            template<size_t optCount>
-            inline chooser( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optCount],
-            bool crossover, uint8_t initialSelection = 0 )
-            : chooser( lcd, lineNo, options, initialSelection, crossover ) {
-            }
-
-            // template<size_t optCount>
-            // inline chooser( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optCount],
-            // uint8_t initialSelection, bool crossover = false )
-            // : chooser( lcd, lineNo, options, initialSelection, crossover ) {
-            // }
-
-            chooser( LCDInterface &lcd, uint8_t row, uint8_t optCount, const char **options,
+            chooser( uint8_t row, uint8_t optCount, const char **options,
             uint8_t initialSelection = 0, bool crossover = false ) {
 
-                this->lcd = &lcd;
                 this->row = row;
                 this->options = options;
                 this->optionCount = optCount;
                 this->crossover = crossover;
-
-                // for( int i = 0 ; i < optCount ; i++ )
-                //     Serial.println( options[i] );
 
                 // limit to 255 items or 255 characters total
                 if ( optionCount > UINT8_MAX )
@@ -127,64 +110,31 @@ namespace LCDUtility {
                 }
 
                 setSelectedItem( initialSelection );
-                // selectedItem = initialSelection;
-                // if ( selectedItem >= optionCount )
-                //     selectedItem = optionCount;
-                // computePositions();
             }
 
             template<size_t optCount>
-            chooser( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optCount],
-            uint8_t initialSelection, bool crossover = false ) {
+            inline chooser( uint8_t row, const char* (&options)[optCount],
+                bool crossover, uint8_t initialSelection = 0 )
+            : chooser( row, optCount, options, initialSelection, crossover ) {}
 
-                this->lcd = &lcd;
-                this->row = lineNo;
-                this->options = options;
-                this->optionCount = optCount;
-                this->crossover = crossover;
+            template<size_t optCount>
+            inline chooser( uint8_t row, const char* (&options)[optCount],
+                uint8_t initialSelection, bool crossover = false )
+            : chooser( row, optCount, options, initialSelection, crossover ) {}
 
-                // limit to 255 items or 255 characters total
-                if ( optionCount > UINT8_MAX )
-                    optionCount = UINT8_MAX;
-                itemLen = new uint8_t[optionCount];
-                posInLayout = new uint8_t[optionCount];
-                int16_t pos = 0;
-                for( uint8_t i = 0; i < optionCount ; i++ ) {
-                    size_t len = strlen( options[i] );
-                    if ( len > UINT8_MAX ) {
-                        // too long, length storage uint8_t
-                        optionCount = i;
-                        break;
-                    }
-                    itemLen[i] = len;
-                    posInLayout[i] = pos;
-                    pos += itemLen[i] + 1;
-                    if ( pos > UINT8_MAX ) {
-                        // using uint8_t only for computations
-                        optionCount = i;
-                        break;
-                    }
-                    pos++;
-                }
-
-                setSelectedItem( initialSelection );
-                // selectedItem = initialSelection;
-                // if ( selectedItem >= optionCount )
-                //     selectedItem = optionCount;
-                // computePositions();
-            }
-
-            template<size_t optionCount>
-            chooser( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optionCount],
-            bool (*backgroundProcess)(void), bool crossover = false )
-            : chooser( lcd, lineNo, options, crossover ) {
+            // background process
+            template<size_t optCount>
+            inline chooser( uint8_t row, const char* (&options)[optCount],
+                bool (*backgroundProcess)(void), uint8_t initialSelection = 0, bool crossover = false )
+            : chooser( row, optCount, options, initialSelection, crossover ) {
                 this->backgroundProcess = backgroundProcess;
             }
 
-            template<size_t optionCount>
-            chooser( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optionCount],
-            Throttle &throttler, bool crossover = false )
-            : chooser( lcd, lineNo, options, crossover ) {
+            // Throttle
+            template<size_t optCount>
+            inline chooser( uint8_t row, const char* (&options)[optCount],
+                Throttle &throttler, uint8_t initialSelection = 0, bool crossover = false )
+            : chooser( row, optCount, options, initialSelection, crossover ) {
                 this->throttler = &throttler;
             }
 
@@ -210,6 +160,10 @@ namespace LCDUtility {
             }
 
             void display( bool showSelection = true ) {
+                namespace ui = StarterPack::UserInterface;
+                if ( !ui::hasScreen() ) return;
+                LCDInterface *lcd = ui::LCD;
+
                 bool overflowRight = false;
                 lcd->setCursor( 0, row );
 
@@ -278,6 +232,7 @@ namespace LCDUtility {
             void hideSelection() { showMarkersCore( ' ', ' ' ); }
 
             uint8_t poll() {
+                namespace ui = StarterPack::UserInterface;
 
                 // return:
                 // 0    - no selection
@@ -285,36 +240,15 @@ namespace LCDUtility {
 
                 if ( ui::KeyHandler == nullptr ) return 0;
 
-                ui::Keys input = ui::getRepeatingKey( ui::Keys::LeftRightOkay );
-                if ( input == ui::Keys::None ) return 0;
-                if ( input == ui::Keys::Okay ) {
+                uint8_t key = ui::getRepeatingKey();
+                if ( key == ui::kENTER ) {
+                    ui::waitUntilNothingIsPressed();
                     return selectedItem + 1;
                 }
-
-                /*
-                hideSelection();
-
-                if ( input == ui::Keys::Left ) {
-                    if ( selectedItem <= 0 ) {
-                        if ( crossover ) selectedItem = optionCount - 1;
-                    } else
-                        selectedItem--;
-                } else if ( input == ui::Keys::Right ) {
-                    if ( selectedItem >= optionCount - 1 ) {
-                        if ( crossover ) selectedItem = 0;
-                    } else
-                        selectedItem++;
-                }
-                computePositions();
-                display( true );
-                */
-
-                if ( input == ui::Keys::Left )
+                if ( key == ui::kLEFT || key == ui::kUP )
                     moveLeft();
-                else if ( input == ui::Keys::Right )
+                else if ( key == ui::kRIGHT || key == ui::kDOWN )
                     moveRight();
-
-                // showSelection();
                 return 0;
             }
 
@@ -341,6 +275,10 @@ namespace LCDUtility {
         private:
 
             void showMarkersCore( char left, char right ) {
+                namespace ui = StarterPack::UserInterface;
+                if ( !ui::hasScreen() ) return;
+                LCDInterface *lcd = ui::LCD;
+
                 uint8_t S = posInLayout[ selectedItem ];
                 uint8_t E = S + itemLen[ selectedItem ] + 1;
                 S -= visibleStart;
@@ -355,6 +293,10 @@ namespace LCDUtility {
             }
 
             void computePositions() {
+                namespace ui = StarterPack::UserInterface;
+                if ( !ui::hasScreen() ) return;
+                LCDInterface *lcd = ui::LCD;
+
                 // S/E = start/end position of selection in buffer
                 uint8_t S = posInLayout[ selectedItem ];
                 uint8_t E = S + itemLen[ selectedItem ] + 2;
@@ -384,271 +326,120 @@ namespace LCDUtility {
                 }
             }
 
-        //
-        // OLD METHOD
-        //
-        // - build layout and use it for display
-        // - need more memory as original strings!
-        /*
-        private:
-
-            char *layout; // string with all options positioned
-
-            inline void freeBuffer() {
-                free layout;
-            }
-            void buildBuffer() {
-                // limit to 255 items or 255 characters total
-                if ( optionCount > UINT8_MAX )
-                    optionCount = UINT8_MAX;
-                itemLen = new uint8_t[optionCount];
-                posInLayout = new uint8_t[optionCount];
-                int16_t pos = 0;
-                for( uint8_t i = 0; i < optionCount ; i++ ) {
-                    size_t len = strlen( options[i] );
-                    if ( len > UINT8_MAX ) {
-                        // too long, length storage uint8_t
-                        optionCount = i;
-                        break;
-                    }
-                    itemLen[i] = len;
-                    posInLayout[i] = pos;                
-                    pos += itemLen[i] + 1;
-                    if ( pos > UINT8_MAX ) {
-                        // using uint8_t only for computations
-                        optionCount = i;
-                        break;
-                    }
-                    pos++;
-                }
-                uint16_t layoutSize = posInLayout[optionCount-1] + itemLen[optionCount-1] + 1;
-                layout = new char[layoutSize];
-                pos = 0;
-                for( uint8_t i = 0; i < optionCount ; i++ ) {
-                    layout[pos++] = ' ';
-                    strcpy( layout+pos, options[i] );
-                    pos += itemLen[i];
-                    layout[pos++] = ' ';
-                }            
-                layout[pos] = 0;
-                // Serial.println( layout );
-            }
-
-            void displayUsingBuffer( bool showSelection = true ) {
-                bool overflowRight = false;
-                lcd->setCursor( 0, lineNo );
-
-                uint8_t chToDisplay = strlen( layout + visibleStart );
-                if ( chToDisplay > lcd->maxColumns ) {
-                    chToDisplay = lcd->maxColumns - 1;
-                    overflowRight = true;
-                }
-
-                #if defined(ESP32)
-                    lcd->printf( "%.*s", chToDisplay, layout + visibleStart );
-                #else
-                    char *ptr = layout + visibleStart;
-                    for( int i = 0; i < chToDisplay ; i++ )
-                        lcd->write( *ptr++ );
-                #endif
-
-                // clear space
-                if ( chToDisplay < lcd->maxColumns )
-                    lcd->printCharsN( ' ', lcd->maxColumns - chToDisplay );
-
-                // overflow markers
-                if ( layout != 0 )
-                    lcd->writeAt( 0, lineNo, 0x7F );
-                if ( overflowRight )
-                    lcd->writeAt( lcd->maxColumns-1, lineNo, 0x7E );
-
-                if ( showSelection )
-                    this->showSelection();
-                lcd->displayAll();
-            }*/
-
     };
 
-    // template<size_t optionCount>
-    // static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optionCount],
-    // bool crossover = false ) {
-    //     chooser c = chooser( lcd, lineNo, options, crossover );
-    //     return c.prompt();
-    // }
-
     template<size_t optCount>
-    static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optCount],
+    static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     bool crossover = false, uint8_t initialSelection = 0 ) {
-        chooser c = chooser( lcd, lineNo, options, initialSelection, crossover );
+        chooser c = chooser( row, optCount, options, initialSelection, crossover );
         return c.prompt();
     }
 
     template<size_t optCount>
-    static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optCount],
+    static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     uint8_t initialSelection, bool crossover = false ) {
-        chooser c = chooser( lcd, lineNo, options, initialSelection, crossover );
+        chooser c = chooser( row, optCount, options, initialSelection, crossover );
         return c.prompt();
     }
 
-    // template<size_t optionCount>
-    // static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optionCount],
-    // bool crossover = false ) {
-    //     chooser c = chooser( lcd, lineNo, options, crossover );
-    //     return c.prompt();
-    // }
-
-    template<size_t optionCount>
-    static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optionCount],
+    template<size_t optCount>
+    static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     bool (*backgroundProcess)(void), bool crossover = false ) {
-        chooser c = chooser( lcd, lineNo, options, backgroundProcess, crossover );
+        chooser c = chooser( row, optCount, options, backgroundProcess, crossover );
         return c.prompt();
     }
 
-    template<size_t optionCount>
-    static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optionCount],
+    template<size_t optCount>
+    static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     Throttle &throttler, bool crossover = false ) {
-        chooser c = chooser( lcd, lineNo, options, throttler, crossover );
+        chooser c = chooser( row, optCount, options, throttler, crossover );
         return c.prompt();
     }
 
-    static inline uint8_t chooseYesNo( LCDInterface &lcd, uint8_t lineNo,
+    template<size_t optCount>
+    static inline uint8_t choose( uint8_t captionRow, const char *caption, uint8_t optionsRow, const char* (&options)[optCount],
     bool crossover = false, uint8_t initialSelection = 0 ) {
-        const char *options[] = { "Yes", "No" };
-        chooser c( lcd, lineNo, options, initialSelection, crossover );
+        namespace ui = StarterPack::UserInterface;
+        if ( !ui::hasScreen() ) return 0;
+        ui::LCD->printStrAtRow( captionRow, caption );
+        chooser c = chooser( optionsRow, optCount, options, initialSelection, crossover );
         return c.prompt();
     }
 
-    static inline uint8_t chooseYesNoCancel( LCDInterface &lcd, uint8_t lineNo,
+    template<size_t optCount>
+    static inline uint8_t choose( uint8_t captionRow, const char *caption, uint8_t optionsRow, const char* (&options)[optCount],
+    uint8_t initialSelection, bool crossover = false ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( !ui::hasScreen() ) return 0;
+        ui::LCD->printStrAtRow( captionRow, caption );
+        chooser c = chooser( optionsRow, optCount, options, initialSelection, crossover );
+        return c.prompt();
+    }
+
+    //
+    // PREDEFINED
+    //
+
+    static inline uint8_t chooseYesNo( uint8_t row,
     bool crossover = false, uint8_t initialSelection = 0 ) {
-        const char *options[] = { "Yes", "No", "Cancel" };
-        chooser c( lcd, lineNo, options, initialSelection, crossover );
+        static const char *options[] = { "Yes", "No" };
+        chooser c( row, options, initialSelection, crossover );
         return c.prompt();
     }
 
-    static inline uint8_t chooseNoYes( LCDInterface &lcd, uint8_t lineNo,
+    static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
     bool crossover = false, uint8_t initialSelection = 0 ) {
-        const char *options[] = { "No", "Yes" };
-        chooser c( lcd, lineNo, options, initialSelection, crossover );
-        return c.prompt();
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printfAtRow( captionRow, caption );
+        return chooseYesNo( optionsRow, crossover, initialSelection );
     }
 
-    static inline uint8_t chooseNoYesCancel( LCDInterface &lcd, uint8_t lineNo,
+    static inline uint8_t chooseYesNoCancel( uint8_t row,
     bool crossover = false, uint8_t initialSelection = 0 ) {
-        const char *options[] = { "No", "Yes", "Cancel" };
-        chooser c( lcd, lineNo, options, initialSelection, crossover );
+        static const char *options[] = { "Yes", "No", "Cancel" };
+        chooser c( row, options, initialSelection, crossover );
         return c.prompt();
     }
 
-//
-// MENU SYSTEM
-//
+    static inline uint8_t chooseYesNoCancel( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    bool crossover = false, uint8_t initialSelection = 0 ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printfAtRow( captionRow, caption );
+        return chooseYesNoCancel( optionsRow, crossover, initialSelection );
+    }
 
-/*
-    class menuSet;
+    static inline uint8_t chooseNoYes( uint8_t lineNo,
+    bool crossover = false, uint8_t initialSelection = 0 ) {
+        static const char *options[] = { "No", "Yes" };
+        chooser c( lineNo, options, initialSelection, crossover );
+        return c.prompt();
+    }
 
-    class menuEntry { public:
-        const char *option;
-        const char *description;
-        uint8_t result;
-        menuEntry *next = nullptr;
-        menuSet *submenu = nullptr;
-        inline void assignSubmenu( menuSet &menu ) {
-            this->submenu = &menu;
-        }
-    };
+    static inline uint8_t chooseNoYes( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    bool crossover = false, uint8_t initialSelection = 0 ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printfAtRow( captionRow, caption );
+        return chooseNoYes( optionsRow, crossover, initialSelection );
+    }
 
-    class menuSet { 
-        
-        public:
+    static inline uint8_t chooseNoYesCancel( uint8_t lineNo,
+    bool crossover = false, uint8_t initialSelection = 0 ) {
+        namespace ui = StarterPack::UserInterface;
+        static const char *options[] = { "No", "Yes", "Cancel" };
+        chooser c( lineNo, options, initialSelection, crossover );
+        return c.prompt();
+    }
 
-            const char *header;
-            menuEntry *options = nullptr;
-
-        menuSet( const char *header ) {
-            this->header = header;
-        }
-        menuEntry *add( char *option, char *description, uint8_t result ) {
-            menuEntry *e = new menuEntry();
-            e->option = option;
-            e->description = description;
-            e->result = result;
-            if ( options == nullptr )
-                options = e;
-            else {
-                menuEntry *ptr = options;
-                while( ptr->next != nullptr )
-                    ptr = ptr->next;
-                ptr->next = e;
-            }
-            return e;
-        }
-        void display( LCDInterface &lcd, uint8_t lineNo ) {
-            uint8_t count = 0;
-            menuEntry *ptr = options;
-            while ( ptr != nullptr ) {
-                count++;
-                ptr = ptr->next;
-            }
-            const char *o[count];
-            ptr = options;
-            uint8_t i = 0;
-            while ( ptr != nullptr )
-                o[i++] = ptr->option;
-            // chooser c( lcd, lineNo, (int) count, o );
-            // c.prompt();
-            // choose( lcd, lineNo, o );
-        }
-        
-    };
-*/
-    // class menuSystem {
-
-    //     public:
-
-
-    //         struct menuSet {
-    //             char *description;
-    //             menuEntry *options;
-
-    //         };
-
-    //         struct menuData {
-    //             const char *header;        // top line to display (if applicable)
-    //             const char *options[];     // menu choices
-    //             uint8_t     optionCount;   // number of menu items
-    //             const char *description[]; // top line to display per menu item (if applicable)
-    //             int8_t      result[];      // next state if selected
-    //             uint8_t     resultCount;
-    //             uint8_t     backMenu;      // menu number to go back to (if applicable)
-    //             uint8_t     backPos;       // menu position to go back to (if applicable)
-    //         };
-
-    //         // template<size_t optCount>
-    //         // static inline uint8_t choose( LCDInterface &lcd, uint8_t lineNo, const char* (&options)[optCount],
-    //         // uint8_t initialSelection, bool crossover = false ) {
-    //         //     chooser c = chooser( lcd, lineNo, options, initialSelection, crossover );
-    //         //     return c.prompt();
-    //         // }
-
-    //         template<size_t optionCnt, size_t descCnt, size_t resultCnt>
-    //         menuData *create( const char *header, const char* (&options)[optionCnt],
-    //         const char* (&description)[descCnt],
-    //         const char* (&results)[resultCnt]  ) {
-    //             if ( resultCnt != descCnt ) return null;
-    //             menuData *m    = new menuData();
-    //             m->header      = header;
-    //             m->options     = options;
-    //             m->optionCount = optCount;
-    //             m->description = description;
-    //             m->result      = results;
-    //             m->resultCount = resultCount;
-    //             return m;
-    //         }
-
-    // };
-
-
-
+    static inline uint8_t chooseNoYesCancel( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    bool crossover = false, uint8_t initialSelection = 0 ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printfAtRow( captionRow, caption );
+        return chooseNoYesCancel( optionsRow, crossover, initialSelection );
+    }
 
 //
 // LONG MESSAGE
@@ -656,37 +447,43 @@ namespace LCDUtility {
 
     // https://solarianprogrammer.com/2016/11/28/cpp-passing-c-style-array-with-size-information-to-function/
     template<size_t msgCount>
-    static void showMultiLineMsg( LCDInterface &lcd, const char* (&msg)[msgCount], void (*backgroundProcess)(void) = nullptr ) {
+    static uint8_t showMultiLineMsg( const char* (&msg)[msgCount], void (*backgroundProcess)(void) = nullptr ) {
+        namespace ui = StarterPack::UserInterface;
 
-        lcd.clear();
+        if ( !ui::hasScreen() ) return 0;
+
+        ui::LCD->clear();
         int lineNo = 0;
-        
+
+        ui::waitUntilNothingIsPressed();
+
         while ( true ) {
 
             // display text
             int tmp = lineNo;
-            for( int i = 0 ; i < lcd.maxRows ; i++ ) {
+            for( int i = 0 ; i < ui::LCD->maxRows ; i++ ) {
                 if ( tmp < msgCount )
-                    lcd.printStrAtRow( i, msg[tmp] );
+                    ui::LCD->printStrAtRow( i, msg[tmp] );
                 else
-                    lcd.clearRow( i );
+                    ui::LCD->clearRow( i );
                 tmp++;
             }
-            lcd.displayAll();
+            if ( lineNo < msgCount - ui::LCD->maxRows ) {
+                // not last line, show marker
+                ui::LCD->printAt( 18, ui::LCD->maxRows-1, " \x7E" );
+            }
+            ui::LCD->displayAll();
 
             if ( ui::KeyHandler != nullptr ) {
-                ui::Keys input = ui::getRepeatingKey( ui::Keys::UpDownOkay );
-                switch( input ) {
-                case ui::Keys::Okay:
-                    return;
-                case ui::Keys::Up:
+                uint8_t key = ui::getRepeatingKey();
+                if ( key == ui::kENTER || key == ui::kESCAPE ) {
+                    ui::waitUntilNothingIsPressed();
+                    return key;
+                }
+                else if ( key == ui::kUP || key == ui::kLEFT ) {
                     if ( lineNo > 0 ) lineNo--;
-                    break;
-                case ui::Keys::Down:
-                    if ( lineNo < msgCount - lcd.maxRows ) lineNo++;
-                    break;
-                default:
-                    break;
+                } else if ( key == ui::kDOWN || key == ui::kRIGHT ) {
+                    if ( lineNo < msgCount - ui::LCD->maxRows ) lineNo++;
                 }
             }
 
@@ -704,40 +501,101 @@ namespace LCDUtility {
             uint32_t blinkTime = millis();
             bool blinkMode = false;
 
-            LCDInterface *lcd;
+            // LCDInterface *lcd;
             uint8_t x;
             uint8_t y;
 
         public:
 
-            blink( LCDInterface &lcd, uint8_t col, uint8_t row ) {
-                this->lcd = &lcd;
+            blink( uint8_t col, uint8_t row ) {
                 this->x = col;
                 this->y = row;
             }
 
             void update() {
+                namespace ui = StarterPack::UserInterface;
+                if ( !ui::hasScreen() ) return;
                 uint32_t now = millis();
                 if ( now - blinkTime >= 1000 ) {
-                    lcd->writeAt( x, y, blinkMode ? 0xA5 : ' ' );
+                    ui::LCD->writeAt( x, y, blinkMode ? 0xA5 : ' ' );
                     blinkMode = !blinkMode;
                     blinkTime = now;
-                    lcd->displayAll();
+                    // ui::LCD->displayAll();
                 }
             }
 
             void setPosition( uint8_t col, uint8_t row ) {
+                namespace ui = StarterPack::UserInterface;
+                if ( !ui::hasScreen() ) return;
                 if ( !blinkMode ) {
                     // false means dot is currently displayed
-                    lcd->writeAt( x, y, blinkMode ? 0xA5 : ' ' );
+                    ui::LCD->writeAt( x, y, blinkMode ? 0xA5 : ' ' );
                     blinkMode = !blinkMode;
-                    lcd->displayAll();
+                    // ui::LCD->displayAll();
                 }
                 this->x = col;
                 this->y = row;
             }
 
     };
+
+//
+// BLINK SOS
+//
+/*
+    class blinkSOS {
+
+            uint8_t col; uint8_t row;
+            char ch;
+            
+            uint8_t counter = 0;
+            bool blinkOn = false;
+            uint32_t lastAction;
+
+        public:
+
+            uint8_t blinkCount = 3;
+            uint16_t blinkDuration = 1000;
+    
+            blinkSOS( uint8_t col, uint8_t row, char ch, uint8_t blinkCount = 3 ) {
+                this->col = col; this->row = row; this->ch = ch;
+                this->blinkCount = blinkCount;
+            }
+
+            void setPosition( uint8_t col, uint8_t row ) { this->col = col; this->row = row; }
+            void setCharacter( char ch ) { this->ch = ch; }
+            
+            void start() {
+                if ( counter != 0 ) return;
+                counter = blinkCount;
+                blinkOn = false;
+                lastAction = millis();
+            }
+            void stop() {
+                if ( !ui::hasScreen() ) return;
+                lcd.setCursor( col, row );
+                lcd.print( ' ' );
+                counter = 0;
+            }
+
+            void loop() {
+                if ( counter == 0 ) return;
+                uint32_t now = millis();
+                if ( now - lastAction < blinkDuration ) return;
+
+                lcd.setCursor( col, row );
+                if ( blinkOn ) {
+                    lcd.write( ' ' );
+                    counter--;
+                } else {
+                    lcd.write( ch );
+                }
+                blinkOn = !blinkOn;
+                lastAction = now;
+            }
+
+    };
+*/
 
 }
 

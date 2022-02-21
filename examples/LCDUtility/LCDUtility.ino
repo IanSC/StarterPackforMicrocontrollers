@@ -34,17 +34,20 @@ AnalogIO aIO( A0 );
         lcd.print( "hello" );
         lcd.printAt( 0, 1, "there" );
 
+        // assign lcd to be used by LCDUtility
+        UserInterface::assignLCD( lcd );
+
         // see AnalogIO Buttons Example
         // see UserInput Example
         aIO.initButtons( 1022, 834, 642, 14, 228, 430 );
-        UserInput::assignKeys( aIO, 1, 2, 3, 4, 5 );
+        UserInterface::assignKeyHandler( aIO );
     }
 
 //
 // LOOP
 //
 
-    LCDUtility::blink imAlive( lcd, 15, 0 );
+    LCDUtility::blink imAlive( 15, 0 );
 
     int counter = 0;
     bool backgroundProcess() {
@@ -64,7 +67,7 @@ AnalogIO aIO( A0 );
         //
         // CHOOSE
         //
-        uint8_t p = LCDUtility::choose( lcd, 
+        uint8_t p = LCDUtility::choose( 
             1,                  // line 1 
             options,            // choices
             &backgroundProcess, // optional background process to run
@@ -86,7 +89,7 @@ AnalogIO aIO( A0 );
             "princess and a",
             "ying prince",
             "haha..." };
-        LCDUtility::showMultiLineMsg( lcd, story );
+        LCDUtility::showMultiLineMsg( story );
 
         //
         // BLINK
@@ -94,7 +97,7 @@ AnalogIO aIO( A0 );
         lcd.clear();
         imAlive.setPosition( 0, 1 );
         uint32_t start = millis();
-        LCDUtility::blink dot2 = LCDUtility::blink( lcd, 3, 1 );
+        LCDUtility::blink dot2 = LCDUtility::blink( 3, 1 );
         while( true ) {
             if ( millis() - start >= 10000 )
                 break;

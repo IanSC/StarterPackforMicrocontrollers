@@ -1,19 +1,9 @@
 #pragma once
 #include <stdint.h>
 #include <LCDUtility.h>
-#include <UserInput.h>
-namespace ui = StarterPack::UserInput;
+#include <UserInterface.h>
 
 namespace StarterPack {
-
-//
-// ENTRY
-//
-
-// class menuSet;
-
-    
-// };
 
 //
 // SET
@@ -133,7 +123,7 @@ class menuSet {
                 ptr = ptr->next;
             }
 
-            this->chooser = new LCDUtility::chooser( lcd, menuRow, optionCount, items );
+            this->chooser = new LCDUtility::chooser( menuRow, optionCount, items );
         }
 
         uint8_t getSelectedItem() { return chooser->selectedItem; }
@@ -163,79 +153,51 @@ class menuSet {
             return prompt();
         }
 
-        uint8_t prompt() { // LCDInterface &lcd, int8_t headerRow=1, int8_t menuRow=2, int8_t descriptionRow=3 ) {
-            /*
-            // count options
-            uint8_t count = 0;
-            menuEntry *ptr = options;
-            while ( ptr != nullptr ) {
-                count++;
-                ptr = ptr->next;
-            }
+        uint8_t prompt() {
+            namespace ui = StarterPack::UserInterface;
 
-            // gather options/descriptions
-            const char *items[count];
-            const char *desc[count];
-            ptr = options;
-            uint8_t i = 0;
-            while ( ptr != nullptr ) {
-                items[i] = ptr->option;
-                desc[i] = ptr->description;
-                i++;
-                ptr = ptr->next;
-            }*/
             if ( chooser == nullptr ) return 0;
+            display();
 
-            display(); // lcd, headerRow, menuRow, descriptionRow );
-
-            // if ( headerRow != -1 )
-            //     lcd.printStrAtRow( headerRow, header );
-            // LCDUtility::chooser chooser( lcd, menuRow, optionCount, items );
-            // chooser.display( true );
-
+            ui::waitUntilNothingIsPressed();
             uint8_t lastSelectedItem = -1;
             while( true ) {
 
-                ui::Keys input = ui::getRepeatingKey();
+                uint8_t key = ui::getRepeatingKey();
                 
-                switch( input ) {
-                case ui::Keys::Okay: {
-                        menuEntry *selected = options;
-                        for( int i = 0 ; i < chooser->selectedItem ; i++ )
-                            selected = selected->next;
-                        if ( selected->submenu != nullptr ) {
-                            // open submenu
-                            selected->submenu->begin( *lcd, headerRow, menuRow, descriptionRow );
-                            uint8_t r = selected->submenu->prompt(); // lcd, headerRow, menuRow, descriptionRow );
-                            if ( r != 0 ) {
-                                // save where to continue
-                                current = selected->submenu;
-                                return r;
-                            }
-                            chooser->display( true );
-                            lastSelectedItem = -1;
-                        } else {
-                            // return result
-                            current = this;
-                            return selected->result;
+                if ( key == ui::kENTER ) {
+                    menuEntry *selected = options;
+                    for( int i = 0 ; i < chooser->selectedItem ; i++ )
+                        selected = selected->next;
+                    if ( selected->submenu != nullptr ) {
+                        // open submenu
+                        selected->submenu->begin( *lcd, headerRow, menuRow, descriptionRow );
+                        uint8_t r = selected->submenu->prompt(); // lcd, headerRow, menuRow, descriptionRow );
+                        if ( r != 0 ) {
+                            // save where to continue
+                            current = selected->submenu;
+                            return r;
                         }
-                        ui::waitUntilNothingIsPressed();
+                        chooser->display( true );
+                        lastSelectedItem = -1;
+                    } else {
+                        // return result
+                        current = this;
+                        return selected->result;
                     }
-                    break;
-                case ui::Keys::Cancel:
+                    ui::waitUntilNothingIsPressed();
+                } else if ( key == ui::kESCAPE ) {
                     // if ( parent != nullptr ) {
                     //     return parent->prompt();
                     // }
+                    ui::waitUntilNothingIsPressed();
                     return 0;
-                case ui::Keys::Left:
+                } else if ( key == ui::kLEFT ) {
                     chooser->moveLeft();
-                    break;
-                case ui::Keys::Right:
+                } else if ( key == ui::kRIGHT ) {
                     chooser->moveRight();
-                    break;
-                default:
-                    break;
                 }
+
                 if ( lastSelectedItem != chooser->selectedItem ) {
                     lastSelectedItem = chooser->selectedItem;
                     if ( descriptionRow != -1 )

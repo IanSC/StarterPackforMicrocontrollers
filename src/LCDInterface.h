@@ -78,6 +78,8 @@
 //                                          ex. lcd.printfAt( 10, 1, "%s = %4d", "val", val );
 
 #pragma once
+#include <stdarg.h>
+#include <stdio.h>
 #include <Print.h>
 #ifdef ESP32
     #include <string>
@@ -127,7 +129,7 @@ class LCDInterface : public Print {
     //
     public:
     
-        bool isBuffered() { return false; }
+        virtual bool isBuffered() { return false; }
         virtual void displayAll() {}
 
     //
@@ -228,13 +230,13 @@ class LCDInterface : public Print {
     public:
 
         // print ch several times
-        inline void printCharsN( char ch, uint8_t count ) {
-            #if defined(ESP32)
-                print( std::string( count, ch ).c_str() );
-            #else
+        inline void printCharsN( char ch, int8_t count ) {
+            //#if defined(ESP32)
+            //    print( std::string( count, ch ).c_str() );
+            //#else
                 while( count-- > 0 )
                     write( ch );
-            #endif
+            //#endif
         }
 
         // print with location
@@ -252,13 +254,12 @@ class LCDInterface : public Print {
 
         /*
         template <typename TType>
-        void printLine( uint8_t lineNo, TType value ) {
+        void printAtRow( uint8_t row, TType value ) {
             // can't tell how many characters to clear
-            // can't pass to lcd since cursor position is not saved
-            //    eg. clear from cursor to end of line
-            // can't clear line 1st, due to flicker
-            // no print() to buffer only printf()
-            setCursor( 0, lineNo );
+            // don't know current cursor position to clear to EOL
+            // ??? can't clear line 1st, due to flicker
+            // ??? no print() to buffer only printf()
+            setCursor( 0, row );
             print( value );
             // ... clear to end of line
         }
@@ -275,12 +276,21 @@ class LCDInterface : public Print {
         }
 
         // print first N characters of string
-        void printStrN( const char *str, uint8_t N ) {
-            if ( str == nullptr ) return;
-            while( N > 0 && *str != 0 ) {
-                print( *str++ );
-                N--;
+        // fill the rest with spacea
+        void printStrN( const char *str, uint8_t N, bool clearSpace = false ) {
+            int8_t spaceAfter = 0;
+            if ( clearSpace ) {
+                spaceAfter = N - strlen( str );
+                if ( spaceAfter < 0 ) spaceAfter = 0;
             }
+            if ( str != nullptr ) {
+                while( N > 0 && *str != 0 ) {
+                    print( *str++ );
+                    N--;
+                }
+            }
+            if ( clearSpace )
+                printCharsN( ' ', spaceAfter );
         }
 
         // clear whole line
@@ -326,6 +336,41 @@ class LCDInterface : public Print {
             va_end( args );
             printStrAtRow( row, buffer );
         }
+
+    //
+    // FULL SCREEN
+    //
+
+    void showLines( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
+        clear();
+        if ( row1 != nullptr ) printStrAtRow( 0, row1 );
+        if ( row2 != nullptr ) printStrAtRow( 1, row2 );
+        if ( row3 != nullptr ) printStrAtRow( 2, row3 );
+        if ( row4 != nullptr ) printStrAtRow( 3, row4 );
+        //lcd.displayAll();
+    }
+    
+    inline void show_12345678901234567890( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
+        // wtf for?
+        //
+        // myLCD.
+        // show_12345678901234567890(
+        //     "can this fit in 20 chars?",
+        //     "obviously not" );
+        showLines( row1, row2, row3, row4 );
+    }
+
+    inline void show_01234567890123456789( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
+        // wtf for?
+        //
+        // myLCD.
+        // show_01234567890123456789(
+        //     "what col# is X on?",
+        //     "it's 13" );
+        showLines( row1, row2, row3, row4 );
+    }
+
+
 
     //
     // ALIAS
