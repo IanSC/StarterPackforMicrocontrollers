@@ -405,7 +405,7 @@ class AnalogIO : public UserInputDevice1Key {
 
     public:
 
-        void readRaw() {
+        int readRaw() {
             #if defined(ESP32)
                 // ESP IDF style
                 rawValue = readESPStlye();
@@ -413,6 +413,7 @@ class AnalogIO : public UserInputDevice1Key {
                 // Arduino style
                 rawValue = analogRead( PIN );
             #endif
+            return rawValue;
         }
 
         int read() {
@@ -540,8 +541,8 @@ class AnalogIO : public UserInputDevice1Key {
                 }
             }
             // DEBUG
-            // for ( int i = 0 ; i < buttonCount; i++ )
-            //     Serial.printf( "%d = %d - %d\n", buttonList[i].value, buttonList[i].from, buttonList[i].to );
+            for ( int i = 0 ; i < buttonCount; i++ )
+                Serial.printf( "%d = %d - %d\n", buttonList[i].value, buttonList[i].from, buttonList[i].to );
 
             // do initial read, otherwise debouncer will give wrong value 1st time
             debouncer.setInitialValue( readMappedKey() );
@@ -603,7 +604,7 @@ class AnalogIO : public UserInputDevice1Key {
             }
             // Serial.println( "GOT INVALID VALUE" );
             // do not debounce invalid button
-            return debouncer.inactiveState;            
+            return debouncer.inactiveState;
         }
 
         // int8_t readButtonCore() {

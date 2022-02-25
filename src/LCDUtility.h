@@ -328,6 +328,7 @@ namespace LCDUtility {
 
     };
 
+    // BASIC
     template<size_t optCount>
     static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     bool crossover = false, uint8_t initialSelection = 0 ) {
@@ -335,6 +336,7 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // BASIC
     template<size_t optCount>
     static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     uint8_t initialSelection, bool crossover = false ) {
@@ -342,20 +344,23 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // WITH BACKGROUND PROCESS
     template<size_t optCount>
     static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     bool (*backgroundProcess)(void), bool crossover = false ) {
-        chooser c = chooser( row, optCount, options, backgroundProcess, crossover );
+        chooser c = chooser( row, options, backgroundProcess, crossover );
         return c.prompt();
     }
 
+    // WITH THROTTLER
     template<size_t optCount>
     static inline uint8_t choose( uint8_t row, const char* (&options)[optCount],
     Throttle &throttler, bool crossover = false ) {
-        chooser c = chooser( row, optCount, options, throttler, crossover );
+        chooser c = chooser( row, options, throttler, crossover );
         return c.prompt();
     }
 
+    // WITH MESSAGE
     template<size_t optCount>
     static inline uint8_t choose( uint8_t captionRow, const char *caption, uint8_t optionsRow, const char* (&options)[optCount],
     bool crossover = false, uint8_t initialSelection = 0 ) {
@@ -366,6 +371,7 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // WITH MESSAGE
     template<size_t optCount>
     static inline uint8_t choose( uint8_t captionRow, const char *caption, uint8_t optionsRow, const char* (&options)[optCount],
     uint8_t initialSelection, bool crossover = false ) {
@@ -380,6 +386,7 @@ namespace LCDUtility {
     // PREDEFINED
     //
 
+    // YES/NO
     static inline uint8_t chooseYesNo( uint8_t row,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         static const char *options[] = { "Yes", "No" };
@@ -387,6 +394,7 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // YES/NO - WITH MESSAGE
     static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
@@ -395,6 +403,24 @@ namespace LCDUtility {
         return chooseYesNo( optionsRow, crossover, initialSelection );
     }
 
+    // YES/NO - WITH BACKGROUND PROCESS
+    static inline uint8_t chooseYesNo( uint8_t row,
+    bool (*backgroundProcess)(void), bool crossover = false ) {
+        static const char *options[] = { "Yes", "No" };
+        chooser c( row, options, backgroundProcess, 0, crossover );
+        return c.prompt();
+    }
+
+    // YES/NO - WITH MESSAGE / BACKGROUND PROCESS
+    static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    bool (*backgroundProcess)(void), bool crossover = false ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printfAtRow( captionRow, caption );
+        return chooseYesNo( optionsRow, backgroundProcess, crossover );
+    }
+
+    // YES/NO/CANCEL
     static inline uint8_t chooseYesNoCancel( uint8_t row,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         static const char *options[] = { "Yes", "No", "Cancel" };
@@ -402,6 +428,7 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // YES/NO/CANCEL - WITH MESSAGE
     static inline uint8_t chooseYesNoCancel( uint8_t captionRow, const char *caption, uint8_t optionsRow,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
@@ -410,6 +437,7 @@ namespace LCDUtility {
         return chooseYesNoCancel( optionsRow, crossover, initialSelection );
     }
 
+    // NO/YES
     static inline uint8_t chooseNoYes( uint8_t lineNo,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         static const char *options[] = { "No", "Yes" };
@@ -417,6 +445,7 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // NO/YES - WITH MESSAGE
     static inline uint8_t chooseNoYes( uint8_t captionRow, const char *caption, uint8_t optionsRow,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
@@ -425,6 +454,7 @@ namespace LCDUtility {
         return chooseNoYes( optionsRow, crossover, initialSelection );
     }
 
+    // NO/YES/CANCEL
     static inline uint8_t chooseNoYesCancel( uint8_t lineNo,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
@@ -433,6 +463,7 @@ namespace LCDUtility {
         return c.prompt();
     }
 
+    // NO/YES/CANCEL - WITH MESSAGE
     static inline uint8_t chooseNoYesCancel( uint8_t captionRow, const char *caption, uint8_t optionsRow,
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;

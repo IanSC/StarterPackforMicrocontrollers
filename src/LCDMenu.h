@@ -14,9 +14,12 @@ class menuSet {
         class menuEntry { public:            
             const char *option;
             const char *description;
+
             uint8_t result;
-            menuEntry *next = nullptr;
             menuSet *submenu = nullptr;
+            bool backToUpperMenu = false;
+
+            menuEntry *next = nullptr;
             // inline void assignSubmenu( menuSet &menu ) {
             //     this->submenu = &menu;
         };
@@ -29,6 +32,7 @@ class menuSet {
 
         ~menuSet() {
             release();
+            delete_NextLinkedList( options );
         }
 
         menuSet( const char *header = nullptr ) {
@@ -38,23 +42,28 @@ class menuSet {
         // menuEntry *
         void add( const char *option, const char *description, uint8_t result ) {
             //return 
-            addCore( option, description, result, nullptr );
+            addCore( option, description, result, nullptr, false );
         }
 
         // menuEntry *
         void add( const char *option, const char *description, menuSet &submenu ) {
             //return
-             addCore( option, description, 0, &submenu );
+             addCore( option, description, 0, &submenu, false );
+        }
+
+        void exitMenu( const char *option, const char *description ) {
+            addCore( option, description, 0, nullptr, true );
         }
 
     private:
 
-        void addCore( const char *option, const char *description, uint8_t result, menuSet *submenu ) {
+        void addCore( const char *option, const char *description, uint8_t result, menuSet *submenu, bool backToUpperMenu ) {
             menuEntry *e = new menuEntry();
             e->option = option;
             e->description = description;
             e->result = result;
             e->submenu = submenu;
+            e->backToUpperMenu = backToUpperMenu;
             if ( submenu != nullptr )
                 submenu->parent = this;
             if ( options == nullptr )
@@ -180,6 +189,10 @@ class menuSet {
                         }
                         chooser->display( true );
                         lastSelectedItem = -1;
+                    } else if ( selected->backToUpperMenu ) {
+                        // as if ESCAPE pressed
+                        ui::waitUntilNothingIsPressed();
+                        return 0;
                     } else {
                         // return result
                         current = this;

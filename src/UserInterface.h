@@ -130,6 +130,40 @@ namespace UserInterface {
             return showError( errSource, errCode, errMsg1, errMsg2, errMsg3, headerDecorator );
         }
 
+        // display only, don't wait for any key
+        void displayDialog( const char *header,
+        const char *msg1 = nullptr, const char *msg2 = nullptr, const char *msg3 = nullptr,
+        const char *headerDecorator = "((()))" ) {
+            if ( LCD == nullptr ) return;
+            LCD->clear();
+            showHeader( 0, header, headerDecorator );
+            if ( msg1 != nullptr ) LCD->printStrAtRow( 1, msg1 );
+            if ( msg2 != nullptr ) LCD->printStrAtRow( 2, msg2 );
+            if ( msg3 != nullptr ) LCD->printStrAtRow( 3, msg3 );
+            LCD->displayAll();
+            // return waitForAnyKey();
+        }
+
+        void displayDialogError( uint8_t errSource, uint8_t errCode,
+        const char *errMsg,
+        const char *headerDecorator = "((()))" ) {
+            if ( LCD == nullptr ) return;
+            LCD->clear();
+            char header[11]; // "ERROR xxyy"
+            snprintf( header, 11, "ERROR %02x%02x", errSource, errCode );
+            displayDialog( header, nullptr, errMsg, nullptr );
+        }
+
+        void displayDialogError( uint8_t errSource, uint8_t errCode,
+        const char *errMsg1, const char *errMsg2, const char *errMsg3 = nullptr,
+        const char *headerDecorator = "((()))" ) {
+            if ( LCD == nullptr ) return;
+            LCD->clear();
+            char header[11];
+            snprintf( header, 11, "ERROR %02x%02x", errSource, errCode );
+            displayDialog( header, errMsg1, errMsg2, errMsg3 );
+        }
+
     //
     // KEY ASSIGNMENT
     //
