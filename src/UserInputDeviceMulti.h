@@ -175,13 +175,14 @@ class UserInputDeviceMulti : public UserInputDevice {
         void addCombinedKey( uint8_t key1, uint8_t key2, uint8_t combined ) {
             combined_2Keys *ck = new combined_2Keys;
             ck->key1 = key1; ck->key2 = key2; ck->result = combined;
-            if ( combinedList_2Keys == nullptr )
-                combinedList_2Keys = ck;
-            else {
-                combined_2Keys *p = combinedList_2Keys;
-                while ( p->next != nullptr ) p = p->next;
-                p->next = ck;
-            }
+            insertEnd_NextLinkedList( &combinedList_2Keys, ck );
+            // if ( combinedList_2Keys == nullptr )
+            //     combinedList_2Keys = ck;
+            // else {
+            //     combined_2Keys *p = combinedList_2Keys;
+            //     while ( p->next != nullptr ) p = p->next;
+            //     p->next = ck;
+            // }
         }
 
     //

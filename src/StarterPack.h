@@ -20,7 +20,6 @@
 // #include <UserInput_Digital.h>
 //#include <UserInput_MatrixKeypad.h>
 
-
 #include <LCD_wired.h>
 #include <LCDBuffered_wired.h>
 #include <LCD_i2c.h>
@@ -39,6 +38,10 @@
 #include <spUtility.h>
 
 #include <blinkSOS.h>
+
+#include <Encoder.h>
+#include <Storage.h>
+#include <PropertyEditor.h>
 
 namespace StarterPack {
 }

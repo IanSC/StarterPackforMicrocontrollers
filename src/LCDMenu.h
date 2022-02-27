@@ -66,14 +66,15 @@ class menuSet {
             e->backToUpperMenu = backToUpperMenu;
             if ( submenu != nullptr )
                 submenu->parent = this;
-            if ( options == nullptr )
-                options = e;
-            else {
-                menuEntry *ptr = options;
-                while( ptr->next != nullptr )
-                    ptr = ptr->next;
-                ptr->next = e;
-            }
+            insertEnd_NextLinkedList( &options, e );
+            // if ( options == nullptr )
+            //     options = e;
+            // else {
+            //     menuEntry *ptr = options;
+            //     while( ptr->next != nullptr )
+            //         ptr = ptr->next;
+            //     ptr->next = e;
+            // }
             // return e;
         }
 

@@ -47,13 +47,14 @@ class DigitalIOGroup : public UserInputDeviceMulti {
             dIOEntry *e = new dIOEntry();
             e->dIO = &dIO;
             e->key = key;
-            if ( dIOEntry_List == nullptr )
-                dIOEntry_List = e;
-            else {
-                dIOEntry *p = dIOEntry_List;
-                while ( p->next != nullptr ) p = p->next;
-                p->next = e;
-            }
+            insertEnd_NextLinkedList( &dIOEntry_List, e );
+            // if ( dIOEntry_List == nullptr )
+            //     dIOEntry_List = e;
+            // else {
+            //     dIOEntry *p = dIOEntry_List;
+            //     while ( p->next != nullptr ) p = p->next;
+            //     p->next = e;
+            // }
         }
 
     //

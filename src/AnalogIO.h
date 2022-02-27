@@ -124,18 +124,18 @@
         #include <driver/adc.h>
     #endif
 
-    // SMOOTHING FILTER - CHOOSE ONLY 1
-    #define USE_RESPONSIVE_AR
-    //#define USE_KALMAN_FILTER
+    // // SMOOTHING FILTER - CHOOSE ONLY 1
+    // #define USE_RESPONSIVE_AR
+    // //#define USE_KALMAN_FILTER
 
-    #if defined(USE_RESPONSIVE_AR)
-        // https://github.com/dxinteractive/ResponsiveAnalogRead
-        #include <ResponsiveAnalogRead.h>
-    #endif
-    #if defined(USE_KALMAN_FILTER)
-        // https://github.com/denyssene/SimpleKalmanFilter
-        #include <SimpleKalmanFilter.h>
-    #endif
+    // #if defined(USE_RESPONSIVE_AR)
+    //     // https://github.com/dxinteractive/ResponsiveAnalogRead
+    //     #include <ResponsiveAnalogRead.h>
+    // #endif
+    // #if defined(USE_KALMAN_FILTER)
+    //     // https://github.com/denyssene/SimpleKalmanFilter
+    //     #include <SimpleKalmanFilter.h>
+    // #endif
 
 namespace StarterPack {
 
@@ -164,9 +164,9 @@ class AnalogIO : public UserInputDevice1Key {
 
         enum optionsEnum {
             NONE          = 0,
-            NO_SMOOTHING  = 0,
-            SMOOTHING     = 1,
-            NO_PULLUP     = 0,
+            // NO_SMOOTHING  = 0,
+            // SMOOTHING     = 1,
+            // NO_PULLUP     = 0,
             WITH_PULLUP   = 2,
             WITH_PULLDOWN = 4
         };
@@ -181,7 +181,7 @@ class AnalogIO : public UserInputDevice1Key {
         AnalogIO( uint8_t pin, optionsEnum options = optionsEnum::NONE, intIntFunction mapFunction = nullptr, voidIntFunction onChange = nullptr ) {
 
             PIN = pin;
-            useSmoothing = ( ( options & optionsEnum::SMOOTHING ) == optionsEnum::SMOOTHING );
+            // useSmoothing = ( ( options & optionsEnum::SMOOTHING ) == optionsEnum::SMOOTHING );
             if ( ( options & optionsEnum::WITH_PULLUP ) == optionsEnum::WITH_PULLUP )
                 pinMode( PIN, INPUT_PULLUP );
             else if ( ( options & optionsEnum::WITH_PULLDOWN ) == optionsEnum::WITH_PULLDOWN )
@@ -200,14 +200,18 @@ class AnalogIO : public UserInputDevice1Key {
                 mapGPIOtoADC();
             #endif
 
-            if ( useSmoothing )
-                setupSmoothing();
+            // if ( useSmoothing )
+            //     setupSmoothing();
         }
         
-        void init() {
-            if ( useSmoothing )
-                initSmoothing();
-            read();
+        // void init() {
+        //     if ( useSmoothing )
+        //         initSmoothing();
+        //     read();
+        // }
+
+        inline void setSmoothingFunction( intIntFunction smoothingFunction ) {
+            this->smoothingFunction = smoothingFunction;
         }
 
         inline void setMappingFunction( intIntFunction mapFunction ) {
@@ -220,24 +224,90 @@ class AnalogIO : public UserInputDevice1Key {
 
     private:
 
-        #if defined(ESP32)
-            int analogResolution = 4096;
-        #else
-            int analogResolution = 1024;
-        #endif
+        bool useSmoothing = false;
+        int16_t smoothingAverage = 0;
+        int16_t smMinimumChange = 20;
+        int16_t smMaxChangeToDisable = 40;   // if changed this much or more, ignore smoothing
+        double smoothingPercentage = 0.25;
+
+        //static int16_t (*StarterPack::AnalogIO::xxx)( int16_t newRawValue ) = applySmoothing25;
+
+        int16_t applySmoothing( int16_t newRawValue ) {
+            // get 90% of previous value
+            //    add 10% of new value
+            auto diff = labs( smoothingAverage - newRawValue );
+            if ( diff < smMinimumChange )
+                return smoothingAverage;
+            if ( diff >= smMaxChangeToDisable ) {
+                smoothingAverage = newRawValue;
+            } else {
+                smoothingAverage = (double) smoothingAverage * (1 - smoothingPercentage) 
+                    + smoothingPercentage * (double) newRawValue;
+            }
+            return smoothingAverage;
+        }
+
+        int16_t applySmoothing25( int16_t newRawValue ) {
+            // https://arduino.stackexchange.com/questions/69473/ignoring-potentiometer-value-variations
+            // (3 * avg + 1 * newdat) / 4
+            return( (((smoothingAverage<<2) - smoothingAverage + newRawValue) + 2) >> 2 );
+        }
 
     public:
 
-        inline void setAnalogResolution( int resolution ) {
-            analogResolution = resolution;
-            #if defined(USE_RESPONSIVE_AR)
-                RAR.setAnalogResolution( resolution );
-            #endif
+        void setSmoothing( int16_t minimumChange, int16_t maximumChangeForSmoothing, double smoothingPercentage ) {
+            // percentage - percent of new reading to apply
+            // ex. 0.3, use 70% of previous value + 30% of new reading
+            if ( smoothingPercentage < 0 )
+                smoothingPercentage = 0;
+            else if ( smoothingPercentage > 1 )
+                smoothingPercentage = 1;
+            this->smMinimumChange = minimumChange;
+            this->smMaxChangeToDisable = abs( maximumChangeForSmoothing );
+            this->smoothingPercentage = smoothingPercentage;
+            smoothingAverage = readRaw();
+            useSmoothing = true;
         }
 
-        inline int getAnalogResolution() {
-            return analogResolution;
+        // void setSmoothing( double percentage ) {
+        //     // percentage - percent of new reading to apply
+        //     // ex. 0.3, use 70% of previous value + 30% of new reading
+        //     if ( percentage < 0 ) percentage = 0;
+        //     if ( percentage > 1 ) percentage = 1;
+        //     smoothingPercentage = percentage;
+        //     smoothingAverage = readRaw();
+        //     useSmoothing = true;
+        // }
+
+        void enableSmoothing() {
+            smoothingAverage = readRaw();
+            useSmoothing = true;
         }
+
+        void disableSmoothing() {
+            useSmoothing = false;
+        }
+
+    private:
+
+        // #if defined(ESP32)
+        //     int analogResolution = 4096;
+        // #else
+        //     int analogResolution = 1024;
+        // #endif
+
+    public:
+
+        // inline void setAnalogResolution( int resolution ) {
+        //     analogResolution = resolution;
+        //     // #if defined(USE_RESPONSIVE_AR)
+        //     //     RAR.setAnalogResolution( resolution );
+        //     // #endif
+        // }
+
+        // inline int getAnalogResolution() {
+        //     return analogResolution;
+        // }
 
 //
 // READ ESP NATIVE METHOD
@@ -326,71 +396,72 @@ class AnalogIO : public UserInputDevice1Key {
         // - need to set range
         // - time: 25 ~ 30 ms (on ESP32 DevKitC)
 
-        bool useSmoothing = false;
+        // bool useSmoothing = false;
 
-        #ifdef USE_KALMAN_FILTER
-            // const float e_mea = 2; const float e_est = 2; const float q = 0.01;
-            const float e_mea = 20; const float e_est = 5; const float q = 0.1;
-            // const float e_mea = 20; const float e_est = 5;  const float q = 0.1;
-            SimpleKalmanFilter SKF = SimpleKalmanFilter( e_mea, e_est, q );
-        #endif
+        // #ifdef USE_KALMAN_FILTER
+        //     // const float e_mea = 2; const float e_est = 2; const float q = 0.01;
+        //     const float e_mea = 20; const float e_est = 5; const float q = 0.1;
+        //     // const float e_mea = 20; const float e_est = 5;  const float q = 0.1;
+        //     SimpleKalmanFilter SKF = SimpleKalmanFilter( e_mea, e_est, q );
+        // #endif
 
-        #ifdef USE_RESPONSIVE_AR
-            ResponsiveAnalogRead RAR = ResponsiveAnalogRead( PIN, false );
-        #endif
+        // #ifdef USE_RESPONSIVE_AR
+        //     ResponsiveAnalogRead RAR = ResponsiveAnalogRead( PIN, false );
+        // #endif
 
     private:
 
-        inline void setupSmoothing() {
-            #if defined(USE_RESPONSIVE_AR)
-                //#if defined(ESP32)
-                    RAR.setAnalogResolution( analogResolution );
-                //#endif
-            #endif
-            #if defined(USE_KALMAN_FILTER)
-            #endif
-        }
+        // inline void setupSmoothing() {
+        //     #if defined(USE_RESPONSIVE_AR)
+        //         //#if defined(ESP32)
+        //             RAR.setAnalogResolution( analogResolution );
+        //         //#endif
+        //     #endif
+        //     #if defined(USE_KALMAN_FILTER)
+        //     #endif
+        // }
 
-        inline int initSmoothing() {
-            const int FEED_COUNT = 10;
-            #if defined(USE_RESPONSIVE_AR)
-                for ( int i = 0 ; i < FEED_COUNT ; i++ ) {
-                    readRaw();
-                    RAR.update( rawValue );
-                    // RAR.update( readRaw() );
-                }
-                smoothValue = RAR.getValue();
-                // return smoothValue;
-                // return RAR.getValue();
-            #endif
-            #if defined(USE_KALMAN_FILTER)
-                for ( int i = 0 ; i < FEED_COUNT-1 ; i++ ) {
-                    readRaw();
-                    SKF.updateEstimate( rawValue );
-                    // SKF.updateEstimate( readRaw() );
-                }
-                readRaw();
-                smoothValue = SKF.updateEstimate( rawValue );
-                // return SKF.updateEstimate( readRaw() );
-            #endif
-            return smoothValue;
-        }
+        // inline int initSmoothing() {
+        //     const int FEED_COUNT = 10;
+        //     #if defined(USE_RESPONSIVE_AR)
+        //         for ( int i = 0 ; i < FEED_COUNT ; i++ ) {
+        //             readRaw();
+        //             RAR.update( rawValue );
+        //             // RAR.update( readRaw() );
+        //         }
+        //         smoothValue = RAR.getValue();
+        //         // return smoothValue;
+        //         // return RAR.getValue();
+        //     #endif
+        //     #if defined(USE_KALMAN_FILTER)
+        //         for ( int i = 0 ; i < FEED_COUNT-1 ; i++ ) {
+        //             readRaw();
+        //             SKF.updateEstimate( rawValue );
+        //             // SKF.updateEstimate( readRaw() );
+        //         }
+        //         readRaw();
+        //         smoothValue = SKF.updateEstimate( rawValue );
+        //         // return SKF.updateEstimate( readRaw() );
+        //     #endif
+        //     return smoothValue;
+        // }
 
-        inline int applySmoothing( int rawValue ) {
-            #if defined(USE_RESPONSIVE_AR)
-                RAR.update( rawValue );
-                return RAR.getValue();
-            #endif
-            #if defined(USE_KALMAN_FILTER)
-                return SKF.updateEstimate( rawValue );
-            #endif
-        }
+        // inline int applySmoothing( int rawValue ) {
+        //     #if defined(USE_RESPONSIVE_AR)
+        //         RAR.update( rawValue );
+        //         return RAR.getValue();
+        //     #endif
+        //     #if defined(USE_KALMAN_FILTER)
+        //         return SKF.updateEstimate( rawValue );
+        //     #endif
+        // }
 
 //
 // ANALOG
 //
     private:
 
+        intIntFunction smoothingFunction = nullptr;
         intIntFunction mapFunction = nullptr;
         voidIntFunction onChange = nullptr;
         int lastValue = -1;
@@ -424,6 +495,11 @@ class AnalogIO : public UserInputDevice1Key {
                 smoothValue = applySmoothing( rawValue );
             else
                 smoothValue = rawValue;
+
+            if ( smoothingFunction != nullptr )
+                smoothValue = smoothingFunction( smoothValue );
+            // else
+            //     smoothValue = rawValue;
 
             if ( mapFunction != nullptr )
                 value = mapFunction( smoothValue );
@@ -541,8 +617,8 @@ class AnalogIO : public UserInputDevice1Key {
                 }
             }
             // DEBUG
-            for ( int i = 0 ; i < buttonCount; i++ )
-                Serial.printf( "%d = %d - %d\n", buttonList[i].value, buttonList[i].from, buttonList[i].to );
+            // for ( int i = 0 ; i < buttonCount; i++ )
+            //     Serial.printf( "%d = %d - %d\n", buttonList[i].value, buttonList[i].from, buttonList[i].to );
 
             // do initial read, otherwise debouncer will give wrong value 1st time
             debouncer.setInitialValue( readMappedKey() );

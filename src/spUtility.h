@@ -128,8 +128,25 @@ namespace StarterPack {
     }
 
 //
-// LINKED LIST
+// NEXT-LINKED LIST
 //
+
+    // insert new item as head or at end of list
+    // A* head = nullptr;
+    // class A {
+    //    ...
+    //    A* next;
+    // }
+    template<typename T>
+    void insertEnd_NextLinkedList( T **head, T *item ) {
+        if ( *head == nullptr )
+            *head = item;
+        else {
+            T *p = *head;
+            while ( p->next != nullptr ) p = p->next;
+            p->next = item;
+        }
+    }
 
     // delete "next-linked" list
     // class A {

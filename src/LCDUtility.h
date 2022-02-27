@@ -478,7 +478,7 @@ namespace LCDUtility {
 
     // https://solarianprogrammer.com/2016/11/28/cpp-passing-c-style-array-with-size-information-to-function/
     template<size_t msgCount>
-    static uint8_t showMultiLineMsg( const char* (&msg)[msgCount], void (*backgroundProcess)(void) = nullptr ) {
+    static uint8_t showMultiLineMsg( const char* (&msg)[msgCount], bool (*backgroundProcess)(void) = nullptr ) {
         namespace ui = StarterPack::UserInterface;
 
         if ( !ui::hasScreen() ) return 0;
@@ -518,8 +518,10 @@ namespace LCDUtility {
                 }
             }
 
-            if ( backgroundProcess != nullptr )
-                backgroundProcess();
+            if ( backgroundProcess != nullptr ) {
+                if ( !backgroundProcess() )
+                    return 0;
+            }
         }
     }
 
@@ -533,14 +535,14 @@ namespace LCDUtility {
             bool blinkMode = false;
 
             // LCDInterface *lcd;
-            uint8_t x;
-            uint8_t y;
+            uint8_t col;
+            uint8_t row;
 
         public:
 
             blink( uint8_t col, uint8_t row ) {
-                this->x = col;
-                this->y = row;
+                this->col = col;
+                this->row = row;
             }
 
             void update() {
@@ -548,7 +550,7 @@ namespace LCDUtility {
                 if ( !ui::hasScreen() ) return;
                 uint32_t now = millis();
                 if ( now - blinkTime >= 1000 ) {
-                    ui::LCD->writeAt( x, y, blinkMode ? 0xA5 : ' ' );
+                    ui::LCD->writeAt( col, row, blinkMode ? 0xA5 : ' ' );
                     blinkMode = !blinkMode;
                     blinkTime = now;
                     // ui::LCD->displayAll();
@@ -560,12 +562,12 @@ namespace LCDUtility {
                 if ( !ui::hasScreen() ) return;
                 if ( !blinkMode ) {
                     // false means dot is currently displayed
-                    ui::LCD->writeAt( x, y, blinkMode ? 0xA5 : ' ' );
+                    ui::LCD->writeAt( col, row, blinkMode ? 0xA5 : ' ' );
                     blinkMode = !blinkMode;
                     // ui::LCD->displayAll();
                 }
-                this->x = col;
-                this->y = row;
+                this->col = col;
+                this->row = row;
             }
 
     };
