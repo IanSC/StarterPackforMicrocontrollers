@@ -386,40 +386,129 @@ namespace LCDUtility {
     // PREDEFINED
     //
 
-    // YES/NO
-    static inline uint8_t chooseYesNo( uint8_t row,
-    bool crossover = false, uint8_t initialSelection = 0 ) {
+    // YES/NO - CORE
+    static uint8_t chooseYesNoCore( uint8_t captionRow, const char *caption,
+    uint8_t optionsRow,
+    uint8_t initialSelection, bool crossover,
+    bool (*backgroundProcess)(void) ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
         static const char *options[] = { "Yes", "No" };
-        chooser c( row, options, initialSelection, crossover );
+        if ( caption != nullptr )
+            ui::LCD->printStrAtRow( captionRow, caption );
+        chooser c( optionsRow, options, backgroundProcess, initialSelection, crossover );
         return c.prompt();
     }
 
-    // YES/NO - WITH MESSAGE
-    static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
-    bool crossover = false, uint8_t initialSelection = 0 ) {
+    // YES/NO/CANCEL - CORE
+    static uint8_t chooseYesNoCancelCore( uint8_t captionRow, const char *caption,
+    uint8_t optionsRow,
+    uint8_t initialSelection, bool crossover,
+    bool (*backgroundProcess)(void) ) {
         namespace ui = StarterPack::UserInterface;
         if ( ui::LCD == nullptr ) return 0;
-        ui::LCD->printfAtRow( captionRow, caption );
-        return chooseYesNo( optionsRow, crossover, initialSelection );
+        static const char *options[] = { "Yes", "No", "Cancel" };
+        if ( caption != nullptr )
+            ui::LCD->printStrAtRow( captionRow, caption );
+        chooser c( optionsRow, options, backgroundProcess, initialSelection, crossover );
+        return c.prompt();
     }
+
+     // NO/YES - CORE
+    static uint8_t chooseNoYesCore( uint8_t captionRow, const char *caption,
+    uint8_t optionsRow,
+    uint8_t initialSelection, bool crossover,
+    bool (*backgroundProcess)(void) ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        static const char *options[] = { "No", "Yes" };
+        if ( caption != nullptr )
+            ui::LCD->printStrAtRow( captionRow, caption );
+        chooser c( optionsRow, options, backgroundProcess, initialSelection, crossover );
+        return c.prompt();
+    }
+
+    // NO/YES/CANCEL - CORE
+    static uint8_t chooseNoYesCancelCore( uint8_t captionRow, const char *caption,
+    uint8_t optionsRow,
+    uint8_t initialSelection, bool crossover,
+    bool (*backgroundProcess)(void) ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        static const char *options[] = { "No", "Yes", "Cancel" };
+        if ( caption != nullptr )
+            ui::LCD->printStrAtRow( captionRow, caption );
+        chooser c( optionsRow, options, backgroundProcess, initialSelection, crossover );
+        return c.prompt();
+    }
+
+    // plain
+    // with caption
+    // with background process
+    // with caption + background process
+    #define CHOOSER_VARIATIONS(fName,fNameCore) \
+        inline static uint8_t fName( uint8_t row, \
+        bool crossover=false, uint8_t initialSelection=0 ) { \
+            return fNameCore( -1, nullptr, row, initialSelection, crossover, nullptr ); \
+        } \
+        inline static uint8_t fName( uint8_t captionRow, const char *caption, uint8_t optionsRow, \
+        bool crossover=false, uint8_t initialSelection=0 ) { \
+            return fNameCore( captionRow, caption, optionsRow, initialSelection, crossover, nullptr ); \
+        } \
+        static inline uint8_t fName( uint8_t row, \
+        bool (*backgroundProcess)(void), bool crossover=false ) { \
+            return fNameCore( -1, nullptr, row, 0, crossover, backgroundProcess ); \
+        } \
+        static inline uint8_t fName( uint8_t captionRow, const char *caption, uint8_t optionsRow, \
+        bool (*backgroundProcess)(void), bool crossover=false ) { \
+            return fNameCore( captionRow, caption, optionsRow, 0, crossover, backgroundProcess ); \
+        }
+
+    CHOOSER_VARIATIONS( chooseYesNo,       chooseYesNoCore       )
+    CHOOSER_VARIATIONS( chooseYesNoCancel, chooseYesNoCancelCore )
+    CHOOSER_VARIATIONS( chooseNoYes,       chooseNoYesCore       )
+    CHOOSER_VARIATIONS( chooseNoYesCancel, chooseNoYesCancelCore )
+    #undef CHOOSER_VARIATIONS 
+
+    // // YES/NO - PLAIN
+    // static inline uint8_t chooseYesNo( uint8_t row,
+    // bool crossover = false, uint8_t initialSelection = 0 ) {
+    //     return chooseYesNoCore( -1, nullptr, row, initialSelection, crossover, nullptr );
+    //     // static const char *options[] = { "Yes", "No" };
+    //     // chooser c( row, options, initialSelection, crossover );
+    //     // return c.prompt();
+    // }
+
+    // // YES/NO - WITH MESSAGE
+    // static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    // bool crossover = false, uint8_t initialSelection = 0 ) {
+    //     return chooseYesNoCore( captionRow, caption, optionsRow, initialSelection, crossover, nullptr );
+    //     // namespace ui = StarterPack::UserInterface;
+    //     // if ( ui::LCD == nullptr ) return 0;
+    //     // ui::LCD->printStrAtRow( captionRow, caption );
+    //     // return chooseYesNo( optionsRow, crossover, initialSelection );
+    // }
 
     // YES/NO - WITH BACKGROUND PROCESS
-    static inline uint8_t chooseYesNo( uint8_t row,
-    bool (*backgroundProcess)(void), bool crossover = false ) {
-        static const char *options[] = { "Yes", "No" };
-        chooser c( row, options, backgroundProcess, 0, crossover );
-        return c.prompt();
-    }
+    // static inline uint8_t chooseYesNo( uint8_t row,
+    // bool (*backgroundProcess)(void), bool crossover = false ) {
+    //     return chooseYesNoCore( -1, nullptr, row, 0, crossover, backgroundProcess );
+    //     // static const char *options[] = { "Yes", "No" };
+    //     // chooser c( row, options, backgroundProcess, 0, crossover );
+    //     // return c.prompt();
+    // }
 
     // YES/NO - WITH MESSAGE / BACKGROUND PROCESS
-    static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
-    bool (*backgroundProcess)(void), bool crossover = false ) {
-        namespace ui = StarterPack::UserInterface;
-        if ( ui::LCD == nullptr ) return 0;
-        ui::LCD->printfAtRow( captionRow, caption );
-        return chooseYesNo( optionsRow, backgroundProcess, crossover );
-    }
+    // static inline uint8_t chooseYesNo( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    // bool (*backgroundProcess)(void), bool crossover = false ) {
+    //     return chooseYesNoCore( captionRow, caption, optionsRow, 0, crossover, backgroundProcess );
+    //     // namespace ui = StarterPack::UserInterface;
+    //     // if ( ui::LCD == nullptr ) return 0;
+    //     // ui::LCD->printStrAtRow( captionRow, caption );
+    //     // return chooseYesNo( optionsRow, backgroundProcess, crossover );
+    // }
 
+/*
     // YES/NO/CANCEL
     static inline uint8_t chooseYesNoCancel( uint8_t row,
     bool crossover = false, uint8_t initialSelection = 0 ) {
@@ -433,8 +522,25 @@ namespace LCDUtility {
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
         if ( ui::LCD == nullptr ) return 0;
-        ui::LCD->printfAtRow( captionRow, caption );
+        ui::LCD->printStrAtRow( captionRow, caption );
         return chooseYesNoCancel( optionsRow, crossover, initialSelection );
+    }
+
+    // YES/NO/CANCEL - WITH BACKGROUND PROCESS
+    static inline uint8_t chooseYesNoCancel( uint8_t row,
+    bool (*backgroundProcess)(void), bool crossover = false ) {
+        static const char *options[] = { "Yes", "No", "Cancel" };
+        chooser c( row, options, backgroundProcess, 0, crossover );
+        return c.prompt();
+    }
+
+    // YES/NO/CANCEL - WITH MESSAGE / BACKGROUND PROCESS
+    static inline uint8_t chooseYesNoCancel( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    bool (*backgroundProcess)(void), bool crossover = false ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printStrAtRow( captionRow, caption );
+        return chooseYesNoCancel( optionsRow, backgroundProcess, crossover );
     }
 
     // NO/YES
@@ -450,8 +556,25 @@ namespace LCDUtility {
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
         if ( ui::LCD == nullptr ) return 0;
-        ui::LCD->printfAtRow( captionRow, caption );
+        ui::LCD->printStrAtRow( captionRow, caption );
         return chooseNoYes( optionsRow, crossover, initialSelection );
+    }
+
+    // NO/YES - WITH BACKGROUND PROCESS
+    static inline uint8_t chooseNoYes( uint8_t row,
+    bool (*backgroundProcess)(void), bool crossover = false ) {
+        static const char *options[] = { "No", "Yes" };
+        chooser c( row, options, backgroundProcess, 0, crossover );
+        return c.prompt();
+    }
+
+    // NO/YES - WITH MESSAGE / BACKGROUND PROCESS
+    static inline uint8_t chooseNoYes( uint8_t captionRow, const char *caption, uint8_t optionsRow,
+    bool (*backgroundProcess)(void), bool crossover = false ) {
+        namespace ui = StarterPack::UserInterface;
+        if ( ui::LCD == nullptr ) return 0;
+        ui::LCD->printStrAtRow( captionRow, caption );
+        return chooseNoYes( optionsRow, backgroundProcess, crossover );
     }
 
     // NO/YES/CANCEL
@@ -468,9 +591,10 @@ namespace LCDUtility {
     bool crossover = false, uint8_t initialSelection = 0 ) {
         namespace ui = StarterPack::UserInterface;
         if ( ui::LCD == nullptr ) return 0;
-        ui::LCD->printfAtRow( captionRow, caption );
+        ui::LCD->printStrAtRow( captionRow, caption );
         return chooseNoYesCancel( optionsRow, crossover, initialSelection );
     }
+*/
 
 //
 // LONG MESSAGE

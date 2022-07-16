@@ -291,6 +291,16 @@ namespace UserInterface {
             KeyHandler = &handler;
         }
 
+        void setDebounceTimeInMs( uint16_t activeState = 50, uint16_t inactiveState = 50, uint16_t minimum = 50 ) {
+            if ( KeyHandler == nullptr ) return;
+            KeyHandler->setDebounceTimeInMs( activeState, inactiveState, minimum );
+        }
+
+        void setConfirmStateTimeInMs( uint16_t confirmActiveStateTimeInMs = 0, uint16_t confirmInactiveStateTimeInMs = 0 ) {
+            if ( KeyHandler == nullptr ) return;
+            KeyHandler->setConfirmStateTimeInMs( confirmActiveStateTimeInMs, confirmInactiveStateTimeInMs );
+        }
+
         void setRepeatDelayAndRateInMs( uint16_t repeatDelay = 400, uint16_t repeatRate = 250 ) {
             if ( KeyHandler == nullptr ) return;
             KeyHandler->setRepeatDelayAndRateInMs( repeatDelay, repeatRate );

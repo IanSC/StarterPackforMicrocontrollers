@@ -55,7 +55,7 @@ class UserInputDevice1Key : public UserInputDevice {
         }
 
         uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
-            return debouncer.getKeyUp( allenKey( allowedKeys ) );
+            return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
         }
 
         uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {

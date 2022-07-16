@@ -1,3 +1,5 @@
+#ifdef XXX
+
 //  2022/01 - isc
 //
 //  I2C Helper
@@ -109,10 +111,7 @@
 //      http://www.forward.com.au/pfod/ArduinoProgramming/I2C_ClearBus/index.html
 
 #pragma once
-#include <Arduino.h>
 #include <Wire.h>
-
-extern volatile uint32_t twi_timeout_us; // in Wire.h/TWI.h
 
 namespace StarterPack {
 
@@ -137,7 +136,6 @@ class i2cHelper {
 
             // from Wire.h
             //      ~/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-i2c.h
-            // 2022/06 - updates removed these
             static const ERROR_NO ERR_I2C_OK       = I2C_ERROR_OK;
             static const ERROR_NO ERR_I2C_DEV      = I2C_ERROR_DEV;
             static const ERROR_NO ERR_I2C_ACK      = I2C_ERROR_ACK;
@@ -304,7 +302,6 @@ class i2cHelper {
         #if defined(ESP32)
         
             inline bool CheckAndRecordError() {
-                // if ( _wire->getWriteError() )
                 if ( _wire->lastError() == ERR_I2C_OK )
                     return true;
                 else {
@@ -313,7 +310,7 @@ class i2cHelper {
                 }
             }
             
-        #elif defined(ARDUINO_ARCH_AVR)
+        #else
         
             inline bool CheckAndRecordError() {
                 if ( _wire->getWireTimeoutFlag() ) {
@@ -321,12 +318,6 @@ class i2cHelper {
                     return false;
                 } else
                     return true;
-            }
-
-        #else
-
-            inline bool CheckAndRecordError() {
-                return true;
             }
             
         #endif
@@ -365,31 +356,7 @@ class i2cHelper {
 
         uint16_t recoveryThrottleInMs = 2000;
 
-        #if defined(ESP32)
-
-            bool recoverIfHasError( uint8_t _i2cAddress ) {
-                if ( lastError == ERR_I2C_OK && _wire->lastError() == ERR_I2C_OK )
-                    return false;
-                
-                // try to recover every recoveryThrottleInMs only
-                uint32_t now = millis();
-                if ( now - lastRecovery > recoveryThrottleInMs ) {
-                    lastRecovery = now;
-
-                    //Serial.println( "RECO: " );
-                    //if ( lastError != ERR_I2C_OK )
-                    //   Serial.printf( "   Last Error = %s\n", errorMessage( lastError ) );
-                    //if ( _wire->lastError() != ERR_I2C_OK )
-                    //   Serial.printf( "   Wire Last Error = %s\n", errorMessage( _wire->lastError() ) );
-
-                    _wire->begin();
-                    lastError = ERR_I2C_OK;
-                    return true;
-                }
-                return false;
-            }
-
-        #elif defined(ARDUINO_ARCH_AVR)
+        #if defined(ARDUINO_ARCH_AVR)
 
             bool recoverIfHasError( uint8_t _i2cAddress ) {
                 if ( lastError == ERR_I2C_OK )
@@ -427,11 +394,10 @@ class i2cHelper {
                 return false;
             }
 
-        #else
-            // Seeeduino Xiao - defined(ARDUINO_ARCH_SAMD)
+        #elif defined(ESP32)
 
             bool recoverIfHasError( uint8_t _i2cAddress ) {
-                if ( lastError == ERR_I2C_OK )
+                if ( lastError == ERR_I2C_OK && _wire->lastError() == ERR_I2C_OK )
                     return false;
                 
                 // try to recover every recoveryThrottleInMs only
@@ -451,6 +417,9 @@ class i2cHelper {
                 }
                 return false;
             }
+
+        #else
+            // Seeeduino Xiao - defined(ARDUINO_ARCH_SAMD)
 
         #endif
 
@@ -481,6 +450,18 @@ class i2cHelper {
                 //if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
                 return true;
             }
+
+            inline bool available( uint8_t length ) {
+                // TIMEOUT IN MILLIS
+                if ( _wire->available() < length ) {
+                    uint32_t start = millis();
+                    while ( _wire->available() < length ) {
+                        if ( millis() - start >= _wire->getTimeOut() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
+                        if ( !CheckAndRecordError() ) return false;
+                    }
+                }
+                return CheckAndRecordError();
+            }
             
         #else
         
@@ -498,14 +479,10 @@ class i2cHelper {
                 if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
                 return true;
             }
-            
-        #endif
-
-        #if defined(ARDUINO_ARCH_AVR)
 
             inline bool available( uint8_t length ) {
                 // TIMEOUT IN MICROS
-                // extern volatile uint32_t twi_timeout_us; // in Wire.h/TWI.h
+                extern volatile uint32_t twi_timeout_us; // in Wire.h/TWI.h
                 if ( _wire->available() < length ) {
                     uint32_t start = micros();
                     while ( _wire->available() < length ) {
@@ -515,26 +492,8 @@ class i2cHelper {
                 }
                 return CheckAndRecordError();
             }
-
-        #else // ESP32, Seeeduino Xiao
-
-            inline bool available( uint8_t length ) {
-                if ( _wire->available() < length ) {
-                    uint32_t start = millis();
-                    while ( _wire->available() < length ) {
-                        #if defined(ESP32)
-                            if ( millis() - start >= _wire->getTimeOut() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
-                        #else
-                            if ( millis() - start >= _wire->getTimeout() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
-                        #endif
-                        if ( !CheckAndRecordError() ) return false;
-                    }
-                }
-                return CheckAndRecordError();
-            }
-
+            
         #endif
-
 
         inline bool requestFrom( uint8_t _i2cAddress, uint8_t length ) {
             size_t bytesArrived = _wire->requestFrom( _i2cAddress, length );
@@ -708,3 +667,5 @@ class i2cHelper {
 };
 
 }
+
+#endif

@@ -53,6 +53,36 @@ namespace StarterPack {
             }
 
             void pinAB_openCollectorMode() {
+                setOpenCollector( pinA, pinB_activeState );
+                setOpenCollector( pinB, pinB_activeState );
+                // // based on encoder output type (not sure if correct):
+                // // - voltage output, set a INPUT
+                // // - NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
+                // // - PNP open collector, negative ACTIVE, set as INPU_PULLDOWN (or external resitor, no pull down on Arduino)
+                // //
+                // // if active HIGH, pullup HIGH
+                // // if active LOW,  pullup LOW
+                // if ( c == HIGH )
+                //     pinMode( pinA, INPUT_PULLUP );
+                // else {
+                //     #if defined(ESP32)
+                //         pinMode( pinA, INPUT_PULLDOWN );
+                //     #else
+                //         // pinMode( pinA, INPUT );
+                //     #endif
+                // }
+                // if ( pinB_activeState == HIGH )
+                //     pinMode( pinB, INPUT_PULLUP );
+                // else {
+                //     #if defined(ESP32)
+                //         pinMode( pinB, INPUT_PULLDOWN );
+                //     #else
+                //         // pinMode( pinB, INPUT );
+                //     #endif
+                // }
+            }
+
+            static void setOpenCollector( uint8_t pin, uint8_t activeState ) {
                 // based on encoder output type (not sure if correct):
                 // - voltage output, set a INPUT
                 // - NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
@@ -60,24 +90,26 @@ namespace StarterPack {
                 //
                 // if active HIGH, pullup HIGH
                 // if active LOW,  pullup LOW
-                if ( pinA_activeState == HIGH )
-                    pinMode( pinA, INPUT_PULLUP );
+
+                if ( activeState == LOW )
+                    pinMode( pin, INPUT_PULLUP );
                 else {
                     #if defined(ESP32)
-                        pinMode( pinA, INPUT_PULLDOWN );
+                        pinMode( pin, INPUT_PULLDOWN );
                     #else
-                        // pinMode( pinA, INPUT );
+                        // pinMode( pin, INPUT );
                     #endif
                 }
-                if ( pinB_activeState == HIGH )
-                    pinMode( pinB, INPUT_PULLUP );
-                else {
-                    #if defined(ESP32)
-                        pinMode( pinB, INPUT_PULLDOWN );
-                    #else
-                        // pinMode( pinB, INPUT );
-                    #endif
-                }
+
+                // if ( activeState == HIGH )
+                //     pinMode( pin, INPUT_PULLUP );
+                // else {
+                //     #if defined(ESP32)
+                //         pinMode( pin, INPUT_PULLDOWN );
+                //     #else
+                //         // pinMode( pin, INPUT );
+                //     #endif
+                // }
             }
 
         //
@@ -156,7 +188,7 @@ namespace StarterPack {
                 //               ^           ^     ^     ^     ^
                 //               ABab        1011  0010  0100  1101
                 //
-                //  AB - new state / ab - previous state
+                //  ABab ==> AB - new state / ab - previous state
                 //
                 //    ABab   DIR   Value
                 //    ----   ---   -----
@@ -183,13 +215,62 @@ namespace StarterPack {
                 prevState >>= 2;
 
                 // put in new AB
-                prevState = prevState | ( digitalRead( pinA ) << 3 ) | ( digitalRead( pinB ) << 2 );
+                prevState = prevState
+                    | ( ( digitalRead( pinA ) == pinA_activeState ) << 3 )
+                    | ( ( digitalRead( pinB ) == pinB_activeState ) << 2 );
 
-                if ( syncOnZ && ( prevState == 0b1110 || prevState == 0b1011 ) ) {
+                // -1, 0 or 1
+                int8_t currentDirection = directionMap[ prevState ];
+                position += currentDirection;
 
+                // same transition CW and CCW
+                // in diagram when (B) rises/falls
+                // - if keep going CW, no ZSync discrepancy
+                // - if keep going CCW, no ZSync discrepancy
+                // - if changing CW/CCW, has ZSync discrepancy
+                //
+                // based on Omron's, but most should be compatible with it
+                //
+                // === CW === >>>
+                //               +--1-----1--+           +--1-----1--+           +--1-----1--+
+                //     (A)       | [a]   [A] |           |           |           |
+                //          --0--+           +--0-----0--+           +--0-----0--+
+                //                     +--1-----1--+           +--1-----1--+           +--1---
+                //     (B)         [b] | [B]       |           |           |           |
+                //          --0-----0--+           +--0-----0--+           +--0-----0--+
+                //             +-------------------+
+                //     (Z)     |       ^           |
+                //          ---+       ^           +--------
+                //                     1110
+                // === CCW === >>>
+                //                     +--1-----1--+           +--1-----1--+           +--1---
+                //     (A)             | [a]   [A] |           |           |           |
+                //          --0-----0--+           +--0-----0--+           +--0-----0--+
+                //               +--1-----1--+           +--1-----1--+           +--1-----1--+
+                //     (B)       |       [b] | [B]       |           |           |
+                //          --0--+           +--0-----0--+           +--0-----0--+
+                //               +-----------------------+
+                //     (Z)       |           ^           |
+                //          -----+           ^           +--------
+                //                           1011
+                //
+                //  ABab ==> AB - new state / ab - previous state
+                //
+
+                // if ( syncOnZ && ( prevState == 0b0001 || prevState == 0b0100 ) ) {
+                // if ( syncOnZ && ( prevState == 0b0111 || prevState == 0b1101 ) ) {
+                // if ( syncOnZ && ( prevState == 0b1000 || prevState == 0b0010 ) ) {
+                // if ( syncOnZ && ( prevState == 0b1110 || prevState == 0b1011 ) ) {
+
+                if ( syncOnZ && ( prevState == 0b1110 || prevState == 0b1101 ) ) {
+
+                    // transistion on a pulse
+                    // going into *******
+                    // - no ZSync discrepancy
+                    //
                     // based on Omron's, but most should be compatible with it
                     //
-                    // === CW === >>>
+                    // === CW === >>>      *******
                     //               +--1-----1--+           +--1-----1--+           +--1-----1--+
                     //     (A)       | [a]   [A] |           |           |           |
                     //          --0--+           +--0-----0--+           +--0-----0--+
@@ -200,30 +281,27 @@ namespace StarterPack {
                     //     (Z)     |       ^           |
                     //          ---+       ^           +--------
                     //                     1110
-                    // === CCW === >>>
+                    // === CCW === >>>     *******
                     //                     +--1-----1--+           +--1-----1--+           +--1---
-                    //     (A)             | [a]   [A] |           |           |           |
+                    //     (A)         [a] | [A]       |           |           |           |
                     //          --0-----0--+           +--0-----0--+           +--0-----0--+
                     //               +--1-----1--+           +--1-----1--+           +--1-----1--+
-                    //     (B)       |       [b] | [B]       |           |           |
+                    //     (B)       | [b]   [B] |           |           |           |
                     //          --0--+           +--0-----0--+           +--0-----0--+
                     //               +-----------------------+
-                    //     (Z)       |           ^           |
-                    //          -----+           ^           +--------
-                    //                           1011
+                    //     (Z)       |     ^                 |
+                    //          -----+     ^                 +--------
+                    //                     1101
+                    //
+                    //  ABab ==> AB - new state / ab - previous state
                     //
                     if ( digitalRead( zPin ) == zPin_activeState ) {
                         // home !!!
                         syncZCore();
-                        portEXIT_CRITICAL_ISR( &mux );
-                        return;
+                        // portEXIT_CRITICAL_ISR( &mux );
+                        // return;
                     }
                 }
-
-                // -1, 0 or 1
-                int8_t currentDirection = directionMap[ prevState ];
-
-                position += currentDirection;
 
                 portEXIT_CRITICAL_ISR( &mux );
             }
@@ -242,7 +320,7 @@ namespace StarterPack {
 
             void set( int32_t position ) {
                 portENTER_CRITICAL( &mux );
-                position = position;
+                this->position = position;
                 portEXIT_CRITICAL( &mux );
             }
 
@@ -280,27 +358,34 @@ namespace StarterPack {
                 this->encoderPPR = encoderPPR;
                 this->syncValue = syncValue;
                 this->zPin_activeState = zPin_activeState;
-                pinMode( zPin, INPUT );
+                setOpenCollector( zPin, zPin_activeState );
+                // pinMode( zPin, INPUT );
                 // portENTER_CRITICAL( &mux );
                 // syncOnZ = true;
                 // portEXIT_CRITICAL( &mux );
             }
 
-            void setPinZ_activeStates( uint8_t zPin_activeState = HIGH ) {
+            void setPinZ_activeState( uint8_t zPin_activeState = HIGH ) {
                 this->zPin_activeState = zPin_activeState;
             }
 
+            void pinZ_openCollectorMode( uint8_t zPin ) {
+                this->zPin = zPin;
+                setOpenCollector( zPin, zPin_activeState );
+            }
+
             void pinZ_openCollectorMode() {
+                setOpenCollector( zPin, zPin_activeState );
                 // same as pinAB_openCollectorMode()
-                if ( zPin_activeState == HIGH )
-                    pinMode( zPin, INPUT_PULLUP );
-                else {
-                    #if defined(ESP32)
-                        pinMode( zPin, INPUT_PULLDOWN );
-                    #else
-                        // pinMode( zPin, INPUT );
-                    #endif
-                }
+                // if ( zPin_activeState == HIGH )
+                //     pinMode( zPin, INPUT_PULLUP );
+                // else {
+                //     #if defined(ESP32)
+                //         pinMode( zPin, INPUT_PULLDOWN );
+                //     #else
+                //         // pinMode( zPin, INPUT );
+                //     #endif
+                // }
             }
 
             void enableZSync() {
@@ -317,11 +402,25 @@ namespace StarterPack {
                 portEXIT_CRITICAL( &mux );
             }
 
+            uint32_t getMissingPulsesAbsolute() {
+                portENTER_CRITICAL( &mux );
+                auto r = missingPulsesAbsolute;
+                portEXIT_CRITICAL( &mux );
+                return r;
+            }
+
             uint32_t getMissingPulses() {
                 portENTER_CRITICAL( &mux );
                 auto r = missingPulses;
                 portEXIT_CRITICAL( &mux );
                 return r;
+            }
+
+            void clearMissingPulses() {
+                portENTER_CRITICAL( &mux );
+                missingPulsesAbsolute = 0;
+                missingPulses = 0;
+                portEXIT_CRITICAL( &mux );
             }
 
         protected:
@@ -332,7 +431,8 @@ namespace StarterPack {
             uint16_t encoderPPR = 100;
             int32_t  syncValue = 0;
 
-            uint32_t missingPulses = 0;
+            uint32_t missingPulsesAbsolute = 0;
+            int32_t missingPulses = 0;
 
             inline void syncZCore() {
                 //Serial.println( "sync" );
@@ -343,20 +443,28 @@ namespace StarterPack {
                 if ( stray == 0 ) return;
 
                 if ( stray >= 0 ) {
+                    // + stray
                     if ( stray >= ( encoderPPR >> 1 ) ) {
+                        // stray >= (encoderPPR/2)
                         auto diff = encoderPPR - stray;
+                        missingPulsesAbsolute += diff;
                         missingPulses += diff;
                         position += diff;
                     } else {
-                        missingPulses += stray;
+                        missingPulsesAbsolute += stray;
+                        missingPulses -= stray;
                         position -= stray;
                     }
                 } else {
+                    // - stray
                     if ( stray <= -( encoderPPR >> 1 ) ) {
+                        // stray <= -(encoderPPR/2)
                         auto diff = encoderPPR + stray;
-                        missingPulses += diff;
+                        missingPulsesAbsolute += diff;
+                        missingPulses -= diff;
                         position -= diff;
                     } else {
+                        missingPulsesAbsolute -= stray;
                         missingPulses -= stray;
                         position -= stray;
                     }

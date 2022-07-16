@@ -618,7 +618,7 @@ class AnalogIO : public UserInputDevice1Key {
             }
             // DEBUG
             // for ( int i = 0 ; i < buttonCount; i++ )
-            //     Serial.printf( "%d = %d - %d\n", buttonList[i].value, buttonList[i].from, buttonList[i].to );
+            //     Serial.printf( "%d = %d [ %d --> %d ]\n", i, buttonList[i].value, buttonList[i].from, buttonList[i].to );
 
             // do initial read, otherwise debouncer will give wrong value 1st time
             debouncer.setInitialValue( readMappedKey() );
@@ -672,15 +672,25 @@ class AnalogIO : public UserInputDevice1Key {
     public:
 
         uint8_t readMappedKey() {
+            delay(1);
             readRaw();
             for ( int i = 0 ; i < buttonCount; i++ ) {
                 if ( buttonList[i].from <= rawValue && rawValue <= buttonList[i].to ) {
+                    // button 0 is no key pressed
+                    if ( i == 0 ) {
+                        return debouncer.debounce( debouncer.inactiveState );
+                        //return debouncer.inactiveState;
+                    }
+                    // 1 to N = actual buttons
+                    // check keymap
+                    //return getKeymap( i );
                     return debouncer.debounce( getKeymap( i ) );
                 }
             }
             // Serial.println( "GOT INVALID VALUE" );
             // do not debounce invalid button
-            return debouncer.inactiveState;
+            return debouncer.debounce( debouncer.inactiveState );
+            //return debouncer.inactiveState;
         }
 
         // int8_t readButtonCore() {
@@ -750,6 +760,7 @@ class AnalogIO : public UserInputDevice1Key {
         void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
 
         inline void setInactiveButton( uint8_t buttonNo ) { debouncer.inactiveState = buttonNo; }
+        // inline void setInactiveState( uint8_t state ) { debouncer.inactiveState = state; }
 
 };
 

@@ -7,6 +7,7 @@
 #include <UserInterface.h>
 // #include <LCDEditor.h>
 #include <LCDEditorAlpha.h>
+#include <LCDEditorNumeric.h>
 
 using namespace StarterPack;
 
@@ -58,6 +59,16 @@ namespace StarterPack {
                 virtual void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) {}
                 virtual void toEditString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) {}
                 virtual void acceptChange() {}
+
+            public:
+
+                enum specialCase {
+                    cNone,
+                    cAccept,
+                    cCancel
+                };
+                specialCase sCase = specialCase::cNone;
+
         };
 
         template <typename T>
@@ -92,6 +103,33 @@ namespace StarterPack {
             message( const char *str ) { caption=str; readonly=true; }
             bool isSingleLiner() { return true;  }
             bool isSelectable()  { return false; }
+            void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) {
+                strncpy( buffer, caption, bufferSize );
+                buffer[bufferSize-1] = 0;
+            }
+        };
+
+        //
+        // SPECIAL
+        //
+        class acceptButton : public entryCore { public:
+            // acceptButton() { caption="ACCEPT"; readonly=true; }
+            // acceptButton() : acceptButton( "ACCEPT" ) {}
+            acceptButton( const char *str ) { caption=str; readonly=false; sCase=specialCase::cAccept; }
+            // bool isSingleLiner() { return true; }
+            bool isSelectable()  { return true; }
+            void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) {
+                strncpy( buffer, caption, bufferSize );
+                buffer[bufferSize-1] = 0;
+            }
+        };
+
+        class cancelButton : public entryCore { public:
+            // cancelButton() { caption="CANCEL"; readonly=true; }
+            // cancelButton() : cancelButton( "CANCEL" ) {}
+            cancelButton( const char *str ) { caption=str; readonly=false; sCase=specialCase::cCancel; }
+            // bool isSingleLiner() { return true; }
+            bool isSelectable()  { return true; }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) {
                 strncpy( buffer, caption, bufferSize );
                 buffer[bufferSize-1] = 0;
@@ -658,6 +696,35 @@ namespace StarterPack {
             }
 
             //
+            // SPECIAL
+            //
+            // void acceptButton() {
+            //     namespace ui = StarterPack::UserInterface;
+            //     auto *se = new StarterPack::PropertyEditorEntry::acceptButton();
+            //     insert( se );
+            // }
+            void acceptButton( const char *str = "\x7F ACCEPT" ) {
+                namespace ui = StarterPack::UserInterface;
+                auto *se = new StarterPack::PropertyEditorEntry::acceptButton( str );
+                insert( se );
+            }
+            // void cancelButton() {
+            //     namespace ui = StarterPack::UserInterface;
+            //     auto *se = new StarterPack::PropertyEditorEntry::cancelButton();
+            //     insert( se );
+            // }
+            void cancelButton( const char *str = "\x7F CANCEL" ) {
+                namespace ui = StarterPack::UserInterface;
+                auto *se = new StarterPack::PropertyEditorEntry::cancelButton( str );
+                insert( se );
+            }
+            void exitButton( const char *str = "\x7F EXIT" ) {
+                namespace ui = StarterPack::UserInterface;
+                auto *se = new StarterPack::PropertyEditorEntry::acceptButton( str );
+                insert( se );
+            }
+
+            //
             // BOOL
             //
 
@@ -752,18 +819,59 @@ namespace StarterPack {
         bool hasChanges = false;
 
         uint8_t show( uint8_t captionWidth ) {
+            keypad = kpadStyle::kStandard;
             readOnly = true;
             return promptCore( captionWidth );
         }
 
         void prompt( uint8_t captionWidth ) {
+            keypad = kpadStyle::kStandard;
             readOnly = false;
             promptCore( captionWidth );
         }
 
+        void promptSliderOnly( uint8_t captionWidth ) {
+            keypad = kpadStyle::kSlidersOnly;
+            readOnly = false;
+            promptCore( captionWidth );
+        }
+
+        struct markerStruct {
+            char Left = '[';
+            char Right = ']';
+            char EditingLeft  = 0b10100010;
+            char EditingRight = 0b10100011;
+        };
+        static markerStruct markers;
+
     protected:
 
         bool readOnly = false;
+
+        enum kpadStyle {
+
+            kStandard,
+            // full keypad
+            // - up, down, left, right (can be part of 0..9)
+            // - enter
+            // - escape
+            // - backspace
+            // - for alphanumeric: (optional) delete, insert, changeCase, number, symbol
+            // - for numeric     : 0..9
+            //                   : (optional) delete, decimal, negative
+
+            kSlidersOnly
+            // 3 keys only
+            // - common up/left
+            // - common down/right
+            // - enter
+            // to use: [up]/[down]    select item
+            //         [enter]        begin editing mode
+            //         [left]/[right] change value
+            //         [enter]        end editing mode
+            // note: add exitButton() to be able to exit
+        };
+        kpadStyle keypad = kpadStyle::kStandard;
 
         uint8_t promptCore( uint8_t captionWidth ) {
             namespace ui = StarterPack::UserInterface;
@@ -795,6 +903,11 @@ namespace StarterPack {
 
             bool updateScreen = true;
 
+            // ui::kENTER          - enter/leave edit mode
+            // ui::kUP / ui::kDOWN - move up down if not edit mode
+            // ui::kUP / ui::kDOWN - left/right if edit mode
+            bool kpadSliderOnlyEditing = false;
+
             while( true ) {
 
                 //
@@ -811,23 +924,34 @@ namespace StarterPack {
                             continue;
                         }
                         lcd->setCursor( 0, r );
-                        if ( se->isSingleLiner() ) {
-                            rowWindow.row = r;
-                            se->toString( buffer, lcd->maxColumns+1, rowWindow );
-                            lcd->printStrN( buffer, lcd->maxColumns, true );
-                        } else {
-                            // CAPTION
-                            lcd->printStrN( se->caption, captionWidth, true );
-                            lcd->print( ' ' );
-                            // DATA
-                            dataWindow.row = r;
-                            se->toString( buffer, lcd->maxColumns, dataWindow );
-                            lcd->setCursor( captionWidth+1, r );
-                            lcd->printStrN( buffer, dataWidth, true );
-                            lcd->print( ' ' );
-                            uint8_t len = strlen( buffer );
-                            if ( len > dataWidth )
-                                lcd->writeAt( lcd->maxColumns-2, r, 0x7E );     
+                        switch( se->sCase ) {
+                        case StarterPack::PropertyEditorEntry::entryCore::specialCase::cAccept:
+                        case StarterPack::PropertyEditorEntry::entryCore::specialCase::cCancel:
+                            lcd->write( ' ' );
+                            se->toString( buffer, lcd->maxColumns-2+1, rowWindow );
+                            lcd->printStrN( buffer, lcd->maxColumns-2, true );
+                            lcd->write( ' ' );
+                            break;
+                        case StarterPack::PropertyEditorEntry::entryCore::specialCase::cNone:
+                            if ( se->isSingleLiner() ) {
+                                rowWindow.row = r;
+                                se->toString( buffer, lcd->maxColumns+1, rowWindow );
+                                lcd->printStrN( buffer, lcd->maxColumns, true );
+                            } else {
+                                // CAPTION
+                                lcd->printStrN( se->caption, captionWidth, true );
+                                lcd->print( ' ' );
+                                // DATA
+                                dataWindow.row = r;
+                                se->toString( buffer, lcd->maxColumns, dataWindow );
+                                lcd->setCursor( captionWidth+1, r );
+                                lcd->printStrN( buffer, dataWidth, true );
+                                lcd->print( ' ' );
+                                uint8_t len = strlen( buffer );
+                                if ( len > dataWidth )
+                                    lcd->writeAt( lcd->maxColumns-2, r, 0x7E );
+                            }
+                            break;
                         }
                         se = se->next;
                     }
@@ -837,8 +961,22 @@ namespace StarterPack {
                         se = rowHandler.getFocusedEntry();
                         if ( se->isSelectable() ) {
                             int r = rowHandler.focusedOnScreenRow();
-                            lcd->printAt( captionWidth, r, '[' );
-                            lcd->printAt( lcd->maxColumns-1, r, ']' );
+                            switch( se->sCase ) {
+                            case StarterPack::PropertyEditorEntry::entryCore::specialCase::cAccept:
+                            case StarterPack::PropertyEditorEntry::entryCore::specialCase::cCancel:
+                                lcd->printAt( 0, r, markers.Left ); // '[' );
+                                lcd->printAt( lcd->maxColumns-1, r, markers.Right ); // ']' );
+                                break;
+                            case StarterPack::PropertyEditorEntry::entryCore::specialCase::cNone:
+                                if ( keypad == kpadStyle::kSlidersOnly && kpadSliderOnlyEditing ) {
+                                    lcd->printAt( captionWidth, r, markers.EditingLeft ); // 0b10100010 ); // '*' );
+                                    lcd->printAt( lcd->maxColumns-1, r, markers.EditingRight ); // 0b10100011 ); // '*' );
+                                } else {
+                                    lcd->printAt( captionWidth, r, markers.Left ); // '[' );
+                                    lcd->printAt( lcd->maxColumns-1, r, markers.Right ); //']' );
+                                }
+                                break;
+                            }
                         }
                     }
                 }
@@ -854,30 +992,60 @@ namespace StarterPack {
                     ui::waitUntilNothingIsPressed();
                     return ui::kESCAPE;
                 } else if ( key == ui::kUP ) {
+                    if ( keypad == kpadStyle::kSlidersOnly && kpadSliderOnlyEditing ) {
+                        // LEFT instead of UP
+                        updateScreen = doLeft( rowHandler );
+                        continue;
+                    }
                     if ( rowHandler.scrollUpDown( true ) )
                         updateScreen = true;
                 } else if ( key == ui::kDOWN ) {
+                    if ( keypad == kpadStyle::kSlidersOnly && kpadSliderOnlyEditing ) {
+                        // RIGHT instead of DOWN
+                        updateScreen = doRight( rowHandler );
+                        continue;
+                    }
                     if ( rowHandler.scrollUpDown( false ) )
                         updateScreen = true;
                 } else if ( key == ui::kLEFT ) {
-                    auto se = actionableEntry( rowHandler );
-                    if ( se == nullptr ) continue;
-                    if ( se->moveLeft() ) {
-                        hasChanges = true;
-                        updateScreen = true;
-                    }
+                    updateScreen = doLeft( rowHandler );
+                    // auto se = actionableEntry( rowHandler );
+                    // if ( se == nullptr ) continue;
+                    // if ( se->moveLeft() ) {
+                    //     hasChanges = true;
+                    //     updateScreen = true;
+                    // }
                 } else if ( key == ui::kRIGHT ) {
-                    auto se = actionableEntry( rowHandler );
-                    if ( se == nullptr ) continue;
-                    if ( se->moveRight() ) {
-                        hasChanges = true;
-                        updateScreen = true;
-                    }
+                    updateScreen = doRight( rowHandler );
+                    // auto se = actionableEntry( rowHandler );
+                    // if ( se == nullptr ) continue;
+                    // if ( se->moveRight() ) {
+                    //     hasChanges = true;
+                    //     updateScreen = true;
+                    // }
                 } else if ( key == ui::kENTER ) {
-                    // edit value
+                    // edit/accept value
+
                     if ( readOnly ) return ui::kENTER;
+
                     auto se = actionableEntry( rowHandler );
                     if ( se == nullptr ) continue;
+
+                    switch( se->sCase ) {
+                    case StarterPack::PropertyEditorEntry::entryCore::specialCase::cAccept:
+                        ui::waitUntilNothingIsPressed();
+                        return ui::kENTER;
+                    case StarterPack::PropertyEditorEntry::entryCore::specialCase::cCancel:
+                        ui::waitUntilNothingIsPressed();
+                        return ui::kESCAPE;
+                    case StarterPack::PropertyEditorEntry::entryCore::specialCase::cNone:
+                        if ( keypad == kpadStyle::kSlidersOnly ) {
+                            kpadSliderOnlyEditing = !kpadSliderOnlyEditing;
+                            updateScreen = true;
+                            continue;
+                        }
+                        break;
+                    }
 
                     char *editBuffer = nullptr;
                     dataWindow.row = rowHandler.focusedOnScreenRow();
@@ -912,6 +1080,26 @@ namespace StarterPack {
             }
         }
 
+        bool doLeft( StarterPack::PropertyEditorEntry::rowHandler rowHandler ) {
+            auto se = actionableEntry( rowHandler );
+            if ( se == nullptr ) return false;
+            if ( se->moveLeft() ) {
+                hasChanges = true;
+                return true;
+            }
+            return false;
+        }
+
+        bool doRight( StarterPack::PropertyEditorEntry::rowHandler rowHandler ) {
+            auto se = actionableEntry( rowHandler );
+            if ( se == nullptr ) return false;
+            if ( se->moveRight() ) {
+                hasChanges = true;
+                return true;
+            }
+            return false;
+        }
+
         StarterPack::PropertyEditorEntry::entryCore *actionableEntry( StarterPack::PropertyEditorEntry::rowHandler &rowHandler ) {
             if ( readOnly ) return nullptr;
             if ( !rowHandler.hasFocusedEntry() ) return nullptr;
@@ -933,6 +1121,8 @@ namespace StarterPack {
         }
 
 };
+
+PropertyEditor::markerStruct PropertyEditor::markers;
 
 //
 // TEST

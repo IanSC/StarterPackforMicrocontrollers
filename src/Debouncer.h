@@ -237,9 +237,6 @@ class Debouncer {
         //     while repeating, new key is pressed
         //  must separate debounce and repeat since can overlap
         
-        // #define DEBUG_TRACE(x)   x;
-        #define DEBUG_TRACE(x)   ;
-
         enum modes {
             mIdle = 0,
             mConfirm,
@@ -256,18 +253,24 @@ class Debouncer {
         };
         startingTimesUnion startingTimes;
 
-        union
-        // struct 
-        keyToMonitorUnion {
-            int keyToConfirm = -1;
-            int keyBeingRepeated;
-        };
-        keyToMonitorUnion keyToMonitor;
+        // union
+        // // struct 
+        // keyToMonitorUnion {
+        //     int keyToConfirm = -1;
+        //     int keyBeingRepeated;
+        // };
+        // keyToMonitorUnion keyToMonitor;
+
+        int keyToConfirm = -1;
+        int keyBeingRepeated = -1;
 
         // uint32_t confirmStartTime;
         //int toConfirmState;
 
     public:
+
+        // #define DEBUG_TRACE(x)   x;
+        #define DEBUG_TRACE(x)   ;
 
         int debounce( int currentState ) {
             
@@ -278,7 +281,8 @@ class Debouncer {
                 if ( currentState == debouncedState ) {
                     // DEBUG_TRACE( Serial.print( "#" ) );
                 } else {
-                    repeatMode = rIdle;
+                    //DEBUG_TRACE( Serial.println( "repeat cancelled" ) );
+                    //repeatMode = rIdle;
                     // confirm if:
                     // - if "keyUp"   and has keyUp   confirmation time
                     // - if "keyDown" and has keyDown confirmation time
@@ -307,7 +311,7 @@ class Debouncer {
                             // confirm first
                             // DEBUG_TRACE( SerialPrintf( "to confirm: %d\n", currentState ) );
                             JUMP_TO_CONFIRM:
-                            keyToMonitor.keyToConfirm = currentState;
+                            keyToConfirm = currentState;
                             startingTimes.confirmStartTime = millis();
                             mode = mConfirm;
                             goto JUMP_CONFIRM;
@@ -351,7 +355,7 @@ class Debouncer {
                 //   if keyUp, abort confirmation
                 //   if different key, new confirmation
                 now = millis();
-                if ( keyToMonitor.keyToConfirm == inactiveState ) {                        
+                if ( keyToConfirm == inactiveState ) {                        
                     // confirming keyUp
                     if ( currentState == inactiveState ) {
                         // ... still keyUp
@@ -365,15 +369,16 @@ class Debouncer {
                         }
                     } else {
                         // ... a key was pressed, reset
-                        DEBUG_TRACE( SerialPrintf( "new key while confirming: %d\n", currentState ) );
+                        DEBUG_TRACE( SerialPrintf( "new key while confirming 1: %d\n", currentState ) );
                         mode = modes::mIdle;
+                        //debouncedState = inactiveState;
                         goto JUMP_IDLE;
                         // keyToMonitor.keyToConfirm = currentState;
                         // startingTimes.confirmStartTime = now;
                     }
                 } else {
                     // confirming keyDown
-                    if ( keyToMonitor.keyToConfirm == currentState ) {
+                    if ( keyToConfirm == currentState ) {
                         // ... still same key
                         if ( now - startingTimes.confirmStartTime >= settings->confirmActiveStateTimeInMs ) {
                             // confirmed
@@ -387,7 +392,7 @@ class Debouncer {
                         // ... released (or jittle during press), meaning not confirmed
                         // abort confirmation
                         //debouncedState = currentState;
-                        DEBUG_TRACE( SerialPrintf( "not confirmed: %d\n", keyToMonitor.keyToConfirm ) );
+                        DEBUG_TRACE( SerialPrintf( "not confirmed: %d\n", keyToConfirm ) );
                         mode = modes::mIdle;
                         goto JUMP_IDLE;
                     } else {
@@ -396,7 +401,8 @@ class Debouncer {
                         //    if fed high frequency changing signal will go on forever confirming
                         //    and keep returning the last confirmed state, which is technically 
                         //    still correct since new state cannot be confirmed
-                        DEBUG_TRACE( SerialPrintf( "new key while confirming: %d\n", currentState ) );
+                        DEBUG_TRACE( SerialPrintf( "new key while confirming 2: %d\n", currentState ) );
+                        //debouncedState = inactiveState;
                         mode = modes::mIdle;
                         goto JUMP_IDLE;
                         // DEBUG_TRACE( SerialPrintf( "new to confirm: %d\n", currentState ) );
@@ -651,24 +657,32 @@ class Debouncer {
 
     private:
 
+        // #define DEBUG_TRACE(x)   x;
+        #define DEBUG_TRACE(x)   ;
+
         int getRepeatingCore( int current ) {
             //actualState = current;
             if ( current != inactiveState ) {
                 uint32_t now = millis();
                 switch( repeatMode ) {
                 case rIdle:
+                    _IDLE:
                     repeatMode = rSentFirstKey;
-                    keyToMonitor.keyBeingRepeated = current;
+                    keyBeingRepeated = current;
                     lastRepeatActionTime = now;
+                    DEBUG_TRACE( SerialPrintfln( "1st: %d", current ) );
                     return current;
                 case rSentFirstKey: {
-                        if ( current != keyToMonitor.keyBeingRepeated ) {
+                        if ( current != keyBeingRepeated ) {
                             // pressed another key
+                            DEBUG_TRACE( Serial.println( "2nd: diff" ) );
+                            goto _IDLE;
                             break;
                         }
                         if ( now - lastRepeatActionTime >= settings->repeatDelayInMs ) {
                             repeatMode = rRepeating;
                             lastRepeatActionTime = now;
+                            DEBUG_TRACE( SerialPrintfln( "2nd: %d", current ) );
                             return current;
                         } else {
                             return inactiveState;
@@ -676,12 +690,15 @@ class Debouncer {
                     }
                     break;
                 case rRepeating: {
-                        if ( current != keyToMonitor.keyBeingRepeated ) {
+                        if ( current != keyBeingRepeated ) {
                             // pressed another key
+                            DEBUG_TRACE( Serial.println( "Nth: diff" ) );
+                            goto _IDLE;
                             break;
                         }                    
                         if ( now - lastRepeatActionTime >= settings->repeatRateInMs ) {
                             lastRepeatActionTime = now;
+                            DEBUG_TRACE( SerialPrintfln( "Nth: %d", current ) );
                             return current;
                         } else {
                             return inactiveState;
@@ -694,6 +711,8 @@ class Debouncer {
             return current;
             // return actualState;
         }
+
+        #undef DEBUG_TRACE
 
 };
 

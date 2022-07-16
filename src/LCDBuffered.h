@@ -1112,7 +1112,9 @@ class LCDBuffered : public LCDInterface {
         lcd->updateDurationInMs = 5000;
         uint32_t start = millis();
         lcd->updateAllNow();
-        SerialPrintfln( "Full Screen = %lu", millis() - start ); // 22ms
+        Serial.print( "Full Screen = " );
+        Serial.println( millis() - start );
+        // SerialPrintfln( "Full Screen = %lu", millis() - start ); // 22ms
         lcd->updateDurationInMs = 10;
 
         lcd->cursorAutoCarriageReturn = true;

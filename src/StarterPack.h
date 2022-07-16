@@ -31,6 +31,8 @@
 #include <LCDEditorAlpha.h>
 #include <LCDEditorNumeric.h>
 
+#include <LCDBitmap.h>
+
 #include <Throttle.h>
 #include <ChangeObserver.h>
 
