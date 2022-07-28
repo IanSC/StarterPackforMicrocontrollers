@@ -39,11 +39,16 @@ class spSemaphore {
 
 public:
 
-    spSemaphore( uint16_t timeoutInMs = 100 ) {
+    spSemaphore() {}
+    spSemaphore( uint16_t timeoutInMs ) {
         this->timeoutInMs = timeoutInMs;
     }
 
     uint16_t timeoutInMs = 100;
+
+    //
+    // WITH ID
+    //
 
     bool take( uint8_t id, uint16_t timeoutInMs = 0 ) {
         if ( token == 0 || token == id ) {
@@ -57,7 +62,10 @@ public:
             timeoutInMs = this->timeoutInMs;
         if ( timeoutInMs == 0 ) {
             while( true ) {
-                while ( token != 0 && token != id ) ;
+                while ( token != 0 && token != id ) {
+                    delay(10);
+                    yield();
+                }
                 token = id;
                 if ( token == id )
                     return true;
@@ -79,12 +87,56 @@ public:
         return false;
     }
 
-    bool release( uint8_t id, uint16_t timeoutInMs = -1 ) {
+    bool release( uint8_t id ) {
         if ( token != id ) {
             // OMG, something is terribly wrong
             return false;
         }
         token = 0;
+        return true;
+    }
+
+    //
+    // SIMPLE LOCK
+    //
+
+    bool locked = false;
+
+    bool takeLock( uint16_t timeoutInMs = 0 ) {
+        if ( !locked ) {
+            locked = true;
+            return true;
+        }
+        if ( timeoutInMs == 0 )
+            timeoutInMs = this->timeoutInMs;
+        if ( timeoutInMs == 0 ) {
+            //while( true ) {
+                while( locked ) {
+                    delay(10);
+                    yield();
+                }
+                locked = true;
+                return true;
+            //}
+        }
+        uint32_t start = millis();
+        while( true ) {
+            while ( locked ) {
+                if ( millis() - start >= timeoutInMs )
+                    return false;
+            }
+            locked = true;
+            return true;
+        }
+        return false;
+    }
+
+    bool releaseLock() {
+        if ( !locked ) {
+            // OMG, something is terribly wrong
+            return false;
+        }
+        locked = true;
         return true;
     }
 

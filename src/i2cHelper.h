@@ -120,81 +120,78 @@ typedef uint8_t ERROR_NO;
 
 class i2cHelper {
 
-    //
-    // ERROR MESSAGES
-    //
-    // option 1 - make error# global, clutter
-    // option 2 - make it internal to i2cHelper, but must remap everything otherwise
-    //            for ESP32:              I2C_ERROR_OK, i2cHelper::I2C_ERROR_WRITE
-    //            for Arduino: i2cHelper::I2C_ERROR_OK, i2cHelper::I2C_ERROR_WRITE
-    //            so just remap all, so common code for any mpu
-    //
-    // make error number same as original to avoid extra mapping
-    //
     public:
+
+        //
+        // ERROR MESSAGES
+        //
     
-        #if defined(ESP32)
+        // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/utility/twi.c
+        // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/utility/twi.h
+        // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/Wire.cpp
+        // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/Wire.h    
+    
+        // Wire                  Calls TWI Functions
+        // -------------------   -------------------
+        // beginTransmission()
+        // endTransmission()     twi_writeTo()
+        //                       Output   0 .. success
+        //                                1 .. length too long for buffer
+        //                                2 .. address send, NACK received
+        //                                3 .. data send, NACK received
+        //                                4 .. other twi error (lost bus arbitration, bus error, ..)
+        //                                5 .. timeout
+        //                       if ESP32, espressif framework:
+        //                          case ESP_OK:          return 0;
+        //                          case ESP_FAIL:        return 2;
+        //                          case ESP_ERR_TIMEOUT: return 5;
+        //                          default:              return 4;
+        // write()               twi_transmit(),                       *** ERRORS WERE IGNORED *** dumbf...
+        //                       Output   1 length too long for buffer *** NOT HANDLED
+        //                                2 not slave transmitter      *** NOT HANDLED
+        //                                0 ok
+        // requestFrom()         beginTransmission()
+        //                       write()
+        //                       endTransmission()
+        //                       twi_readFrom() - timeout
 
-            // from Wire.h
-            //      ~/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-i2c.h
-            // 2022/06 - updates removed these
-            static const ERROR_NO ERR_I2C_OK       = I2C_ERROR_OK;
-            static const ERROR_NO ERR_I2C_DEV      = I2C_ERROR_DEV;
-            static const ERROR_NO ERR_I2C_ACK      = I2C_ERROR_ACK;
-            static const ERROR_NO ERR_I2C_TIMEOUT  = I2C_ERROR_TIMEOUT;
-            static const ERROR_NO ERR_I2C_BUS      = I2C_ERROR_BUS;
-            static const ERROR_NO ERR_I2C_BUSY     = I2C_ERROR_BUSY;
-            static const ERROR_NO ERR_I2C_MEMORY   = I2C_ERROR_MEMORY;
-            static const ERROR_NO ERR_I2C_CONTINUE = I2C_ERROR_CONTINUE;
-            static const ERROR_NO ERR_I2C_NO_BEGIN = I2C_ERROR_NO_BEGIN;
+        // void dummy() {
+        //     _wire->beginTransmission( 0 );
+        //     _wire->endTransmission();
+        //     _wire->write( 0 );
+        //     _wire->getWriteError();
+        //     _wire->clearWriteError();
+        //     _wire->requestFrom(0,1);
+        // }
 
-        #else
-        
-            // match errors as close as possible to ESP32
-            static const ERROR_NO ERR_I2C_OK       = 0;
-            static const ERROR_NO ERR_I2C_MEMORY   = 1;  // 1 .. length too long for buffer
-            static const ERROR_NO ERR_I2C_ACK      = 2;  // 2 .. address send, NACK received
-            static const ERROR_NO ERR_I2C_BUSY     = 3;  // 3 .. data send, NACK received
-            static const ERROR_NO ERR_I2C_BUS      = 4;  // 4 .. other twi error (lost bus arbitration, bus error, ..)
-            static const ERROR_NO ERR_I2C_TIMEOUT  = 5;  // 5 .. timeout    
-            static const ERROR_NO ERR_I2C_DEV      = 51; // unused - placeholders only so same error codes for ESP32/Arduino
-            static const ERROR_NO ERR_I2C_CONTINUE = 52;
-            static const ERROR_NO ERR_I2C_NO_BEGIN = 53;
-        
-            // twi calls that generates timeout errors:
-            // - twi_readFrom()
-            // - two_writeTo()
-            // - twi_stop()
-            // - ISR --> twi_stop()
-            //
-            // Wire                  Calls TWI Functions
-            // -------------------   -------------------
-            // beginTransmission()
-            // endTransmission()     twi_writeTo()
-            //                       Output   0 .. success
-            //                                1 .. length too long for buffer
-            //                                2 .. address send, NACK received
-            //                                3 .. data send, NACK received
-            //                                4 .. other twi error (lost bus arbitration, bus error, ..)
-            //                                5 .. timeout
-            // write()               twi_transmit(),                       *** ERRORS WERE IGNORED *** dumbf...
-            //                       Output   1 length too long for buffer *** NOT HANDLED
-            //                                2 not slave transmitter      *** NOT HANDLED
-            //                                0 ok
-            // requestFrom()         beginTransmission()
-            //                       write()
-            //                       endTransmission()
-            //                       twi_readFrom() - timeout
-        
-            //extern volatile uint32_t twi_timeout_us;
-            
-        #endif
+        static const ERROR_NO ERR_I2C_OK        = 0;
+        static const ERROR_NO ERR_I2C_BUFFER    = 1;  // 1 .. length too long for buffer
+        static const ERROR_NO ERR_I2C_ADDR_NACK = 2;  // 2 .. address send, NACK received
+        static const ERROR_NO ERR_I2C_DATA_NACK = 3;  // 3 .. data send, NACK received
+        static const ERROR_NO ERR_I2C_TWI       = 4;  // 4 .. other twi error (lost bus arbitration, bus error, ..)
+        static const ERROR_NO ERR_I2C_TIMEOUT   = 5;  // 5 .. timeout
 
         // additional errors possibly not handled in Wire.h
         static const ERROR_NO ERR_I2C_WRITE    = 101;
         static const ERROR_NO ERR_I2C_ENDTRANS = 102;
         static const ERROR_NO ERR_I2C_REQUEST  = 103;
         static const ERROR_NO ERR_I2C_TIMEOUT2 = 104;
+
+        static const char* errorMessage( ERROR_NO errorNo ) {
+            switch ( errorNo ) {
+            case ERR_I2C_OK:        return "no error";                          // errors from Arduino Wire.h
+            case ERR_I2C_BUFFER:    return "length too long for buffer";
+            case ERR_I2C_ADDR_NACK: return "address send, NACK received";
+            case ERR_I2C_DATA_NACK: return "data send, NACK received";
+            case ERR_I2C_TWI:       return "other twi error";
+            case ERR_I2C_TIMEOUT:   return "timeout";
+            case ERR_I2C_WRITE:     return "invalid return value from write()"; // additional errors
+            case ERR_I2C_ENDTRANS:  return "invalid return value from endTransmission()";
+            case ERR_I2C_REQUEST:   return "invalid requestFrom() length";
+            case ERR_I2C_TIMEOUT2:  return "uncaught timeout";
+            default:                return "unknown error";
+            }
+        }
 
     private:
 
@@ -221,70 +218,27 @@ class i2cHelper {
         inline void setTimeoutInMs( uint16_t timeOut ) {
             #if defined(ESP32)
                 _wire->setTimeOut( timeOut );
+            #elif defined(ARDUINO_ARCH_AVR)
+                _wire->setWireTimeout( timeOut * 1000 ); // Arduino in microsecs
+            #endif
+            // Stream.h in microsecs
+            _wire->setTimeout( timeOut );
+        }
+
+        inline uint16_t getTimeoutInMs() {
+            #if defined(ESP32)
+                return _wire->getTimeOut();
+            #elif defined(ARDUINO_ARCH_AVR)
+                return twi_timeout_us / 1000;
             #else
-                _wire->setTimeout( timeOut * 1000 ); // Arduino in microsecs
+                // get from Stream.h ???
+                return _wire->getTimeout(); // assume milliseconds
             #endif
         }
 
         inline void setFrequency( uint32_t frequency ) {
             _wire->setClock( frequency );
         }
-
-    //
-    // ERROR MESSAGES
-    //
-    // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/utility/twi.c
-    // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/utility/twi.h
-    // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/Wire.cpp
-    // https://github.com/arduino/ArduinoCore-avr/blob/master/libraries/Wire/src/Wire.h
-    
-    public:
-
-        #if defined(ESP32)
-
-            static const char* errorMessage( ERROR_NO errorNo ) {
-                // Wire.h
-                // ~/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp32-hal-i2c.h
-                switch ( errorNo ) {
-                case ERR_I2C_OK:       return "no error";                          // errors from ESP32 Wire.h
-                case ERR_I2C_DEV:      return "I2C_ERROR_DEV";
-                case ERR_I2C_ACK:      return "NACK received";
-                case ERR_I2C_TIMEOUT:  return "timeout";
-                case ERR_I2C_BUS:      return "bus arbitration";
-                case ERR_I2C_BUSY:     return "bus busy";
-                case ERR_I2C_MEMORY:   return "memory related error";
-                case ERR_I2C_CONTINUE: return "stop not received";
-                case ERR_I2C_NO_BEGIN: return "I2C_ERROR_NO_BEGIN";
-                case ERR_I2C_WRITE:    return "invalid return from write()";       // additional errors
-                case ERR_I2C_ENDTRANS: return "invalid return from endTransmission()";
-                case ERR_I2C_REQUEST:  return "invalid requestFrom() length";
-                case ERR_I2C_TIMEOUT2: return "uncaught timeout";
-                default:               return "unknown error";
-                }
-            }
-
-        #else
-    
-            static const char* errorMessage( ERROR_NO errorNo ) {
-                switch ( errorNo ) {
-                case ERR_I2C_OK:       return "no error";                          // errors from Arduino Wire.h
-                case ERR_I2C_MEMORY:   return "length too long for buffer";
-                case ERR_I2C_ACK:      return "address send, NACK received";
-                case ERR_I2C_BUSY:     return "data send, NACK received";
-                case ERR_I2C_BUS:      return "other twi error";
-                case ERR_I2C_TIMEOUT:  return "timeout";
-                case ERR_I2C_DEV:                                                  // unused
-                case ERR_I2C_CONTINUE:
-                case ERR_I2C_NO_BEGIN: return "( placeholder only )";
-                case ERR_I2C_WRITE:    return "invalid return value from write()"; // additional errors
-                case ERR_I2C_ENDTRANS: return "invalid return value from endTransmission()";
-                case ERR_I2C_REQUEST:  return "invalid requestFrom() length";
-                case ERR_I2C_TIMEOUT2: return "uncaught timeout";
-                default:                 return "unknown error";
-                }
-            }
-            
-        #endif
         
     //
     // LAST ERROR
@@ -301,19 +255,7 @@ class i2cHelper {
             lastError = newError;
         }
 
-        #if defined(ESP32)
-        
-            inline bool CheckAndRecordError() {
-                // if ( _wire->getWriteError() )
-                if ( _wire->lastError() == ERR_I2C_OK )
-                    return true;
-                else {
-                    lastError = _wire->lastError();
-                    return false;
-                }
-            }
-            
-        #elif defined(ARDUINO_ARCH_AVR)
+        #if defined(ARDUINO_ARCH_AVR)
         
             inline bool CheckAndRecordError() {
                 if ( _wire->getWireTimeoutFlag() ) {
@@ -365,31 +307,7 @@ class i2cHelper {
 
         uint16_t recoveryThrottleInMs = 2000;
 
-        #if defined(ESP32)
-
-            bool recoverIfHasError( uint8_t _i2cAddress ) {
-                if ( lastError == ERR_I2C_OK && _wire->lastError() == ERR_I2C_OK )
-                    return false;
-                
-                // try to recover every recoveryThrottleInMs only
-                uint32_t now = millis();
-                if ( now - lastRecovery > recoveryThrottleInMs ) {
-                    lastRecovery = now;
-
-                    //Serial.println( "RECO: " );
-                    //if ( lastError != ERR_I2C_OK )
-                    //   Serial.printf( "   Last Error = %s\n", errorMessage( lastError ) );
-                    //if ( _wire->lastError() != ERR_I2C_OK )
-                    //   Serial.printf( "   Wire Last Error = %s\n", errorMessage( _wire->lastError() ) );
-
-                    _wire->begin();
-                    lastError = ERR_I2C_OK;
-                    return true;
-                }
-                return false;
-            }
-
-        #elif defined(ARDUINO_ARCH_AVR)
+        #if defined(ARDUINO_ARCH_AVR)
 
             bool recoverIfHasError( uint8_t _i2cAddress ) {
                 if ( lastError == ERR_I2C_OK )
@@ -422,13 +340,13 @@ class i2cHelper {
                     
                     lastError = ERR_I2C_OK;
                     _wire->clearWireTimeoutFlag();
+                    _wire->clearWriteError();
                     return true;
                 }
                 return false;
             }
 
         #else
-            // Seeeduino Xiao - defined(ARDUINO_ARCH_SAMD)
 
             bool recoverIfHasError( uint8_t _i2cAddress ) {
                 if ( lastError == ERR_I2C_OK )
@@ -442,10 +360,9 @@ class i2cHelper {
                     //Serial.println( "RECO: " );
                     //if ( lastError != ERR_I2C_OK )
                     //   Serial.printf( "   Last Error = %s\n", errorMessage( lastError ) );
-                    //if ( _wire->lastError() != ERR_I2C_OK )
-                    //   Serial.printf( "   Wire Last Error = %s\n", errorMessage( _wire->lastError() ) );
 
                     _wire->begin();
+                    _wire->clearWriteError();
                     lastError = ERR_I2C_OK;
                     return true;
                 }
@@ -462,79 +379,82 @@ class i2cHelper {
     // WRAPPERS
     //
     
-         #if defined(ESP32)
-         
-            inline bool endTransmission() {
-                // int8_t err =
-                _wire->endTransmission();
-                if ( !CheckAndRecordError() ) return false;
-                // NO NEED FOR ESP32 lastError() detected it
-                // if ( err != ERR_I2C_OK ) { RecordError( ERR_I2C_ENDTRANS ); return false; }
-                return true;
+        inline bool endTransmission() {
+            auto err = _wire->endTransmission();
+            if ( err != ERR_I2C_OK ) { RecordError( err ); return false; }
+            if ( !CheckAndRecordError() ) return false;
+            return true;
+        }
+
+        inline bool write( uint8_t data ) {
+            size_t bytesWritten = _wire->write( data );
+            auto err = _wire->getWriteError();
+            if ( err != 0 ) { RecordError( ERR_I2C_WRITE ); return false; }
+            if ( !CheckAndRecordError() ) return false;
+            // NEEDED FOR ARDUINO
+            if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
+            return true;
+        }
+
+        inline bool available( uint8_t length ) {
+            if ( _wire->available() < length ) {
+                uint32_t start = millis();
+                while ( _wire->available() < length ) {
+                    if ( millis() - start >= getTimeoutInMs() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
+                    if ( !CheckAndRecordError() ) return false;
+                }
             }
-            
-            inline bool write( uint8_t data ) {
-                // size_t bytesWritten =
-                _wire->write( data );
-                if ( !CheckAndRecordError() ) return false;
-                // NO NEED FOR ESP32 lastError() detected it
-                //if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
-                return true;
-            }
-            
-        #else
+            return CheckAndRecordError();
+        }
+
+        // #if defined(ESP32)
+
+        //     inline bool available( uint8_t length ) {
+        //         if ( _wire->available() < length ) {
+        //             uint32_t start = millis();
+        //             while ( _wire->available() < length ) {
+        //                 if ( millis() - start >= _wire->getTimeOut() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
+        //                 if ( !CheckAndRecordError() ) return false;
+        //             }
+        //         }
+        //         return CheckAndRecordError();
+        //     }
+
+        // #elif defined(ARDUINO_ARCH_AVR)
+
+        //     // Ardu9no Nano
+        //     inline bool available( uint8_t length ) {
+        //         // TIMEOUT IN MICROS
+        //         // extern volatile uint32_t twi_timeout_us; // in Wire.h/TWI.h
+        //         if ( _wire->available() < length ) {
+        //             uint32_t start = micros();
+        //             while ( _wire->available() < length ) {
+
+        //                 _wire->getTimeout()
+        //                 if ( micros() - start >= twi_timeout_us ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
+        //                 if ( !CheckAndRecordError() ) return false;
+        //             }
+        //         }
+        //         return CheckAndRecordError();
+        //     }
+
+        // #else
         
-            inline bool endTransmission() {
-                int8_t err = _wire->endTransmission();
-                if ( !CheckAndRecordError() ) return false;
-                if ( err != 0 ) { RecordError( ERR_I2C_ENDTRANS ); return false; }
-                return true;
-            }
-            
-            inline bool write( uint8_t data ) {
-                size_t bytesWritten = _wire->write( data );
-                if ( !CheckAndRecordError() ) return false;
-                // NEEDED FOR ARDUINO
-                if ( bytesWritten != 1 ) { RecordError( ERR_I2C_WRITE ); return false; }
-                return true;
-            }
-            
-        #endif
+        //     // Seeeduino Xiao
+        //     inline bool available( uint8_t length ) {
+        //         if ( _wire->available() < length ) {
+        //             uint32_t start = micros();
+        //             while ( _wire->available() < length ) {
 
-        #if defined(ARDUINO_ARCH_AVR)
+        //                 _wire->getTimeout()
+        //                 if ( micros() - start >= twi_timeout_us ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
+        //                 if ( !CheckAndRecordError() ) return false;
+        //             }
+        //         }
+        //         return CheckAndRecordError();
+        //     }
 
-            inline bool available( uint8_t length ) {
-                // TIMEOUT IN MICROS
-                // extern volatile uint32_t twi_timeout_us; // in Wire.h/TWI.h
-                if ( _wire->available() < length ) {
-                    uint32_t start = micros();
-                    while ( _wire->available() < length ) {
-                        if ( micros() - start >= twi_timeout_us ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
-                        if ( !CheckAndRecordError() ) return false;
-                    }
-                }
-                return CheckAndRecordError();
-            }
-
-        #else // ESP32, Seeeduino Xiao
-
-            inline bool available( uint8_t length ) {
-                if ( _wire->available() < length ) {
-                    uint32_t start = millis();
-                    while ( _wire->available() < length ) {
-                        #if defined(ESP32)
-                            if ( millis() - start >= _wire->getTimeOut() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
-                        #else
-                            if ( millis() - start >= _wire->getTimeout() ) { RecordError( ERR_I2C_TIMEOUT2 ); return false; }
-                        #endif
-                        if ( !CheckAndRecordError() ) return false;
-                    }
-                }
-                return CheckAndRecordError();
-            }
-
-        #endif
-
+        // #endif
 
         inline bool requestFrom( uint8_t _i2cAddress, uint8_t length ) {
             size_t bytesArrived = _wire->requestFrom( _i2cAddress, length );
