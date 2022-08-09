@@ -433,7 +433,7 @@ public:
 
 private:
 
-    static Throttle *TT;
+    static Throttle *TT; // = nullptr;
 
 public:
 
@@ -467,7 +467,7 @@ private:
 public:
 
     static void release() {
-        if ( TT != nullptr ) delete TT;        
+        if ( TT != nullptr ) { delete TT; TT = nullptr; }
     }
     
 };

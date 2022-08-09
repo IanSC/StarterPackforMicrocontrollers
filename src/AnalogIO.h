@@ -118,6 +118,7 @@
 #include <Debouncer.h>
 #include <limits.h>
 #include <UserInputDevice1Key.h>
+#include <JitterRemover.h>
 
     #if defined(ESP32)
         // FOR ESP32 NATIVE READ
@@ -148,14 +149,15 @@ class AnalogIO : public UserInputDevice1Key {
 // INIT
 //
 
-    private:
+    protected:
 
         uint8_t PIN;
 
     public:
 
         ~AnalogIO() {
-            if ( buttonList != nullptr ) delete buttonList;
+            if ( buttonList != nullptr ) { delete[] buttonList; buttonList = nullptr; }
+            destroyJitter();
         }
 
         int rawValue    = 0;
@@ -210,19 +212,23 @@ class AnalogIO : public UserInputDevice1Key {
         //     read();
         // }
 
-        inline void setSmoothingFunction( intIntFunction smoothingFunction ) {
-            this->smoothingFunction = smoothingFunction;
+        inline void setSmoothingPreMapFunction( intIntFunction smoothingFunction ) {
+            this->smoothingPreMapFunction = smoothingFunction;
         }
 
         inline void setMappingFunction( intIntFunction mapFunction ) {
             this->mapFunction = mapFunction;
         }
 
+        inline void setSmoothingPostMapFunction( intIntFunction smoothingFunction ) {
+            this->smoothingPostMapFunction = smoothingFunction;
+        }
+
         inline void setOnChangeCallback( voidIntFunction onChange ) {
             this->onChange = onChange;
         }
 
-    private:
+    protected:
 
         bool useSmoothing = false;
         int16_t smoothingAverage = 0;
@@ -288,7 +294,7 @@ class AnalogIO : public UserInputDevice1Key {
             useSmoothing = false;
         }
 
-    private:
+    protected:
 
         // #if defined(ESP32)
         //     int analogResolution = 4096;
@@ -310,6 +316,78 @@ class AnalogIO : public UserInputDevice1Key {
         // }
 
 //
+// JITTER BUG
+//
+    protected:
+
+        JitterRemover *jitterRemover = nullptr;
+
+        inline void destroyJitter() {
+            if ( jitterRemover != nullptr ) {
+                delete jitterRemover;
+                jitterRemover = nullptr;
+            }
+        }
+
+        // JitterRemover *jrStage1 = nullptr;
+        // JitterRemover *jrStage2 = nullptr;
+        // JitterRemover *jrStage3 = nullptr;
+        // JitterRemover *jrStage4 = nullptr;
+        // JitterRemover *jrStage5 = nullptr;
+
+        // inline void destroyJitter() {
+        //     destroyJitterStage1();
+        //     destroyJitterStage2();
+        //     destroyJitterStage3();
+        //     destroyJitterStage4();
+        //     destroyJitterStage5();
+        // }
+
+        // inline void destroyJitterStage1() { if ( jrStage1 != nullptr ) { delete jrStage1; jrStage1 = nullptr; } }
+        // inline void destroyJitterStage2() { if ( jrStage2 != nullptr ) { delete jrStage2; jrStage1 = nullptr; } }
+        // inline void destroyJitterStage3() { if ( jrStage3 != nullptr ) { delete jrStage3; jrStage1 = nullptr; } }
+        // inline void destroyJitterStage4() { if ( jrStage4 != nullptr ) { delete jrStage4; jrStage1 = nullptr; } }
+        // inline void destroyJitterStage5() { if ( jrStage5 != nullptr ) { delete jrStage5; jrStage1 = nullptr; } }
+
+    public:
+
+        void applyJitterRemoval( int maxSlots, int rangeTolerance ) {
+            destroyJitter();
+            jitterRemover = new JitterRemover();
+            jitterRemover->init( maxSlots, rangeTolerance );
+        }
+
+        // void applyJitterRemovalStage1( int maxSlots, int rangeTolerance ) {
+        //     destroyJitterStage1();
+        //     jrStage1 = new JitterRemover();
+        //     jrStage1->init( maxSlots, rangeTolerance );
+        // }
+
+        // void applyJitterRemovalStage2( int maxSlots, int rangeTolerance ) {
+        //     destroyJitterStage2();
+        //     jrStage2 = new JitterRemover();
+        //     jrStage2->init( maxSlots, rangeTolerance );
+        // }
+
+        // void applyJitterRemovalStage3( int maxSlots, int rangeTolerance ) {
+        //     destroyJitterStage3();
+        //     jrStage3 = new JitterRemover();
+        //     jrStage3->init( maxSlots, rangeTolerance );
+        // }
+
+        // void applyJitterRemovalStage4( int maxSlots, int rangeTolerance ) {
+        //     destroyJitterStage4();
+        //     jrStage4 = new JitterRemover();
+        //     jrStage4->init( maxSlots, rangeTolerance );
+        // }
+
+        // void applyJitterRemovalStage5( int maxSlots, int rangeTolerance ) {
+        //     destroyJitterStage5();
+        //     jrStage5 = new JitterRemover();
+        //     jrStage5->init( maxSlots, rangeTolerance );
+        // }
+
+//
 // READ ESP NATIVE METHOD
 //
     
@@ -323,7 +401,7 @@ class AnalogIO : public UserInputDevice1Key {
     //
     // https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/adc.html
 
-    private:
+    protected:
 
         #if defined(ESP32)
 
@@ -409,7 +487,7 @@ class AnalogIO : public UserInputDevice1Key {
         //     ResponsiveAnalogRead RAR = ResponsiveAnalogRead( PIN, false );
         // #endif
 
-    private:
+    protected:
 
         // inline void setupSmoothing() {
         //     #if defined(USE_RESPONSIVE_AR)
@@ -459,9 +537,10 @@ class AnalogIO : public UserInputDevice1Key {
 //
 // ANALOG
 //
-    private:
+    protected:
 
-        intIntFunction smoothingFunction = nullptr;
+        intIntFunction smoothingPreMapFunction = nullptr;
+        intIntFunction smoothingPostMapFunction = nullptr;
         intIntFunction mapFunction = nullptr;
         voidIntFunction onChange = nullptr;
         int lastValue = -1;
@@ -496,8 +575,8 @@ class AnalogIO : public UserInputDevice1Key {
             else
                 smoothValue = rawValue;
 
-            if ( smoothingFunction != nullptr )
-                smoothValue = smoothingFunction( smoothValue );
+            if ( smoothingPreMapFunction != nullptr )
+                smoothValue = smoothingPreMapFunction( smoothValue );
             // else
             //     smoothValue = rawValue;
 
@@ -505,6 +584,55 @@ class AnalogIO : public UserInputDevice1Key {
                 value = mapFunction( smoothValue );
             else
                 value = smoothValue;
+
+            if ( smoothingPostMapFunction != nullptr )
+                value = smoothingPostMapFunction( value );
+
+            if ( jitterRemover != nullptr )
+                value = jitterRemover->removeJitter( value );
+
+            /* EVEN 5 STAGE DOES NOT WORK WITH BAD POT ON ESP32
+               IT'S A BOURN MULTI TURN ???
+            static auto oldValue1 = -1;
+            static auto oldValue2 = -1;
+            static auto oldValue3 = -1;
+
+            if ( jrStage1 != nullptr ) {
+                value = jrStage1->removeJitter( value );
+            //Serial.print(1);
+                if ( value != oldValue1 ) {
+                    oldValue1 = value;
+            //Serial.print("-");
+                    if ( jrStage2 != nullptr ) {
+                        value = jrStage2->removeJitter( value );
+            //Serial.print(2);
+                        if ( value != oldValue2 ) {
+                            oldValue2 = value;
+            //Serial.print("-");
+                            if ( jrStage3 != nullptr ) {
+                                value = jrStage3->removeJitter( value );
+            Serial.print(3);
+                                if ( value != oldValue3 ) {
+                                    oldValue3 = value;
+            Serial.print("-");
+                                    if ( jrStage4 != nullptr ) {
+                                        value = jrStage4->removeJitter( value );
+            Serial.print(4);
+                                    }
+                                }
+                            }
+                        }
+            //Serial.println();
+                    }
+                }
+            }
+            // if ( jrStage3 != nullptr ) value = jrStage3->removeJitter( value );
+            // if ( jrStage4 != nullptr ) value = jrStage4->removeJitter( value );
+            // if ( jrStage5 != nullptr ) value = jrStage5->removeJitter( value );
+            // TO DO: keep conversion stage result for user analysis ???
+            // - raw / preMapSmooth / mapped (final)
+            // - raw / preMapSmooth / mapped / postMapSmooth (final)
+            */
 
             handleOnChanged();
             // if ( value != lastValue ) {
@@ -519,7 +647,7 @@ class AnalogIO : public UserInputDevice1Key {
 // AS BUTTONS
 //
 
-    private:
+    protected:
     
         class buttonRange { public:
             int from;

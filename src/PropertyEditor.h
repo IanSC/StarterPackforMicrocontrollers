@@ -1073,8 +1073,10 @@ namespace StarterPack {
                     }
                     // restore
                     dataWindow.windowSize = dataWidth;
-                    if ( editBuffer != nullptr )
+                    if ( editBuffer != nullptr ) {
                         delete editBuffer;
+                        editBuffer = nullptr;
+                    }
                     updateScreen = true;
                 }
             }

@@ -100,7 +100,7 @@ class Debouncer {
             uint16_t repeatRateInMs  = 250;
         };
 
-        static Settings defaultSettings;            // global single instance setting to save space
+        static Settings defaultSettings;                // global single instance setting to save space
 
     private:
 

@@ -66,6 +66,7 @@
         "queue": "cpp",
         "stdexcept": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "memory_resource": "cpp"
     }
 }

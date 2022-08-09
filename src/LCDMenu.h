@@ -86,9 +86,9 @@ class menuSet {
         LCDUtility::chooser *chooser = nullptr;
 
         void release() {
-            if ( items != nullptr ) delete items;
-            if ( desc != nullptr ) delete desc;
-            if ( chooser != nullptr ) delete chooser;  
+            if ( items   != nullptr ) { delete[] items;   items   = nullptr; }
+            if ( desc    != nullptr ) { delete[] desc;    desc    = nullptr; }
+            if ( chooser != nullptr ) { delete   chooser; chooser = nullptr; }
         }
 
         LCDInterface *lcd = nullptr;

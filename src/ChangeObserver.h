@@ -198,7 +198,7 @@ public:
     #undef OBS
 
     static void release() {
-        if ( CHG != nullptr ) delete CHG;
+        if ( CHG != nullptr ) { delete CHG; CHG = nullptr; }
     }
 
 private:

@@ -64,8 +64,8 @@ namespace LCDUtility {
             bool    crossover = false;         // allow crossover between 1st/last items
 
             ~chooser() {
-                delete itemLen;
-                delete posInLayout;
+                delete[] itemLen;
+                delete[] posInLayout;
             }
 
             void setSelectedItem( uint8_t selectedItem ) {

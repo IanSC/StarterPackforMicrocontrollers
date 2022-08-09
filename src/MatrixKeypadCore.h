@@ -55,7 +55,7 @@ class MatrixKeypadCore {
             //    assignRowsN( uint8_t argCount, int ... )
             rowCount = argCount;
             if ( rowPinList != nullptr )
-                delete rowPinList;
+                delete[] rowPinList;
             rowPinList = new uint8_t[rowCount];
 
             va_list valist;
@@ -83,7 +83,7 @@ class MatrixKeypadCore {
         void assignColumnsN( uint8_t argCount, ... ) {
             colCount = argCount;
             if ( colPinList != nullptr )
-                delete colPinList;
+                delete[] colPinList;
             colPinList = new uint8_t[colCount];
 
             va_list valist;
