@@ -37,7 +37,7 @@ class LCD_HD44780 : public LCDInterface {
 
         ~LCD_HD44780() {}
 
-        void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) {
+        void begin( uint8_t maxColumns, uint8_t maxRows, charDotSize dotSize = charDotSize::size5x8 ) override {
             delay( 50 );
             beginCore( maxColumns, maxRows, dotSize );
         }
@@ -138,16 +138,16 @@ class LCD_HD44780 : public LCDInterface {
         // https://en.wikipedia.org/wiki/Hitachi_HD44780_LCD_controller
         // https://html.alldatasheet.com/html-pdf/63673/HITACHI/HD44780/6019/24/HD44780.html
         
-        inline void setCursor( uint8_t col, uint8_t row ) {
+        inline void setCursor( uint8_t col, uint8_t row ) override {
             row = row % maxRows;
             command( LCD_SET_DDRAM_ADDR | ( rowAddress[row] + col ) );
         }
     
-        inline void clear() {
+        inline void clear() override {
             command( LCD_CLEAR );
             delayMicroseconds( 1520 - 37 ); // 1.52ms, command already has 37ms
         }
-        inline void home() {
+        inline void home() override {
             command( LCD_HOME );
             delayMicroseconds( 1520 - 37 ); // 1.52ms, command already has 37ms
         }
@@ -167,30 +167,30 @@ class LCD_HD44780 : public LCDInterface {
         
     public:
     
-        inline void displayOn() {
+        inline void displayOn() override {
             displayMode |= LCD_DISPLAY_ON;
             command( displayMode );
         }
-        inline void displayOff() {
+        inline void displayOff() override {
             displayMode &= ~LCD_DISPLAY_ON;
             command( displayMode );
         }
-        inline void cursorOn() {
+        inline void cursorOn() override {
             displayMode |= LCD_DISPLAY_CURSOR_ON;
             command( displayMode );
             // or just: display ON, cursor ON, blink OFF
         }
-        inline void cursorOff() {
+        inline void cursorOff() override {
             displayMode &= ~LCD_DISPLAY_CURSOR_ON;
             command( displayMode );
             // or just: display ON, cursor OFF, blink N/A
         }
-        inline void cursorBlinkOn()  {
+        inline void cursorBlinkOn() override {
             displayMode |= LCD_DISPLAY_BLINK_ON;
             command( displayMode );
             // or just: display ON, cursor ON, blink ON
         }
-        inline void cursorBlinkOff() {
+        inline void cursorBlinkOff() override {
             displayMode &= ~LCD_DISPLAY_BLINK_ON;
             command( displayMode );
             // or just: display ON, cursor ON, blink OFF
@@ -211,16 +211,16 @@ class LCD_HD44780 : public LCDInterface {
 
     public:
     
-        inline void moveCursorLeft() {
+        inline void moveCursorLeft() override {
             command( LCD_SHIFT_MODE | LCD_SHIFT_LEFT );
         }
-        inline void moveCursorRight() {
+        inline void moveCursorRight() override {
             command( LCD_SHIFT_MODE | LCD_SHIFT_RIGHT );
         }    
-        inline void scrollDisplayLeft() {
+        inline void scrollDisplayLeft() override {
             command( LCD_SHIFT_MODE | LCD_SHIFT_DISPLAY_ON | LCD_SHIFT_LEFT );
         }
-        inline void scrollDisplayRight() {
+        inline void scrollDisplayRight() override {
             command( LCD_SHIFT_MODE | LCD_SHIFT_DISPLAY_ON | LCD_SHIFT_RIGHT );
         }
         
@@ -240,19 +240,19 @@ class LCD_HD44780 : public LCDInterface {
         
     public:
     
-        inline void leftToRight() {
+        inline void leftToRight() override {
             entryMode |= LCD_ENTRY_INCREMENT;
             command( entryMode );
         }
-        inline void rightToLeft() { 
+        inline void rightToLeft() override { 
             entryMode &= ~LCD_ENTRY_INCREMENT;
             command( entryMode );
         }
-        inline void autoscrollOn() {
+        inline void autoscrollOn() override {
             entryMode |= LCD_ENTRY_SHIFT_ON;
             command( entryMode );
         }
-        inline void autoscrollOff() {
+        inline void autoscrollOff() override {
             entryMode &= ~LCD_ENTRY_SHIFT_ON;
             command( entryMode );
         }
@@ -266,11 +266,11 @@ class LCD_HD44780 : public LCDInterface {
 
     public:
     
-        inline void createChar( uint8_t charID, const uint8_t charmap[] ) {
+        inline void createChar( uint8_t charID, const uint8_t charmap[] ) override {
             createCharCore( charID, (const char *) charmap );
         }
 
-        inline void createChar( uint8_t charID, const char *charmap ) {
+        inline void createChar( uint8_t charID, const char *charmap ) override {
             createCharCore( charID, charmap );
         }
 

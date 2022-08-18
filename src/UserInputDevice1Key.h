@@ -26,45 +26,45 @@ class UserInputDevice1Key : public UserInputDevice {
     public:
 
         // return unmapped key number
-        virtual uint8_t readMappedKey() = 0;
+        //virtual uint8_t readMappedKey() override = 0;
 
         // return string containing all mapped key values
-        char *readMappedKeyList() {
+        char *readMappedKeyList() override {
             static char buffer[2] = " ";
             buffer[0] = readMappedKey();
             return buffer;
         }
 
-        char *getContinuousKeys( char *allowedKeys = nullptr ) {
+        char *getContinuousKeys( char *allowedKeys = nullptr ) override {
             char *keys = readMappedKeyList();
             if ( allowedKeys != nullptr && !isCharInString( keys[0], allowedKeys ) )
                 keys[0] = 0;
             return keys;
         }
 
-        uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
+        uint8_t getContinuousKey( char *allowedKeys = nullptr ) override {
             return debouncer.getContinuousKey( allenKey( allowedKeys ) );
         }
 
-        uint8_t getKeyDown( char *allowedKeys = nullptr ) {
+        uint8_t getKeyDown( char *allowedKeys = nullptr ) override {
             return debouncer.getKeyDown( allenKey( allowedKeys ) );
         }
 
-        uint8_t getKeyUp( char *allowedKeys = nullptr ) {
+        uint8_t getKeyUp( char *allowedKeys = nullptr ) override {
             return debouncer.getKeyUp( allenKey( allowedKeys ) );
         }
 
-        uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
+        uint8_t getRepeatingKey( char *allowedKeys = nullptr ) override {
             return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
         }
 
-        uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {
+        uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) override {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             if ( key == nonRepeatingKey ) debouncer.flagWaitForKeyup();
             return key;
         }
 
-        uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
+        uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) override {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             if ( nonRepeatingKeys != nullptr && isCharInString( key, nonRepeatingKeys ) )
                 debouncer.flagWaitForKeyup();

@@ -67,7 +67,7 @@ class MatrixKeypad1Key : public MatrixKeypadCore, public UserInputDevice1Key {
     //
     public:
 
-        void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
+        void flagWaitForKeyupSpecific( uint8_t key ) override { debouncer.flagWaitForKeyup(); }
 
     //
     // READ DEVICE
@@ -91,7 +91,7 @@ class MatrixKeypad1Key : public MatrixKeypadCore, public UserInputDevice1Key {
         uint8_t readScanCode = 0;
         bool multiplePress = false;
 
-        void recordScanCode( uint8_t scanCode ) {
+        void recordScanCode( uint8_t scanCode ) override {
             if ( readScanCode == 0 )
                 readScanCode = scanCode + 1;
             else

@@ -104,7 +104,7 @@ public:
 
     #if defined( LCD_USE_8BIT_PORT )
         #if defined( LCD_READ_WRITE_MODE )
-            inline LCD_wired2( uint8_t rs, uint8_t rw, uint8_t enable,
+            inline LCD_wired( uint8_t rs, uint8_t rw, uint8_t enable,
             uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
                 LCD_RS = rs; LCD_RW = rw; LCD_E = enable;
                 LCD_DB0 = d0; LCD_DB1 = d1; LCD_DB2 = d2; LCD_DB3 = d3;
@@ -112,7 +112,7 @@ public:
                 initPort();
             }
         #else    
-            inline LCD_wired2( uint8_t rs, uint8_t enable,
+            inline LCD_wired( uint8_t rs, uint8_t enable,
             uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
                 LCD_RS = rs; LCD_E = enable;
                 LCD_DB0 = d0; LCD_DB1 = d1; LCD_DB2 = d2; LCD_DB3 = d3;
@@ -122,7 +122,7 @@ public:
         #endif        
     #else
         #if defined( LCD_READ_WRITE_MODE )
-            inline LCD_wired2( uint8_t rs, uint8_t rw, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
+            inline LCD_wired( uint8_t rs, uint8_t rw, uint8_t enable, uint8_t d4, uint8_t d5, uint8_t d6, uint8_t d7 ) {
                 LCD_RS = rs; LCD_RW = rw; LCD_E = enable;
                 LCD_DB4 = d4; LCD_DB5 = d5; LCD_DB6 = d6; LCD_DB7 = d7;
                 initPort();
@@ -136,8 +136,8 @@ public:
         #endif
     #endif
 
-    inline void setTimeoutInMs( uint16_t timeOut ) {}
-    inline void setFrequency( uint32_t frequency ) {}
+    inline void setTimeoutInMs( uint16_t timeOut ) override {}
+    inline void setFrequency( uint32_t frequency ) override {}
 
     void initPort() {
         // initialize port directions
@@ -170,12 +170,12 @@ public:
         // also if reconnected will still work unless power is removed
         // in which case will revert to 8-bit mode
         
-        inline bool     verify()            { return true; }
-        inline ERROR_NO verifyWithError()   { return 0; }
-        inline bool     recoverIfHasError() { return false; }
-        inline void     setRecoveryThrottleInMs( uint16_t delay ) {}
+        inline bool     verify()            override { return true; }
+        inline ERROR_NO verifyWithError()   override { return 0; }
+        inline bool     recoverIfHasError() override { return false; }
+        inline void     setRecoveryThrottleInMs( uint16_t delay ) override {}
 
-        void reset() {
+        void reset() override {
             begin( maxColumns, maxRows, dotSize );
         }
 
@@ -184,15 +184,15 @@ public:
     //
     public:
 
-        inline void backlightOn()  {} // not supported
-        inline void backlightOff() {}
+        inline void backlightOn()  override {} // not supported
+        inline void backlightOff() override {}
 
     //
     // CORE
     //
     public:
 
-        void command( uint8_t com ) {
+        void command( uint8_t com ) override {
             digitalWrite( LCD_RS, LOW );
             setWriteMode();
             setDataPortToWrite( true );
@@ -200,7 +200,7 @@ public:
             delayMicroseconds( 37 );
         }
 
-        size_t write( uint8_t ch ) {
+        size_t write( uint8_t ch ) override {
             digitalWrite( LCD_RS, HIGH );
             setWriteMode();
             setDataPortToWrite( true );
@@ -246,7 +246,7 @@ public:
             
         #else
     
-            void sendNibble( uint8_t nibble ) {
+            void sendNibble( uint8_t nibble ) override {
                 // send lower nibble
                 digitalWrite( LCD_RS, LOW );
                 setWriteMode();

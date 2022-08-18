@@ -28,12 +28,14 @@ class UserInputDevice {
     // CORE
     //
 
-        // return mapped key number
-        // eg. '1', '2', '3'
+        // // not debounced
+        // virtual uint8_t readRaw() = 0;
+
+        // return mapped key number, eg. '1', '2', '3'
+        // return 0 if multiple keys pressed
         virtual uint8_t readMappedKey() = 0;
 
-        // return string containing all mapped key values
-        // eg. "123ABC"
+        // return string containing all mapped key values, eg. "123ABC"
         virtual char *readMappedKeyList() = 0;
 
     //
@@ -78,11 +80,19 @@ class UserInputDevice {
 
         void waitUntilNothingIsPressed() {
             while( true ) {
-                if ( getContinuousKey() == 0 ) return;
+//Serial.print( "." );
+                if ( strlen( readMappedKeyList() ) == 0 ) {
+//Serial.println( "nothing pressed" );
+                    return;
+                }
+//                 if ( getContinuousKey() == 0 ) {
+// Serial.println( "nothing pressed" );
+//                     return;
+//                 }
             }
         }
 
-        uint8_t waitForAnyKeyOnly() {
+        uint8_t waitForAnyKeyPressed() {
             // wait for key, don't check if released already
             waitUntilNothingIsPressed();
             while ( true ) {

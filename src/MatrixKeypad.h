@@ -22,15 +22,15 @@ class MatrixKeypad : public MatrixKeypadCore, public UserInputDeviceMulti {
     //     
     public:
 
-        void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
-        void flagWaitForKeyupMulti( char *keysPressed ) { debouncer.flagWaitForKeyup(); }
+        void flagWaitForKeyupSpecific( uint8_t key ) override { debouncer.flagWaitForKeyup(); }
+        void flagWaitForKeyupMulti( char *keysPressed ) override { debouncer.flagWaitForKeyup(); }
 
     //
     // READ DEVICE
     //
     public:
 
-        char *readMappedKeyList() {
+        char *readMappedKeyList() override {
             // record each key pressed into buffer
             keysPressed[0] = 0;
             if ( sendPinCount == 0 || recvPinCount == 0 )
@@ -44,7 +44,7 @@ class MatrixKeypad : public MatrixKeypadCore, public UserInputDeviceMulti {
         static const uint8_t MAX_KEYS = 5;
         char keysPressed[MAX_KEYS+1];
 
-        void recordScanCode( uint8_t scanCode ) {
+        void recordScanCode( uint8_t scanCode ) override {
             uint8_t l = strlen( keysPressed );
             if ( l >= MAX_KEYS ) return;
             // uint8_t getKeymap( const uint8_t scanCode )

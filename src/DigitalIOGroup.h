@@ -62,8 +62,8 @@ class DigitalIOGroup : public UserInputDeviceMulti {
     //     
     public:
 
-        void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
-        void flagWaitForKeyupMulti( char *keysPressed ) { debouncer.flagWaitForKeyup(); }
+        void flagWaitForKeyupSpecific( uint8_t key ) override { debouncer.flagWaitForKeyup(); }
+        void flagWaitForKeyupMulti( char *keysPressed ) override { debouncer.flagWaitForKeyup(); }
 
     //
     // READ DEVICE
@@ -75,8 +75,22 @@ class DigitalIOGroup : public UserInputDeviceMulti {
 
     public:
 
-        char *readMappedKeyList() {
+// uint8_t prevPressedCount2 = 255;
+// void reportPressedCount2( uint8_t v ) {
+//     if ( prevPressedCount2 != v ) {
+//         Serial.printf( "diog count=%d\n", v );
+//         prevPressedCount2 = v;
+//     }
+// }
+
+// bool firstCall = true;
+
+        char *readMappedKeyList() override {
             // record each key pressed into buffer
+// if ( firstCall ) {
+//     Serial.println( "diog: readMappedKeyList()" );
+//     firstCall = false;
+// }
             uint8_t count = 0;
             dIOEntry *p = dIOEntry_List;
             while ( p != nullptr ) {
@@ -89,6 +103,9 @@ class DigitalIOGroup : public UserInputDeviceMulti {
                 p = p->next;
             }
             keysPressed[count] = 0;
+
+// reportPressedCount2( keysPressed[0] );
+
             return keysPressed;
         }
         

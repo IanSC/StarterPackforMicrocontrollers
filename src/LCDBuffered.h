@@ -149,8 +149,8 @@ class LCDBuffered : public LCDInterface {
             if ( mustDeletedLCD ) delete lcd;
         }
 
-        inline bool isBuffered() { return true; }
-        inline void displayAll() { updateAllNow(); }
+        inline bool isBuffered() override { return true; }
+        inline void displayAll() override { updateAllNow(); }
 
         LCDBuffered() {}
 
@@ -170,11 +170,11 @@ class LCDBuffered : public LCDInterface {
             this->updateDurationInMs = updateDurationInMs;
         }
 
-        inline void setTimeoutInMs( uint16_t timeOut ) {
+        inline void setTimeoutInMs( uint16_t timeOut ) override {
             lcd->setTimeoutInMs( timeOut );
         }
 
-        inline void setFrequency( uint32_t frequency ) {
+        inline void setFrequency( uint32_t frequency ) override {
             lcd->setFrequency( frequency );
         }
 
@@ -183,7 +183,7 @@ class LCDBuffered : public LCDInterface {
     //
     public:
 
-        inline void begin( uint8_t maxColumns, uint8_t maxRows, LCDInterface::charDotSize dotSize = LCDInterface::charDotSize::size5x8 ) {
+        inline void begin( uint8_t maxColumns, uint8_t maxRows, LCDInterface::charDotSize dotSize = LCDInterface::charDotSize::size5x8 ) override {
             lcd->begin( maxColumns, maxRows, dotSize );
             initBuffers();
         }
@@ -292,22 +292,22 @@ class LCDBuffered : public LCDInterface {
     //
     public:
 
-        bool verify() {
+        bool verify() override {
             return lcd->verify();
         }
-        ERROR_NO verifyWithError() {
+        ERROR_NO verifyWithError() override {
             return lcd->verifyWithError();
         }
         
-        bool recoverIfHasError() {
+        bool recoverIfHasError() override {
             bool r = lcd->recoverIfHasError();
             if ( r ) reset();
             return r;
         }
-        inline void setRecoveryThrottleInMs( uint16_t delay ) {
+        inline void setRecoveryThrottleInMs( uint16_t delay ) override {
             lcd->setRecoveryThrottleInMs( delay );
         }
-        void reset() {
+        void reset() override {
             // if LCD is reset, will revert to blanks
             memset( screenData, ' ', bufferSize );
             updateAllNow();
@@ -381,7 +381,7 @@ class LCDBuffered : public LCDInterface {
 
     public:
     
-        size_t write( uint8_t ch ) {
+        size_t write( uint8_t ch ) override {
             if ( offscreen ) return 0;
             uint16_t pos = userCursorY * maxColumns + userCursorX;
             if ( pos > bufferSize ) pos = pos % bufferSize;
@@ -449,31 +449,31 @@ class LCDBuffered : public LCDInterface {
     //
     public:
 
-        void clear() {
+        void clear() override {
             memset( userBuffer, ' ', bufferSize );
             setCursor( 0, 0 );
         }
 
-        inline void home() {
+        inline void home() override {
             // no need to call lcd->home()
             // since LCD origin scrolling not supported
             clear();
         }
 
-        void setCursor( uint8_t col, uint8_t row ) {
+        void setCursor( uint8_t col, uint8_t row ) override {
             userCursorX = col; userCursorY = row;
             offscreen = ( userCursorX >= maxColumns || userCursorY >= maxRows );
         }
 
-        inline void backlightOn()  { lcd->backlightOn();  }
-        inline void backlightOff() { lcd->backlightOff(); }
-        inline void displayOn()    { lcd->displayOn();    }
-        inline void displayOff()   { lcd->displayOff();   }
+        inline void backlightOn()  override { lcd->backlightOn();  }
+        inline void backlightOff() override { lcd->backlightOff(); }
+        inline void displayOn()    override { lcd->displayOn();    }
+        inline void displayOff()   override { lcd->displayOff();   }
 
-        inline void moveCursorRight() { cursorForward(); }
-        inline void moveCursorLeft()  { cursorBackward(); }
+        inline void moveCursorRight() override { cursorForward(); }
+        inline void moveCursorLeft()  override { cursorBackward(); }
 
-        void scrollDisplayLeft() {
+        void scrollDisplayLeft() override {
             // ABCDE
             // BCDE_
             char *from = userBuffer+1;
@@ -485,7 +485,7 @@ class LCDBuffered : public LCDInterface {
                 to += maxColumns;
             }
         }
-        void scrollDisplayRight() {
+        void scrollDisplayRight() override {
             // ABCDE
             // _ABCD
             char *from = userBuffer;
@@ -498,16 +498,16 @@ class LCDBuffered : public LCDInterface {
             }
         }
 
-        inline void leftToRight() { cursorMovementLeftToRight = true;  }
-        inline void rightToLeft() { cursorMovementLeftToRight = false; }
+        inline void leftToRight() override { cursorMovementLeftToRight = true;  }
+        inline void rightToLeft() override { cursorMovementLeftToRight = false; }
         
-        inline void autoscrollOn () {} // not supported
-        inline void autoscrollOff() {}
+        inline void autoscrollOn () override {} // not supported
+        inline void autoscrollOff() override {}
 
-        inline void createChar( uint8_t charID, const uint8_t charmap[] ) { lcd->createChar( charID, charmap ); }
-        inline void createChar( uint8_t charID, const char *charmap )     { lcd->createChar( charID, charmap ); }
+        inline void createChar( uint8_t charID, const uint8_t charmap[] ) override { lcd->createChar( charID, charmap ); }
+        inline void createChar( uint8_t charID, const char *charmap )     override { lcd->createChar( charID, charmap ); }
 
-        inline void command( uint8_t value ) { lcd->command( value ); }
+        inline void command( uint8_t value ) override { lcd->command( value ); }
 
     //
     // ADDITIONAL FUNCTIONALITIES
@@ -650,7 +650,7 @@ class LCDBuffered : public LCDInterface {
             vCursorX = col; vCursorY = row;
         }
 
-        void cursorOn() {
+        void cursorOn() override {
             isCursorOn = true;
             // virtualCursor = vcTurnOn(virtualCursor,cCursorOn);
             // if blink is on next update on immediately
@@ -658,11 +658,11 @@ class LCDBuffered : public LCDInterface {
             // cursorLastBlinkUpdate = millis() - cursorBlinkOnDurationInMs - cursorBlinkOffDurationInMs;
             // cursorIsDisplayed = false;
         }
-        inline void cursorOff() {
+        inline void cursorOff() override {
             isCursorOn = false;
             // virtualCursor = vcTurnOff(virtualCursor,cCursorOn);
         }
-        void cursorBlinkOn()  {
+        void cursorBlinkOn() override {
             isCursorBlinking = true;
             // virtualCursor = vcTurnOn(virtualCursor,cBlinking);
             // if on:  next update off immediately
@@ -671,7 +671,7 @@ class LCDBuffered : public LCDInterface {
             // cursorLastBlinkUpdate = millis() - cursorBlinkOnDurationInMs - cursorBlinkOffDurationInMs;
             // cursorIsDisplayed = true;
         }
-        inline void cursorBlinkOff() {
+        inline void cursorBlinkOff() override {
             isCursorBlinking = false;
             // virtualCursor = vcTurnOff(virtualCursor,cBlinking);
         }

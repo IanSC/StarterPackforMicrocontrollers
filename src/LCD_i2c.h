@@ -68,11 +68,11 @@ class LCD_i2c : public LCD_HD44780 {
             _wireHelper = &wireHelper;
         }
 
-        inline void setTimeoutInMs( uint16_t timeOut ) {
+        inline void setTimeoutInMs( uint16_t timeOut ) override {
             _wireHelper->setTimeoutInMs( timeOut );
         }
 
-        inline void setFrequency( uint32_t frequency ) {
+        inline void setFrequency( uint32_t frequency ) override {
             _wireHelper->setFrequency( frequency );
         }
 
@@ -81,14 +81,14 @@ class LCD_i2c : public LCD_HD44780 {
     //
     public:
     
-        inline bool verify() {
+        inline bool verify() override {
             return _wireHelper->verify( _i2cAddress );
         }
-        inline ERROR_NO verifyWithError() {
+        inline ERROR_NO verifyWithError() override {
             return _wireHelper->verifyWithError( _i2cAddress );
         }
         
-        bool recoverIfHasError() {
+        bool recoverIfHasError() override {
             bool r = _wireHelper->recoverIfHasError( _i2cAddress );
             if ( r ) {
                 // Serial.println( "LCD RECO" );
@@ -96,10 +96,10 @@ class LCD_i2c : public LCD_HD44780 {
             }
             return r;
         }
-        inline void setRecoveryThrottleInMs( uint16_t delay ) {
+        inline void setRecoveryThrottleInMs( uint16_t delay ) override {
             _wireHelper->recoveryThrottleInMs = delay;
         }
-        inline void reset() {
+        inline void reset() override {
             // if VCC/GND was disconnected, LCD will revert to 8-bit data bus, so must reset
             begin( maxColumns, maxRows, dotSize );
         }
@@ -113,11 +113,11 @@ class LCD_i2c : public LCD_HD44780 {
 
     public:
 
-        void backlightOn() {
+        void backlightOn() override {
             _backlightStatus = PIN_BACKLIGHT;
             expanderWrite( _backlightStatus );
         }
-        void backlightOff() {
+        void backlightOff() override {
             _backlightStatus = PIN_NOBACKLIGHT;
             expanderWrite( _backlightStatus );
         }
@@ -127,12 +127,12 @@ class LCD_i2c : public LCD_HD44780 {
     //
     public:
 
-        inline void command( uint8_t value ) {
+        inline void command( uint8_t value ) override {
             // RS = LOW
             send( value, 0 );
         }
 
-        inline size_t write( uint8_t value ) {
+        inline size_t write( uint8_t value ) override {
             // RS = HIGH
             send( value, PIN_RS );
             return 1;
@@ -143,7 +143,7 @@ class LCD_i2c : public LCD_HD44780 {
     //
     private:
 
-        void sendNibble( uint8_t nibble ) {
+        void sendNibble( uint8_t nibble ) override {
             // send lower nibble
             sendCore( nibble << 4 );
         }

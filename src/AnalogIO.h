@@ -184,17 +184,23 @@ class AnalogIO : public UserInputDevice1Key {
 
             PIN = pin;
             // useSmoothing = ( ( options & optionsEnum::SMOOTHING ) == optionsEnum::SMOOTHING );
-            if ( ( options & optionsEnum::WITH_PULLUP ) == optionsEnum::WITH_PULLUP )
+            if ( ( options & optionsEnum::WITH_PULLUP ) == optionsEnum::WITH_PULLUP ) {
                 pinMode( PIN, INPUT_PULLUP );
-            else if ( ( options & optionsEnum::WITH_PULLDOWN ) == optionsEnum::WITH_PULLDOWN )
+                // write high so when disconnected, will be high??? no effect
+                // test system has a capacitor, no effect maybe
+                // digitalWrite( PIN, HIGH );
+            } else if ( ( options & optionsEnum::WITH_PULLDOWN ) == optionsEnum::WITH_PULLDOWN ) {
                 #if defined( ESP32 )
                     pinMode( PIN, INPUT_PULLDOWN );
+                    // write high so when disconnected, will be low??? no effect
+                    // test system has a capacitor, no effect maybe
+                    // digitalWrite( PIN, LOW );
                 #else
                     pinMode( PIN, INPUT );
                 #endif
-            else
+            } else
                 pinMode( PIN, INPUT );
-            pinMode( PIN, INPUT_PULLUP );
+//            pinMode( PIN, INPUT_PULLUP );
             this->mapFunction = mapFunction;
             this->onChange = onChange;
 
@@ -799,7 +805,7 @@ class AnalogIO : public UserInputDevice1Key {
 
     public:
 
-        uint8_t readMappedKey() {
+        uint8_t readMappedKey() override {
             delay(1);
             readRaw();
             for ( int i = 0 ; i < buttonCount; i++ ) {
@@ -885,7 +891,7 @@ class AnalogIO : public UserInputDevice1Key {
     //
     public:
 
-        void flagWaitForKeyupSpecific( uint8_t key ) { debouncer.flagWaitForKeyup(); }
+        void flagWaitForKeyupSpecific( uint8_t key ) override { debouncer.flagWaitForKeyup(); }
 
         inline void setInactiveButton( uint8_t buttonNo ) { debouncer.inactiveState = buttonNo; }
         // inline void setInactiveState( uint8_t state ) { debouncer.inactiveState = state; }

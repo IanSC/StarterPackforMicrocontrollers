@@ -369,10 +369,10 @@ namespace UserInterface {
             KeyHandler->waitUntilNothingIsPressed();
         }
 
-        uint8_t waitForAnyKeyOnly() {
+        uint8_t waitForAnyKeyPressed() {
             if ( KeyHandler == nullptr ) while( true ); // hang it ???
             // if ( KeyHandler == nullptr ) return;
-            return KeyHandler->waitForAnyKeyOnly();
+            return KeyHandler->waitForAnyKeyPressed();
         }
 
         uint8_t waitForAnyKey() {

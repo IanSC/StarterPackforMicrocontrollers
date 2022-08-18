@@ -27,50 +27,66 @@ class UserInputDeviceMulti : public UserInputDevice {
 
     public:
 
+// uint8_t prevReadMappedKey = -1;
+// void reportReadMappedKey( uint8_t v ) {
+//     if ( prevReadMappedKey != v ) {
+//         Serial.printf( "dm readMappedKey=%d\n", v );
+//         prevReadMappedKey = v;
+//     }
+// }
+
+
         // return mapped key number
-        uint8_t readMappedKey() {
+        uint8_t readMappedKey() override {
             // get 1st and only key
             char *keys = readMappedKeyList();
-            if ( keys == nullptr ) return 0;
+            if ( keys == nullptr ) {
+// reportReadMappedKey( 255 );
+                return 0;
+            }
             uint8_t l = strlen( keys );
-            if ( l != 1 ) return 0;
+            if ( l != 1 ) {
+// reportReadMappedKey( 0 );
+                return 0;
+            }
+// reportReadMappedKey( keys[0] );
             return keys[0];
         }
 
         // return string containing all mapped key values
-        virtual char *readMappedKeyList() = 0;
+        // virtual char *readMappedKeyList() override = 0;
 
-        char *getContinuousKeys( char *allowedKeys = nullptr ) {
+        char *getContinuousKeys( char *allowedKeys = nullptr ) override {
             char *keyList = readMappedKeyList();
             if ( allowedKeys != nullptr )
                 removeDisallowedKeys( allowedKeys, keyList );
             return keyList;
         }
 
-        uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
+        uint8_t getContinuousKey( char *allowedKeys = nullptr ) override {
             return debouncer.getContinuousKey( allenKey( allowedKeys ) );
         }
 
-        uint8_t getKeyDown( char *allowedKeys = nullptr ) {
+        uint8_t getKeyDown( char *allowedKeys = nullptr ) override {
             return debouncer.getKeyDown( allenKey( allowedKeys ) );
         }
 
-        uint8_t getKeyUp( char *allowedKeys = nullptr ) {
+        uint8_t getKeyUp( char *allowedKeys = nullptr ) override {
             return debouncer.getKeyUp( allenKey( allowedKeys ) );
         }
 
-        uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
+        uint8_t getRepeatingKey( char *allowedKeys = nullptr ) override {
             return debouncer.getRepeatingKey( allenKey( allowedKeys ) );
         }
 
-        uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {
+        uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) override {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             if ( key == nonRepeatingKey )
                 flagWaitForKeyupSpecific( key );
             return key;
         }
 
-        uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
+        uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) override {
             uint8_t key = debouncer.getRepeatingKey( allenKey( allowedKeys ) );
             if ( nonRepeatingKeys != nullptr && isCharInString( key, nonRepeatingKeys ) )
                 flagWaitForKeyupSpecific( key );
@@ -190,6 +206,21 @@ class UserInputDeviceMulti : public UserInputDevice {
     //
     protected:
 
+// uint8_t prevPressedCount = -1;
+// uint8_t prevToReturn = -1;
+// void reportPressedCount( uint8_t pressedCount ) {
+//     if ( prevPressedCount != pressedCount ) {
+//         Serial.printf( "dm pressed=%d\n", pressedCount );
+//         prevPressedCount = pressedCount;
+//     }
+// }
+// void reportToReturn( uint8_t toReturn ) {
+//     if ( prevToReturn != toReturn ) {
+//         Serial.printf( "dm ret=%d\n", toReturn );
+//         prevToReturn = toReturn;
+//     }
+// }
+
         uint8_t processKeysCore( char *allowedKeys, char *keysPressed, bool issueWaitForKeyUp ) {
 
             // filter keysPressed by allowed keys
@@ -201,10 +232,16 @@ class UserInputDeviceMulti : public UserInputDevice {
                 removeDisallowedKeys( allowedKeys, keysPressed );
 
             uint8_t pressedCount = strlen( keysPressed );
+
+// reportPressedCount( pressedCount );
+
             switch( pressedCount ) {
             case 1:
                 if ( issueWaitForKeyUp )
                     flagWaitForKeyupMulti( keysPressed );
+
+// reportToReturn( keysPressed[0] );
+
                 return keysPressed[0];
             case 2:
                 if ( combinedList_2Keys != nullptr ) {
@@ -215,13 +252,22 @@ class UserInputDeviceMulti : public UserInputDevice {
                         || ( ck->key1==keysPressed[1] && ck->key2==keysPressed[0] ) ) {
                             if ( issueWaitForKeyUp )
                                 flagWaitForKeyupMulti( keysPressed );
+
+// reportToReturn( ck->result );
+
                             return ck->result;
                         }
                         ck = ck->next;
                     }
                 }
+
+// reportToReturn( 0 );
+
                 return 0;
             default:
+
+// reportToReturn( 0 );
+
                 return 0;
             }
         }

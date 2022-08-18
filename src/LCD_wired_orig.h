@@ -47,8 +47,8 @@ class LCD_wired_orig : public LCDInterface {
             lcd = new LiquidCrystal( rs, enable, d0, d1, d2, d3 );
         }
 
-        inline void setTimeoutInMs( uint16_t timeOut ) {}
-        inline void setFrequency( uint32_t frequency ) {}
+        inline void setTimeoutInMs( uint16_t timeOut ) override {}
+        inline void setFrequency( uint32_t frequency ) override {}
         
     //
     // BEGIN
@@ -65,7 +65,7 @@ class LCD_wired_orig : public LCDInterface {
 
     public:
         
-        inline void begin( uint8_t cols, uint8_t lines, charDotSize dotSize = charDotSize::size5x8 ) {
+        inline void begin( uint8_t cols, uint8_t lines, charDotSize dotSize = charDotSize::size5x8 ) override {
             this->maxColumns = cols;
             this->maxRows = lines;
             this->dotSize = dotSize;
@@ -80,12 +80,12 @@ class LCD_wired_orig : public LCDInterface {
         // also if reconnected will still work unless power is removed
         // in which case will revert to 8-bit mode
         
-        inline bool     verify()            { return true; }
-        inline ERROR_NO verifyWithError()   { return 0; }
-        inline bool     recoverIfHasError() { return false; }
-        inline void     setRecoveryThrottleInMs( uint16_t delay ) {}
+        inline bool     verify()            override { return true; }
+        inline ERROR_NO verifyWithError()   override { return 0; }
+        inline bool     recoverIfHasError() override { return false; }
+        inline void     setRecoveryThrottleInMs( uint16_t delay ) override {}
 
-        void reset() {
+        void reset() override {
             // no access to private variables, so need to keep data when created
             // but what are the chances it needs to be called again, so never mind
             // uint8_t fourbitmode = ( lcd->_displayfunction & LCD_8BITMODE ) != LCD_8BITMODE;
@@ -100,35 +100,35 @@ class LCD_wired_orig : public LCDInterface {
     //
     public:
 
-        inline void setCursor( uint8_t col, uint8_t row ) { lcd->setCursor( col, row ); }
+        inline void setCursor( uint8_t col, uint8_t row ) override { lcd->setCursor( col, row ); }
 
-        inline void backlightOn()    {} // not supported
-        inline void backlightOff()   {}
+        inline void backlightOn()    override {} // not supported
+        inline void backlightOff()   override {}
 
-        inline void clear()          { lcd->clear();     }
-        inline void home()           { lcd->home();      }
-        inline void displayOn()      { lcd->display();   }
-        inline void displayOff()     { lcd->noDisplay(); }
-        inline void cursorOn()       { lcd->cursor();    }
-        inline void cursorOff()      { lcd->noCursor();  }
-        inline void cursorBlinkOn()  { lcd->blink();     }
-        inline void cursorBlinkOff() { lcd->noBlink();   }
+        inline void clear()          override { lcd->clear();     }
+        inline void home()           override { lcd->home();      }
+        inline void displayOn()      override { lcd->display();   }
+        inline void displayOff()     override { lcd->noDisplay(); }
+        inline void cursorOn()       override { lcd->cursor();    }
+        inline void cursorOff()      override { lcd->noCursor();  }
+        inline void cursorBlinkOn()  override { lcd->blink();     }
+        inline void cursorBlinkOff() override { lcd->noBlink();   }
 
-        inline void moveCursorRight()    { lcd->command( LCD_CURSORSHIFT | LCD_MOVERIGHT ); }
-        inline void moveCursorLeft()     { lcd->command( LCD_CURSORSHIFT | LCD_MOVELEFT  ); }
-        inline void scrollDisplayLeft()  { lcd->scrollDisplayLeft();  }
-        inline void scrollDisplayRight() { lcd->scrollDisplayRight(); }
+        inline void moveCursorRight()    override { lcd->command( LCD_CURSORSHIFT | LCD_MOVERIGHT ); }
+        inline void moveCursorLeft()     override { lcd->command( LCD_CURSORSHIFT | LCD_MOVELEFT  ); }
+        inline void scrollDisplayLeft()  override { lcd->scrollDisplayLeft();  }
+        inline void scrollDisplayRight() override { lcd->scrollDisplayRight(); }
 
-        inline void leftToRight()        { lcd->leftToRight();        }
-        inline void rightToLeft()        { lcd->rightToLeft();        }
-        inline void autoscrollOn()       { lcd->autoscroll();         }
-        inline void autoscrollOff()      { lcd->noAutoscroll();       }
+        inline void leftToRight()        override { lcd->leftToRight();        }
+        inline void rightToLeft()        override { lcd->rightToLeft();        }
+        inline void autoscrollOn()       override { lcd->autoscroll();         }
+        inline void autoscrollOff()      override { lcd->noAutoscroll();       }
 
-        inline void createChar( uint8_t location, uint8_t     charmap[] ) { lcd->createChar( location, charmap ); }
-        inline void createChar( uint8_t location, const char *charmap   ) { lcd->createChar( location, (uint8_t*) charmap ); }
+        inline void createChar( uint8_t charID, const uint8_t charmap[] ) override { lcd->createChar( charID, (uint8_t*) charmap ); }
+        inline void createChar( uint8_t charID, const char *charmap   ) override { lcd->createChar( charID, (uint8_t*) charmap ); }
 
-        inline void command( uint8_t value ) {        lcd->command( value ); }
-        inline size_t write( uint8_t value ) { return lcd->write( value );   }
+        inline void command( uint8_t value ) override {        lcd->command( value ); }
+        inline size_t write( uint8_t value ) override { return lcd->write( value );   }
 
 };
 
