@@ -55,6 +55,20 @@ class menuSet {
             addCore( option, description, 0, nullptr, true );
         }
 
+    //
+    // EXIT CHECK
+    //
+    protected:
+        typedef std::function<bool(void)> backgroundProcessDelegate;
+        backgroundProcessDelegate backgroundProcess = nullptr;
+    public:
+        void assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
+            this->backgroundProcess = backgroundProcess;
+        }        
+        void assignBackgroundProcess( bool (*backgroundProcessFunc)() ) {
+            this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
+        }
+
     private:
 
         void addCore( const char *option, const char *description, uint8_t result, menuSet *submenu, bool backToUpperMenu ) {
@@ -217,6 +231,11 @@ class menuSet {
                     if ( descriptionRow != -1 )
                         lcd->printStrAtRow( descriptionRow, desc[chooser->selectedItem] );
                     lcd->displayAll();
+                }
+
+                if ( backgroundProcess != nullptr ) {
+                    if ( !backgroundProcess() )
+                        return 0;
                 }
             }            
         }

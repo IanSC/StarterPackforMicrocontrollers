@@ -237,46 +237,50 @@ class AnalogIO : public UserInputDevice1Key {
     protected:
 
         bool useSmoothing = false;
-        int16_t smoothingAverage = 0;
-        int16_t smMinimumChange = 20;
-        int16_t smMaxChangeToDisable = 40;   // if changed this much or more, ignore smoothing
-        double smoothingPercentage = 0.25;
+        float smoothingAverage = 0;
+        // int16_t smoothingAverage = 0;
+        int16_t smMinimumChange = 20;       // if change is below this, ignore, assume noise
+        int16_t smMaxChangeToDisable = 40;  // if changed more than this, ignore smoothing, eg. abrupt change
+        float smoothingPercentage = 0.25;
 
         //static int16_t (*StarterPack::AnalogIO::xxx)( int16_t newRawValue ) = applySmoothing25;
 
         int16_t applySmoothing( int16_t newRawValue ) {
-            // get 90% of previous value
-            //    add 10% of new value
+            // ex. 90% of previous value
+            //     add 10% of new value
             auto diff = labs( smoothingAverage - newRawValue );
-            if ( diff < smMinimumChange )
+            if ( diff < smMinimumChange ) {
+                // change too small, ignore
                 return smoothingAverage;
-            if ( diff >= smMaxChangeToDisable ) {
-                smoothingAverage = newRawValue;
-            } else {
-                smoothingAverage = (double) smoothingAverage * (1 - smoothingPercentage) 
-                    + smoothingPercentage * (double) newRawValue;
             }
+            if ( diff >= smMaxChangeToDisable ) {
+                // abrupt change, respond immediately
+                smoothingAverage = newRawValue;
+                return smoothingAverage;
+            }
+            smoothingAverage = round( (float) smoothingAverage * (1.0 - smoothingPercentage) 
+                + smoothingPercentage * (float) newRawValue );
             return smoothingAverage;
         }
 
-        int16_t applySmoothing25( int16_t newRawValue ) {
-            // https://arduino.stackexchange.com/questions/69473/ignoring-potentiometer-value-variations
-            // (3 * avg + 1 * newdat) / 4
-            return( (((smoothingAverage<<2) - smoothingAverage + newRawValue) + 2) >> 2 );
-        }
+        // int16_t applySmoothing25( int16_t newRawValue ) {
+        //     // https://arduino.stackexchange.com/questions/69473/ignoring-potentiometer-value-variations
+        //     // (3 * avg + 1 * newdat) / 4
+        //     return( (((smoothingAverage<<2) - smoothingAverage + newRawValue) + 2) >> 2 );
+        // }
 
     public:
 
-        void setSmoothing( int16_t minimumChange, int16_t maximumChangeForSmoothing, double smoothingPercentage ) {
+        void setSmoothing( int16_t minimumChange, int16_t maximumChangeForSmoothing, float smoothingPercentage ) {
             // percentage - percent of new reading to apply
             // ex. 0.3, use 70% of previous value + 30% of new reading
             if ( smoothingPercentage < 0 )
                 smoothingPercentage = 0;
             else if ( smoothingPercentage > 1 )
                 smoothingPercentage = 1;
-            this->smMinimumChange = minimumChange;
+            this->smMinimumChange = abs( minimumChange );
             this->smMaxChangeToDisable = abs( maximumChangeForSmoothing );
-            this->smoothingPercentage = smoothingPercentage;
+            this->smoothingPercentage = abs( smoothingPercentage );
             smoothingAverage = readRaw();
             useSmoothing = true;
         }
@@ -357,7 +361,7 @@ class AnalogIO : public UserInputDevice1Key {
 
     public:
 
-        void applyJitterRemoval( int maxSlots, int rangeTolerance ) {
+        void applyJitterRemoval( int maxSlots = 9, int rangeTolerance = 3 ) {
             destroyJitter();
             jitterRemover = new JitterRemover();
             jitterRemover->init( maxSlots, rangeTolerance );
@@ -782,7 +786,7 @@ class AnalogIO : public UserInputDevice1Key {
                     cnt++;
                     // Serial.print( analogRead(15) );
                     Serial.print( "average: " );
-                    Serial.println( (double)total / (double)cnt );
+                    Serial.println( (float) total / (float) cnt );
                 }
                 delay( 20 );
             }

@@ -117,7 +117,7 @@ class JitterRemover {
             }
             */
 
-            int result;
+            valueType result;
             if ( average == value ) {
                 // #if defined( DEBUG_DIAGNOSE )
                 //     Serial.print( "= " );
@@ -151,7 +151,7 @@ class JitterRemover {
                     // Serial.print( " to " );
                     // Serial.println( diffToMax );
                     if ( diffToMin == diffToMax )
-                        result = ( min + max ) / 2;
+                        result = round( (float) ( min + max ) / 2.0 );
                     else if ( diffToMin < diffToMax )
                         result = min;
                     else

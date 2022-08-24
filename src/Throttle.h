@@ -2,7 +2,7 @@
 //
 //  Throttle
 //  --------
-//  throttleS executing a function
+//  throttles executing a function
 //  to avoid overwhelming resources
 //
 //  To Use
@@ -27,7 +27,7 @@
 //              tt.updateNow();
 //          }
 //          void loop() {
-//              // process() getS called every 1000 ms only
+//              // process() gets called every 1000 ms only
 //              tt.update();
 //          }
 //
@@ -60,6 +60,7 @@
 #pragma once
 #include <Arduino.h>
 #include <stdint.h>
+#include <functional>
 
 namespace StarterPack {
 
@@ -178,6 +179,122 @@ class Throttle {
     typedef double (*_doob_flot_F) (float   );
     typedef double (*_doob_doob_F) (double  );
 
+    /*
+    //
+    // FUNCTIONAL
+    //
+
+    typedef std::function<void(void    )> _void_void_FF;
+    typedef std::function<void(bool    )> _void_bool_FF;
+    typedef std::function<void(int8_t  )> _void_si08_FF;
+    typedef std::function<void(uint8_t )> _void_ui08_FF;
+    typedef std::function<void(int16_t )> _void_si16_FF;
+    typedef std::function<void(uint16_t)> _void_ui16_FF;
+    typedef std::function<void(int32_t )> _void_si32_FF;
+    typedef std::function<void(uint32_t)> _void_ui32_FF;
+    typedef std::function<void(float   )> _void_flot_FF;
+    typedef std::function<void(double  )> _void_doob_FF;
+
+    typedef std::function<bool(void    )> _bool_void_FF;
+    typedef std::function<bool(bool    )> _bool_bool_FF;
+    typedef std::function<bool(int8_t  )> _bool_si08_FF;
+    typedef std::function<bool(uint8_t )> _bool_ui08_FF;
+    typedef std::function<bool(int16_t )> _bool_si16_FF;
+    typedef std::function<bool(uint16_t)> _bool_ui16_FF;
+    typedef std::function<bool(int32_t )> _bool_si32_FF;
+    typedef std::function<bool(uint32_t)> _bool_ui32_FF;
+    typedef std::function<bool(float   )> _bool_flot_FF;
+    typedef std::function<bool(double  )> _bool_doob_FF;
+
+    typedef std::function<int8_t(void    )> _si08_void_FF;
+    typedef std::function<int8_t(bool    )> _si08_bool_FF;
+    typedef std::function<int8_t(int8_t  )> _si08_si08_FF;
+    typedef std::function<int8_t(uint8_t )> _si08_ui08_FF;
+    typedef std::function<int8_t(int16_t )> _si08_si16_FF;
+    typedef std::function<int8_t(uint16_t)> _si08_ui16_FF;
+    typedef std::function<int8_t(int32_t )> _si08_si32_FF;
+    typedef std::function<int8_t(uint32_t)> _si08_ui32_FF;
+    typedef std::function<int8_t(float   )> _si08_flot_FF;
+    typedef std::function<int8_t(double  )> _si08_doob_FF;
+
+    typedef std::function<uint8_t(void    )> _ui08_void_FF;
+    typedef std::function<uint8_t(bool    )> _ui08_bool_FF;
+    typedef std::function<uint8_t(int8_t  )> _ui08_si08_FF;
+    typedef std::function<uint8_t(uint8_t )> _ui08_ui08_FF;
+    typedef std::function<uint8_t(int16_t )> _ui08_si16_FF;
+    typedef std::function<uint8_t(uint16_t)> _ui08_ui16_FF;
+    typedef std::function<uint8_t(int32_t )> _ui08_si32_FF;
+    typedef std::function<uint8_t(uint32_t)> _ui08_ui32_FF;
+    typedef std::function<uint8_t(float   )> _ui08_flot_FF;
+    typedef std::function<uint8_t(double  )> _ui08_doob_FF;
+
+    typedef std::function<int16_t(void    )> _si16_void_FF;
+    typedef std::function<int16_t(bool    )> _si16_bool_FF;
+    typedef std::function<int16_t(int8_t  )> _si16_si08_FF;
+    typedef std::function<int16_t(uint8_t )> _si16_ui08_FF;
+    typedef std::function<int16_t(int16_t )> _si16_si16_FF;
+    typedef std::function<int16_t(uint16_t)> _si16_ui16_FF;
+    typedef std::function<int16_t(int32_t )> _si16_si32_FF;
+    typedef std::function<int16_t(uint32_t)> _si16_ui32_FF;
+    typedef std::function<int16_t(float   )> _si16_flot_FF;
+    typedef std::function<int16_t(double  )> _si16_doob_FF;
+
+    typedef std::function<uint16_t(void    )> _ui16_void_FF;
+    typedef std::function<uint16_t(bool    )> _ui16_bool_FF;
+    typedef std::function<uint16_t(int8_t  )> _ui16_si08_FF;
+    typedef std::function<uint16_t(uint8_t )> _ui16_ui08_FF;
+    typedef std::function<uint16_t(int16_t )> _ui16_si16_FF;
+    typedef std::function<uint16_t(uint16_t)> _ui16_ui16_FF;
+    typedef std::function<uint16_t(int32_t )> _ui16_si32_FF;
+    typedef std::function<uint16_t(uint32_t)> _ui16_ui32_FF;
+    typedef std::function<uint16_t(float   )> _ui16_flot_FF;
+    typedef std::function<uint16_t(double  )> _ui16_doob_FF;
+
+    typedef std::function<int32_t(void    )> _si32_void_FF;
+    typedef std::function<int32_t(bool    )> _si32_bool_FF;
+    typedef std::function<int32_t(int8_t  )> _si32_si08_FF;
+    typedef std::function<int32_t(uint8_t )> _si32_ui08_FF;
+    typedef std::function<int32_t(int16_t )> _si32_si16_FF;
+    typedef std::function<int32_t(uint16_t)> _si32_ui16_FF;
+    typedef std::function<int32_t(int32_t )> _si32_si32_FF;
+    typedef std::function<int32_t(uint32_t)> _si32_ui32_FF;
+    typedef std::function<int32_t(float   )> _si32_flot_FF;
+    typedef std::function<int32_t(double  )> _si32_doob_FF;
+
+    typedef std::function<uint32_t(void    )> _ui32_void_FF;
+    typedef std::function<uint32_t(bool    )> _ui32_bool_FF;
+    typedef std::function<uint32_t(int8_t  )> _ui32_si08_FF;
+    typedef std::function<uint32_t(uint8_t )> _ui32_ui08_FF;
+    typedef std::function<uint32_t(int16_t )> _ui32_si16_FF;
+    typedef std::function<uint32_t(uint16_t)> _ui32_ui16_FF;
+    typedef std::function<uint32_t(int32_t )> _ui32_si32_FF;
+    typedef std::function<uint32_t(uint32_t)> _ui32_ui32_FF;
+    typedef std::function<uint32_t(float   )> _ui32_flot_FF;
+    typedef std::function<uint32_t(double  )> _ui32_doob_FF;
+
+    typedef std::function<float(void    )> _flot_void_FF;
+    typedef std::function<float(bool    )> _flot_bool_FF;
+    typedef std::function<float(int8_t  )> _flot_si08_FF;
+    typedef std::function<float(uint8_t )> _flot_ui08_FF;
+    typedef std::function<float(int16_t )> _flot_si16_FF;
+    typedef std::function<float(uint16_t)> _flot_ui16_FF;
+    typedef std::function<float(int32_t )> _flot_si32_FF;
+    typedef std::function<float(uint32_t)> _flot_ui32_FF;
+    typedef std::function<float(float   )> _flot_flot_FF;
+    typedef std::function<float(double  )> _flot_doob_FF;
+
+    typedef std::function<double(void    )> _doob_void_FF;
+    typedef std::function<double(bool    )> _doob_bool_FF;
+    typedef std::function<double(int8_t  )> _doob_si08_FF;
+    typedef std::function<double(uint8_t )> _doob_ui08_FF;
+    typedef std::function<double(int16_t )> _doob_si16_FF;
+    typedef std::function<double(uint16_t)> _doob_ui16_FF;
+    typedef std::function<double(int32_t )> _doob_si32_FF;
+    typedef std::function<double(uint32_t)> _doob_ui32_FF;
+    typedef std::function<double(float   )> _doob_flot_FF;
+    typedef std::function<double(double  )> _doob_doob_FF;
+    */
+
     inline Throttle( uint16_t throttleInMs = 100 ) {
         this->throttleInMs = throttleInMs;
         lastUpdateTime = millis() - throttleInMs;
@@ -270,6 +387,84 @@ public:
 
     #undef CONS
 
+    /*
+    //
+    // FUNCTIONAL
+    //
+
+    void(*ptrF)();
+
+    Throttle( std::function<void(void)> f, uint16_t throttleInMs = 100 ) : Throttle( throttleInMs ) {
+        this->ptrF = (void(*ptrF)()) f;
+        inputType = paramType::_void;
+        outputType = paramType::_void;
+    }
+
+    #define CONS( out, in ) \
+        Throttle( out ## in ## _FF f, uint16_t throttleInMs = 100 ) : Throttle( throttleInMs ) { \
+            this->ptrF = f; \
+            inputType = paramType::in; \
+            outputType = paramType::out; \
+        }
+
+    CONS( _void, _void ) CONS( _bool, _void )
+    CONS( _void, _bool ) CONS( _bool, _bool )
+    CONS( _void, _si08 ) CONS( _bool, _si08 )
+    CONS( _void, _ui08 ) CONS( _bool, _ui08 )
+    CONS( _void, _si16 ) CONS( _bool, _si16 )
+    CONS( _void, _ui16 ) CONS( _bool, _ui16 )
+    CONS( _void, _si32 ) CONS( _bool, _si32 )
+    CONS( _void, _ui32 ) CONS( _bool, _ui32 )
+    CONS( _void, _flot ) CONS( _bool, _flot )
+    CONS( _void, _doob ) CONS( _bool, _doob )
+
+    CONS( _si08, _void ) CONS( _ui08, _void )
+    CONS( _si08, _bool ) CONS( _ui08, _bool )
+    CONS( _si08, _si08 ) CONS( _ui08, _si08 )
+    CONS( _si08, _ui08 ) CONS( _ui08, _ui08 )
+    CONS( _si08, _si16 ) CONS( _ui08, _si16 )
+    CONS( _si08, _ui16 ) CONS( _ui08, _ui16 )
+    CONS( _si08, _si32 ) CONS( _ui08, _si32 )
+    CONS( _si08, _ui32 ) CONS( _ui08, _ui32 )
+    CONS( _si08, _flot ) CONS( _ui08, _flot )
+    CONS( _si08, _doob ) CONS( _ui08, _doob )
+
+    CONS( _si16, _void ) CONS( _ui16, _void )
+    CONS( _si16, _bool ) CONS( _ui16, _bool )
+    CONS( _si16, _si08 ) CONS( _ui16, _si08 )
+    CONS( _si16, _ui08 ) CONS( _ui16, _ui08 )
+    CONS( _si16, _si16 ) CONS( _ui16, _si16 )
+    CONS( _si16, _ui16 ) CONS( _ui16, _ui16 )
+    CONS( _si16, _si32 ) CONS( _ui16, _si32 )
+    CONS( _si16, _ui32 ) CONS( _ui16, _ui32 )
+    CONS( _si16, _flot ) CONS( _ui16, _flot )
+    CONS( _si16, _doob ) CONS( _ui16, _doob )
+
+    CONS( _si32, _void ) CONS( _ui32, _void )
+    CONS( _si32, _bool ) CONS( _ui32, _bool )
+    CONS( _si32, _si08 ) CONS( _ui32, _si08 )
+    CONS( _si32, _ui08 ) CONS( _ui32, _ui08 )
+    CONS( _si32, _si16 ) CONS( _ui32, _si16 )
+    CONS( _si32, _ui16 ) CONS( _ui32, _ui16 )
+    CONS( _si32, _si32 ) CONS( _ui32, _si32 )
+    CONS( _si32, _ui32 ) CONS( _ui32, _ui32 )
+    CONS( _si32, _flot ) CONS( _ui32, _flot )
+    CONS( _si32, _doob ) CONS( _ui32, _doob )
+
+    CONS( _flot, _void ) CONS( _doob, _void )
+    CONS( _flot, _bool ) CONS( _doob, _bool )
+    CONS( _flot, _si08 ) CONS( _doob, _si08 )
+    CONS( _flot, _ui08 ) CONS( _doob, _ui08 )
+    CONS( _flot, _si16 ) CONS( _doob, _si16 )
+    CONS( _flot, _ui16 ) CONS( _doob, _ui16 )
+    CONS( _flot, _si32 ) CONS( _doob, _si32 )
+    CONS( _flot, _ui32 ) CONS( _doob, _ui32 )
+    CONS( _flot, _flot ) CONS( _doob, _flot )
+    CONS( _flot, _doob ) CONS( _doob, _doob )
+
+    #undef CONS
+    */
+
     //
     // VOID --> VOID
     //
@@ -305,7 +500,7 @@ public:
         void trigger( dType input ) { \
             uint32_t now = millis(); \
             if ( now - lastUpdateTime < throttleInMs ) return; \
-            lastUpdateTime = millis(); \
+            lastUpdateTime = now; \
             if ( ptr == nullptr || inputType != in ) return; \
             switch( outputType ) { \
             case _void: ((_void ## in ## _F) ptr)(input); break; \
@@ -339,7 +534,7 @@ public:
         bool triggerCheck( dType &output ) { \
             uint32_t now = millis(); \
             if ( now - lastUpdateTime >= throttleInMs ) { \
-                lastUpdateTime = millis(); \
+                lastUpdateTime = now; \
                 if ( ptr != nullptr && outputType == out && inputType == _void ) { \
                     output = ((out ## _void_F) ptr)(); \
                     return true; \
@@ -366,7 +561,7 @@ public:
         bool triggerCheck( odType &output, idType input ) { \
             uint32_t now = millis(); \
             if ( now - lastUpdateTime >= throttleInMs ) { \
-                lastUpdateTime = millis(); \
+                lastUpdateTime = now; \
                 if ( ptr != nullptr && outputType == out && inputType == in ) { \
                     output = ((out ## in ## _F) ptr)( input ); \
                     return true; \

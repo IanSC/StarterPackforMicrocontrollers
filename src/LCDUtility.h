@@ -52,7 +52,7 @@ namespace LCDUtility {
 
             uint8_t visibleStart = 0;     // char position in layout that is dispayed on leftmost of screen
 
-            bool (*backgroundProcess)(void) = nullptr;
+                    // bool (*backgroundProcess)(void) = nullptr;
             Throttle *throttler = nullptr;
 
         public:
@@ -73,6 +73,17 @@ namespace LCDUtility {
                     selectedItem = optionCount;
                 this->selectedItem = selectedItem;
                 computePositions();
+            }
+
+        protected:
+            typedef std::function<bool(void)> backgroundProcessDelegate;
+            backgroundProcessDelegate backgroundProcess = nullptr;
+        public:
+            void assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
+                this->backgroundProcess = backgroundProcess;
+            }        
+            void assignBackgroundProcess( bool (*backgroundProcessFunc)() ) {
+                this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
             }
 
         public:
@@ -659,10 +670,12 @@ namespace LCDUtility {
             bool blinkMode = false;
 
             // LCDInterface *lcd;
-            uint8_t col;
-            uint8_t row;
+            uint8_t col = 0;
+            uint8_t row = 0;
 
         public:
+
+            blink() {}
 
             blink( uint8_t col, uint8_t row ) {
                 this->col = col;
