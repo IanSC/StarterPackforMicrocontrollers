@@ -883,6 +883,25 @@ namespace StarterPack {
                 // }
             }
 
+    //
+    // BACKGROUND PROCESS/BREAKOUT
+    //
+    protected:
+        // return anything but ui::kNone to breakout of loop
+        typedef std::function<uint8_t(void)> backgroundProcessDelegate;
+        backgroundProcessDelegate backgroundProcess = nullptr;
+    public:
+        static uint8_t backgroundProcessNoAction() {
+            namespace ui = StarterPack::UserInterface;
+            return ui::kNONE;
+        }
+        void assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
+            this->backgroundProcess = backgroundProcess;
+        }        
+        void assignBackgroundProcess( uint8_t (*backgroundProcessFunc)() ) {
+            this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
+        }
+
     public:
 
         bool hasChanges = false;
@@ -1195,6 +1214,11 @@ namespace StarterPack {
                         editBuffer = nullptr;
                     }
                     updateScreen = true;
+                }
+                if ( backgroundProcess != nullptr ) {
+                    auto r = backgroundProcess();
+                    if ( r != ui::kNONE )
+                        return r;
                 }
             }
         }
