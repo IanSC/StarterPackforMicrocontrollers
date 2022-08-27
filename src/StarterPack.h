@@ -33,7 +33,7 @@
 
 #include <LCDBitmap.h>
 
-#include <Throttle.h>
+#include <Throttle_OLD.h>
 #include <ChangeObserver.h>
 
 #include <spSemaphore.h>

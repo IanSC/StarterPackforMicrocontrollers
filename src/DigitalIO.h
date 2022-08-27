@@ -102,6 +102,8 @@ class DigitalIO {
             // initial values
             value = ( digitalRead( PIN ) == ACTIVE_STATE );
             lastValue = value;
+            // debouncer.inactiveState = !ACTIVE_STATE;
+            debouncer.inactiveState = false;
             debouncer.setInitialValue( value );
         }
 

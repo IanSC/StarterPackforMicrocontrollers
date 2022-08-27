@@ -135,6 +135,13 @@ class UserInputDevice {
 
         Debouncer debouncer;
 
+        inline void setInitialValue( int state ) {
+            debouncer.setInitialValue( state );
+        }
+        inline void setInactiveState( int state ) {
+            debouncer.inactiveState = state;
+        }
+
         void setDebounceTimeInMs( uint16_t activeState = 50, uint16_t inactiveState = 50, uint16_t minimum = 50 ) {
             debouncer.useCustomSettings();
             Debouncer::Settings *s = debouncer.getSettings();

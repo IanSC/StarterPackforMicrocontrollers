@@ -370,8 +370,6 @@ class LCDInterface : public Print {
         showLines( row1, row2, row3, row4 );
     }
 
-
-
     //
     // ALIAS
     //

@@ -200,6 +200,21 @@ class i2cHelper {
 
     public:
 
+        // https://github.com/espressif/arduino-esp32/issues/6616
+        // master/slave mode depends on variable type
+        inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+            return wire.begin( (int) sda, (int) scl );
+        }
+        inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
+            return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
+        }
+        inline static bool beginSlave( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+            // slave has no clock
+            return wire.begin( sda, scl );
+        }
+
+    public:
+
         i2cHelper( uint8_t defaultI2cAddress ) {
             // default to global "Wire"
             _wire = &Wire;

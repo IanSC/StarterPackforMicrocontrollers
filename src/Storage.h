@@ -46,14 +46,14 @@ class Storage {
             namespace ui = StarterPack::UserInterface;
 
             ui::LCD->clear();
-            uint8_t input = StarterPack::LCDUtility::chooseNoYes( 0, "Erase Data?", 1 );
+            uint8_t input = StarterPack::LCDUtility::promptNoYes( "Erase Data?" )->prompt();
 
             if ( input == 2 ) {
                 if ( wipeCore() ) {
-                    ui::dialogBox( "RESET", "data erased" );
+                    ui::promptDialog1( "RESET", "data erased" );
                     return wipeResult::wOkay;
                 } else {
-                    ui::showError( ERR_SOURCE, ERR_STORAGE_WIPE, "error erasing data" );
+                    ui::promptErrorDialog1( ERR_SOURCE, ERR_STORAGE_WIPE, "error erasing data" );
                     return wipeResult::wError;
                 }
             } else {

@@ -114,9 +114,9 @@ class Debouncer {
         }
 
         //int actualState = false;                    // actual physical state of the button
-        int debouncedState = false;                 // state to consider after taking into account debouncing and confirmation logic
+        int debouncedState = 0; //false;                 // state to consider after taking into account debouncing and confirmation logic
 
-        int inactiveState = false;                  // value that is considered the "keyUp"
+        int inactiveState = 0; // false;                  // value that is considered the "keyUp"
 
         void useCustomSettings() {
             if ( mustDeleteSettings ) return; // already customized
@@ -495,7 +495,7 @@ class Debouncer {
         // eg. while pressed debounceState = HIGH
         //     but repeating key is LOW..LOW, HIGH, LOW..LOW, HIGH, ...
 //        int lastValue = -1;
-        int lastReadValue = -1;
+        int lastReadValue = 0; // -1;
 
     public:
 

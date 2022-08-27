@@ -8,6 +8,11 @@ class DigitalIOGroup : public UserInputDeviceMulti {
 
     public:
 
+        // DigitalIOGroup() {
+        //     setInitialValue( 0 );
+        //     setInactiveState( 0 );
+        // }
+
         ~DigitalIOGroup() {
             delete_NextLinkedList( dIOEntry_List );
             // deleteIOList();

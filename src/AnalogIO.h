@@ -155,6 +155,11 @@ class AnalogIO : public UserInputDevice1Key {
 
     public:
 
+        // AnalogIO() {
+        //     setInitialValue( 0 );
+        //     setInactiveState( 0 );
+        // }
+
         ~AnalogIO() {
             if ( buttonList != nullptr ) { delete[] buttonList; buttonList = nullptr; }
             destroyJitter();
