@@ -1,12 +1,14 @@
 #pragma once
-#include <UserInputDevice.h>
+
+#include <UserInterface/UserInterfaceRepeated.h>
 #include <LCDInterface.h>
-// #include <LCDEditorAlpha.h>
-// #include <LCDEditorNumeric.h>
 
 namespace StarterPack {
     
 namespace UserInterface {
+
+    typedef UserInterfaceKeyUpDown::KEY KEY;
+    static const KEY INACTIVE_KEY = UserInterfaceKeyUpDown::INACTIVE_KEY;
 
     //
     // LCD
@@ -22,12 +24,28 @@ namespace UserInterface {
             return LCD != nullptr;
         }
 
+        void updateBufferedLCD() {
+            // draw for buffered screens
+            if ( LCD == nullptr ) return;
+            LCD->update();
+            // if ( !LCD->isBuffered() ) return;
+            // ( (LCDBuffered*) LCD )->update();
+        }
+
+        void displayAllBufferedLCD() {
+            // draw for buffered screens
+            if ( LCD == nullptr ) return;
+            LCD->displayAll();
+            // if ( !LCD->isBuffered() ) return;
+            // ( (LCDBuffered*) LCD )->update();
+        }
+
         //
         // FULL SCREEN
         //
 
         // defined later
-        uint8_t waitForAnyKey();
+        KEY waitForAnyKeyPressed();
 
         void showLines( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
             if ( LCD == nullptr ) return;
@@ -54,18 +72,18 @@ namespace UserInterface {
             showLines( row1, row2, row3, row4 );
         }
 
-        uint8_t showLinesAndWait( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
+        KEY showLinesAndWait( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
             if ( LCD == nullptr ) return 0;
             LCD->showLines( row1, row2, row3, row4 );
             LCD->displayAll();
-            return waitForAnyKey();
+            return waitForAnyKeyPressed();
         }
 
-        inline uint8_t wait_01234567890123456789( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
+        inline KEY wait_01234567890123456789( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
             return showLinesAndWait( row1, row2, row3, row4 );
         }
 
-        inline uint8_t wait_12345678901234567890( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
+        inline KEY wait_12345678901234567890( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
             return showLinesAndWait( row1, row2, row3, row4 );
         }
 
@@ -79,9 +97,11 @@ namespace UserInterface {
             int L = LCD->maxColumns - len - R;
             if ( L < 0 ) L = 0;
             LCD->printStrN( decorator, decoLen/2 );
-            LCD->print( std::string( L, ' ' ).c_str() );
+            LCD->printCharsN( ' ', L );
+            // LCD->print( std::string( L, ' ' ).c_str() );
             LCD->print( header );
-            LCD->print( std::string( R, ' ' ).c_str() );
+            LCD->printCharsN( ' ', R );
+            // LCD->print( std::string( R, ' ' ).c_str() );
             LCD->printStrN( decorator+decoLen/2, decoLen-decoLen/2 );
         }
 
@@ -117,10 +137,10 @@ namespace UserInterface {
         }
 
         // 3-liner text dialog, wait for any key
-        inline uint8_t promptDialog3( const char *header,
+        inline KEY promptDialog3( const char *header,
         const char *msg1 = nullptr, const char *msg2 = nullptr, const char *msg3 = nullptr,
         const char *headerDecorator = "((()))" ) {
-            if ( LCD == nullptr ) return 0;
+            if ( LCD == nullptr ) return INACTIVE_KEY;
             showDialog3( header, msg1, msg2, msg3, headerDecorator );
             // if ( LCD == nullptr ) return 0;
             // LCD->clear();
@@ -129,7 +149,7 @@ namespace UserInterface {
             // if ( msg2 != nullptr ) LCD->printStrAtRow( 2, msg2 );
             // if ( msg3 != nullptr ) LCD->printStrAtRow( 3, msg3 );
             // LCD->displayAll();
-            return waitForAnyKey();
+            return waitForAnyKeyPressed();
         }
 
         // 1-liner text dialog, display only
@@ -140,15 +160,15 @@ namespace UserInterface {
         }
 
         // 1-liner text dialog, wait for any key
-        inline uint8_t promptDialog1( const char *header,
+        inline KEY promptDialog1( const char *header,
         const char *msg = nullptr,
         const char *headerDecorator = "((()))" ) {
-            if ( LCD == nullptr ) return 0;
+            if ( LCD == nullptr ) return INACTIVE_KEY;
             showDialog3( header, nullptr, msg, nullptr );
-            return waitForAnyKey();
+            return waitForAnyKeyPressed();
         }
 
-        inline uint8_t dbox_12345678901234567890( const char *header,
+        inline KEY dbox_12345678901234567890( const char *header,
         const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr, 
         const char *headerDecorator = "((()))" ) {
             return promptDialog3( header, row2, row3, row4, headerDecorator );
@@ -170,12 +190,12 @@ namespace UserInterface {
         }
 
         // 3-liner error code dialog, wait for any key
-        inline uint8_t promptErrorDialog3( uint8_t errSource, uint8_t errCode,
+        inline KEY promptErrorDialog3( uint8_t errSource, uint8_t errCode,
         const char *errMsg1 = nullptr, const char *errMsg2 = nullptr, const char *errMsg3 = nullptr,
         const char *headerDecorator = "((()))" ) {
-            if ( LCD == nullptr ) return 0;
+            if ( LCD == nullptr ) return INACTIVE_KEY;
             showErrorDialog3( errSource, errCode, errMsg1, errMsg2, errMsg3, headerDecorator );
-            return waitForAnyKey();
+            return waitForAnyKeyPressed();
         }
 
         // 1-liner error code dialog, display only
@@ -191,18 +211,18 @@ namespace UserInterface {
         }
 
         // 1-liner error code dialog, wait for any key
-        uint8_t promptErrorDialog1( uint8_t errSource, uint8_t errCode,
+        KEY promptErrorDialog1( uint8_t errSource, uint8_t errCode,
         const char *errMsg = nullptr,
         const char *headerDecorator = "((()))" ) {
-            if ( LCD == nullptr ) return 0;
+            if ( LCD == nullptr ) return INACTIVE_KEY;
             showErrorDialog3( errSource, errCode, nullptr, errMsg, nullptr );
-            return waitForAnyKey();
+            return waitForAnyKeyPressed();
             // if ( LCD == nullptr ) return 0;
             // displayOnlyErrorDialog1( errSource, errCode, errMsg, headerDecorator );
             // return waitForAnyKey();
         }
 
-        inline uint8_t eror_12345678901234567890( uint8_t errSource, uint8_t errCode,
+        inline KEY eror_12345678901234567890( uint8_t errSource, uint8_t errCode,
         const char *errMsg1 = nullptr, const char *errMsg2 = nullptr, const char *errMsg3 = nullptr, 
         const char *headerDecorator = "((()))" ) {
             return promptErrorDialog3( errSource, errCode, errMsg1, errMsg2, errMsg3, headerDecorator );
@@ -365,129 +385,151 @@ namespace UserInterface {
         //
         // since kXXX occupies space, anything not used in other modules were commented out
 
-        static const uint8_t    cNONE      = 0x00;
-        static const uint8_t    cENTER     = 0x0D; // 13
-        static const uint8_t    cESCAPE    = 0x1B; // 27
-        static const uint8_t    cBACKSPACE = 0x08; //  8 
-        // static const uint8_t cTAB       = 0x09; //  9
+        // static const KEY    cNONE      = UserInputDevice::cNONE; // 0x00;
+        static const KEY    cENTER     = 0x0D; // 13
+        static const KEY    cESCAPE    = 0x1B; // 27
+        static const KEY    cBACKSPACE = 0x08; //  8 
+        // static const KEY cTAB       = 0x09; //  9
 
-        static const uint8_t    cLEFT      = 0x01;
-        static const uint8_t    cUP        = 0x02;
-        static const uint8_t    cRIGHT     = 0x03;
-        static const uint8_t    cDOWN      = 0x04;
-        // static const uint8_t cPGUP      = ----;
-        // static const uint8_t cPGDOWN    = ----;
+        static const KEY    cLEFT      = 0x01;
+        static const KEY    cUP        = 0x02;
+        static const KEY    cRIGHT     = 0x03;
+        static const KEY    cDOWN      = 0x04;
+        // static const KEY cPGUP      = ----;
+        // static const KEY cPGDOWN    = ----;
 
-        static const uint8_t    cINSERT    = 0x05;
-        static const uint8_t    cDELETE    = 0x06;
+        static const KEY    cINSERT    = 0x05;
+        static const KEY    cDELETE    = 0x06;
 
-        static const uint8_t    cNUMBERS   = 0x07; // alphanumeric editor: numbers
-        static const uint8_t    cSYMBOLS   = 0x10; // alphanumeric editor: symbols
-        static const uint8_t    cCHG_CASE  = 0x11; // alphanumeric editor: upper/lower case
+        static const KEY    cNUMBERS   = 0x07; // alphanumeric editor: numbers
+        static const KEY    cSYMBOLS   = 0x10; // alphanumeric editor: symbols
+        static const KEY    cCHG_CASE  = 0x11; // alphanumeric editor: upper/lower case
 
-        static const uint8_t    cDECIMAL   = '.';
-        static const uint8_t    cQUESTION  = '?';
-        static const uint8_t    cMINUS     = '-';
-        // static const uint8_t cPLUS      = '+';
-        // static const uint8_t cMUTIPLY   = '*';
-        // static const uint8_t cDIVIDE    = '/';
+        static const KEY    cDECIMAL   = '.';
+        static const KEY    cQUESTION  = '?';
+        static const KEY    cMINUS     = '-';
+        // static const KEY cPLUS      = '+';
+        // static const KEY cMUTIPLY   = '*';
+        // static const KEY cDIVIDE    = '/';
 
         static const
-        uint8_t    kNONE      = cNONE;
-        uint8_t    kENTER     = cENTER;
-        uint8_t    kESCAPE    = cESCAPE;
-        uint8_t    kBACKSPACE = cBACKSPACE;
-        // uint8_t kTAB       = cTAB;
+        KEY    kNONE      = INACTIVE_KEY;
+        KEY    kENTER     = cENTER;
+        KEY    kESCAPE    = cESCAPE;
+        KEY    kBACKSPACE = cBACKSPACE;
+        // KEY kTAB       = cTAB;
 
-        uint8_t    kLEFT      = cLEFT;
-        uint8_t    kUP        = cUP;
-        uint8_t    kRIGHT     = cRIGHT;
-        uint8_t    kDOWN      = cDOWN;
-        // uint8_t kPGUP      = cPGUP;
-        // uint8_t kPGDOWN    = cPGDOWN;
+        KEY    kLEFT      = cLEFT;
+        KEY    kUP        = cUP;
+        KEY    kRIGHT     = cRIGHT;
+        KEY    kDOWN      = cDOWN;
+        // KEY kPGUP      = cPGUP;
+        // KEY kPGDOWN    = cPGDOWN;
 
-        uint8_t    kINSERT    = cINSERT;
-        uint8_t    kDELETE    = cDELETE;
+        KEY    kINSERT    = cINSERT;
+        KEY    kDELETE    = cDELETE;
 
-        uint8_t    kNUMBERS   = cNUMBERS;  // alphanumeric editor: numbers
-        uint8_t    kSYMBOLS   = cSYMBOLS;  // alphanumeric editor: symbols
-        uint8_t    kCHG_CASE  = cCHG_CASE; // alphanumeric editor: upper/lower case
+        KEY    kNUMBERS   = cNUMBERS;  // alphanumeric editor: numbers
+        KEY    kSYMBOLS   = cSYMBOLS;  // alphanumeric editor: symbols
+        KEY    kCHG_CASE  = cCHG_CASE; // alphanumeric editor: upper/lower case
 
-        uint8_t    kDECIMAL   = cDECIMAL;
-        uint8_t    kQUESTION  = cQUESTION;
-        uint8_t    kMINUS     = cMINUS;
-        // uint8_t kPLUS      = cPLUS;
-        // uint8_t kMUTIPLY   = cMUTIPLY;
-        // uint8_t kDIVIDE    = cDIVIDE;
+        KEY    kDECIMAL   = cDECIMAL;
+        KEY    kQUESTION  = cQUESTION;
+        KEY    kMINUS     = cMINUS;
+        // KEY kPLUS      = cPLUS;
+        // KEY kMUTIPLY   = cMUTIPLY;
+        // KEY kDIVIDE    = cDIVIDE;
 
     //
     // ASSIGN KEY HANDLER DEVICE
     //
 
-        UserInputDevice *KeyHandler = nullptr;
+        UserInterfaceRepeated  *KeyHandler = nullptr;
 
-        void assignKeyHandler( UserInputDevice &handler ) {
-            KeyHandler = &handler;
+        void assignKeyHandler( UserInterfaceRepeated &handler ) {
+            KeyHandler  = &handler;
         }
 
-        void setDebounceTimeInMs( uint16_t activeState = 50, uint16_t inactiveState = 50, uint16_t minimum = 50 ) {
+        void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 50, uint16_t minimum = 50 ) {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->setDebounceTimeInMs( activeState, inactiveState, minimum );
+            KeyHandler->debouncerSettings->stabilizedTimePressedInMs = activeStateStabilizeTime;
+            KeyHandler->debouncerSettings->stabilizedTimeReleasedInMs = inactiveStateStabilizeTime;
         }
 
-        void setConfirmStateTimeInMs( uint16_t confirmActiveStateTimeInMs = 0, uint16_t confirmInactiveStateTimeInMs = 0 ) {
+        void setDebounceDelayTimeInMs( uint16_t activeStateDelayTime = 0, uint16_t inactiveStateDelayTime = 0 ) {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->setConfirmStateTimeInMs( confirmActiveStateTimeInMs, confirmInactiveStateTimeInMs );
+            KeyHandler->debouncerSettings->debounceDelayPressedInMs = activeStateDelayTime;
+            KeyHandler->debouncerSettings->debounceDelayReleasedInMs = inactiveStateDelayTime;
         }
 
         void setRepeatDelayAndRateInMs( uint16_t repeatDelay = 400, uint16_t repeatRate = 250 ) {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->setRepeatDelayAndRateInMs( repeatDelay, repeatRate );
+            KeyHandler->repeaterSettings->repeatDelayInMs = repeatDelay;
+            KeyHandler->repeaterSettings->repeatRateInMs = repeatRate;
         }
 
     //
     // KEYS
     //
 
-        char *getContinuousKeys( char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return nullptr;
-            return KeyHandler->getContinuousKeys( allowedKeys );
+        // char *getContinuousKeys( char *allowedKeys = nullptr ) {
+        //     if ( KeyHandler == nullptr ) return nullptr;
+        //     return KeyHandler->getContinuousKeys( allowedKeys );
+        // }
+        // KEY getContinuousKey( char *allowedKeys = nullptr ) {
+        //     if ( KeyHandler == nullptr ) return 0;
+        //     return KeyHandler->getContinuousKey( allowedKeys );
+        // }
+
+        KEY getNonDebouncedKey() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getNonDebouncedKey();
         }
 
-        uint8_t getContinuousKey( char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getContinuousKey( allowedKeys );
+        KEY getDebouncedKey() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getDebouncedKey();
         }
 
-        uint8_t getKeyDown( char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getKeyDown( allowedKeys );
+        KEY getKeyDown() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getKeyDown();
         }
 
-        uint8_t getKeyUp( char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getKeyUp( allowedKeys );
+        KEY getKeyUp() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getKeyUp();
         }
 
-        uint8_t getRepeatingKey( char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getRepeatingKey( allowedKeys );
+        KEY getRepeatingKey() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getRepeatingKey();
         }
 
-        uint8_t getRepeatingKeyExcept( uint8_t nonRepeatingKey, char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getRepeatingKeyExcept( nonRepeatingKey, allowedKeys );
-        }
+        // KEY getRepeatingKeyExcept( KEY nonRepeatingKey, char *allowedKeys = nullptr ) {
+        //     if ( KeyHandler == nullptr ) return 0;
+        //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKey, allowedKeys );
+        // }
 
-        uint8_t getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
-            if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getRepeatingKeyExcept( nonRepeatingKeys, allowedKeys );
-        }
+        // KEY getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
+        //     if ( KeyHandler == nullptr ) return 0;
+        //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKeys, allowedKeys );
+        // }
 
-        void flagWaitForKeyup() {
+        void skipDelayWait() {
             if ( KeyHandler == nullptr ) return;
-            return KeyHandler->flagWaitForKeyup();
+            KeyHandler->skipDelayWait();
         }
+
+        void cancelDelayWait() {
+            if ( KeyHandler == nullptr ) return;
+            KeyHandler->cancelDelayWait();
+        }
+
+        // void flagWaitForKeyup() {
+        //     if ( KeyHandler == nullptr ) return;
+        //     return KeyHandler->flagWaitForKeyup();
+        // }
 
         // void flagWaitForKeyup( uint8_t key ) {
         //     if ( KeyHandler == nullptr ) return;
@@ -498,9 +540,9 @@ namespace UserInterface {
     // BASIC
     //
 
-        bool isKeyPressed( uint8_t key, bool issueWaitForKeyUp = true ) {
+        bool isKeyPressed( KEY key ) {
             if ( KeyHandler == nullptr ) return false;
-            return KeyHandler->isKeyPressed( key, issueWaitForKeyUp );
+            return KeyHandler->isKeyPressed( key );
         }
 
         void waitUntilNothingIsPressed() {
@@ -508,15 +550,14 @@ namespace UserInterface {
             KeyHandler->waitUntilNothingIsPressed();
         }
 
-        uint8_t waitForAnyKeyPressed() {
+        KEY waitForAnyKeyPressed() {
             if ( KeyHandler == nullptr ) while( true ); // hang it ???
-            // if ( KeyHandler == nullptr ) return;
             return KeyHandler->waitForAnyKeyPressed();
         }
 
-        uint8_t waitForAnyKey() {
+        KEY waitForAnyKeyReleased() {
             if ( KeyHandler == nullptr ) while( true ); // hang it ???
-            return KeyHandler->waitForAnyKey();
+            return KeyHandler->waitForAnyKeyReleased();
         }
 
     //
@@ -530,4 +571,6 @@ namespace UserInterface {
         //     alphaEditor = &alphaEditorToUse;
         // }
 
-}}
+}
+
+}

@@ -129,8 +129,18 @@ class LCDInterface : public Print {
     //
     public:
     
-        virtual bool isBuffered() { return false; }
-        virtual void displayAll() {}
+        inline virtual bool isBuffered() { return false; }
+        inline virtual void displayAll() {}
+
+        enum updateResult {
+            Timeout,        // screen not yet fully updated
+            Completed,      // screen fully updated
+            BufferLock,     // user updates lock not released yet
+            Throttling,     // update not yet performed due to trottling
+            NotInitialized  // update skipped, begin() not called or invalid, ex. begin(16,0)
+        };
+
+        inline virtual updateResult update() { return NotInitialized; }
 
     //
     // USER COMMANDS
@@ -276,7 +286,7 @@ class LCDInterface : public Print {
         }
 
         // print first N characters of string
-        // fill the rest with spacea
+        // fill the rest with spaces
         void printStrN( const char *str, uint8_t N, bool clearSpace = false ) {
             int8_t spaceAfter = 0;
             if ( clearSpace ) {

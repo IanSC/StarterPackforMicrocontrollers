@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <float.h>
 #include <spUtility.h>
+#include <spVector.h>
 
 #include <LCDEditorAlpha.h>
 #include <LCDEditorNumeric.h>
@@ -80,7 +81,7 @@ class SettingsEditor;
         rangeUnion  min;
         rangeUnion  max;
         bool        readonly;
-        seEntry *next = nullptr;
+        // seEntry *next = nullptr;
 
     //
     //
@@ -335,14 +336,16 @@ class SettingsEditor {
     public:
 
         ~SettingsEditor() {
-            seEntry *se = head;
+            seEntry *se = head.getFirst();
+            // seEntry *se = head;
             while( se != nullptr ) {
                 // delete text buffers
                 if ( se->type == seEntry::dataType::_text )
                     delete se->data._text;
-                se = se->next;
+                se = head.getNext();
+                // se = se->next;
             }
-            StarterPack::delete_NextLinkedList( head );
+            // StarterPack::delete_NextLinkedList( head );
         }
 
         bool allowCrossover = true;
@@ -424,24 +427,21 @@ class SettingsEditor {
     //
     protected:
 
-        seEntry *head = nullptr;
+        spVector<seEntry> head;
+        // seEntry *head = nullptr;
 
         inline void insert( seEntry *se ) {
-            insertEnd_NextLinkedList( &head, se );
-            // if ( head == nullptr ) {
-            //     head = se;
-            // } else {
-            //     seEntry *ptr = head;
-            //     while ( ptr->next != nullptr )
-            //         ptr = ptr->next;
-            //     ptr->next = se;
-            // }
+            head.insert( se );
+            // insertEnd_NextLinkedList( &head, se );
         }
 
         seEntry *getEntry( uint8_t entryNo ) {
-            seEntry *ptr = head;
-            for( int i = 0 ; i < entryNo ; i++ )
-                ptr = ptr->next;
+            seEntry *ptr = head.getFirst();
+            // seEntry *ptr = head;
+            for( int i = 0 ; i < entryNo ; i++ ) {
+                ptr = head.getNext();
+                // ptr = ptr->next;
+            }
             return ptr;
         }
 
@@ -458,10 +458,14 @@ class SettingsEditor {
             uint8_t maxFocus = 0;
             uint8_t lcdRows;
 
-            void compute( seEntry *se, uint8_t lcdRows ) {
+            void compute(
+            spVector<seEntry> *head,
+            // seEntry *se,
+            uint8_t lcdRows ) {
 
                 this->lcdRows = lcdRows;
 
+                auto se = head->getFirst();
                 while( se != nullptr ) {
                     count++;
                     if ( se->isSelectable() ) {
@@ -469,7 +473,8 @@ class SettingsEditor {
                             minFocus = count-1;
                         maxFocus = count-1;
                     }
-                    se = se->next;
+                    se = head->getNext();
+                    // se = se->next;
                 }
                 current = minFocus;
             }
@@ -550,7 +555,7 @@ class SettingsEditor {
             LCDInterface *lcd = StarterPack::UserInterface::LCD;
 
             rowData row;
-            row.compute( head, lcd->maxRows );
+            row.compute( &head, lcd->maxRows );
 
             seEntry *se;
 
@@ -570,9 +575,12 @@ class SettingsEditor {
                 if ( updateScreen ) {
                     updateScreen = false;
 
-                    se = head;
-                    for( int i = 0 ; i < row.itemOnTop ; i++ )
-                        se = se->next;
+                    se = head.getFirst();
+                    // se = head;
+                    for( int i = 0 ; i < row.itemOnTop ; i++ ) {
+                        se = head.getNext();
+                        // se = se->next;
+                    }
 
                     for( int row = 0 ; row < lcd->maxRows ; row++ ) {
                         if ( se == nullptr ) {
@@ -600,7 +608,8 @@ class SettingsEditor {
                             if ( len > dataWidth )
                                 lcd->writeAt( lcd->maxColumns-2, row, 0x7E );                        
                         }
-                        se = se->next;
+                        se = head.getNext();
+                        // se = se->next;
                     }
 
                     se = getEntry( row.current );
@@ -646,11 +655,13 @@ class SettingsEditor {
         }
 
         void acceptChanges() {
-            seEntry *se = head;
+            seEntry *se = head.getFirst();
+            // seEntry *se = head;
             while( se != nullptr ) {
                 if ( !se->readonly )
                     se->acceptChange();
-                se = se->next;
+                se = head.getNext();
+                // se = se->next;
             }
         }
 

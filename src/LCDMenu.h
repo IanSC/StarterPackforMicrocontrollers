@@ -1,5 +1,7 @@
 #pragma once
 #include <stdint.h>
+
+#include <spVector.h>
 #include <LCDUtility.h>
 #include <UserInterface.h>
 
@@ -19,20 +21,21 @@ class menuSet {
             menuSet *submenu = nullptr;
             bool backToUpperMenu = false;
 
-            menuEntry *next = nullptr;
+            // menuEntry *next = nullptr;
             // inline void assignSubmenu( menuSet &menu ) {
             //     this->submenu = &menu;
         };
 
         const char *header;
-        menuEntry *options = nullptr;
+        // menuEntry *options = nullptr;
+        spVector<menuEntry> options;
         menuSet *parent = nullptr;
 
     public:
 
         ~menuSet() {
             release();
-            delete_NextLinkedList( options );
+            // delete_NextLinkedList( options );
         }
 
         menuSet( const char *header = nullptr ) {
@@ -80,16 +83,8 @@ class menuSet {
             e->backToUpperMenu = backToUpperMenu;
             if ( submenu != nullptr )
                 submenu->parent = this;
-            insertEnd_NextLinkedList( &options, e );
-            // if ( options == nullptr )
-            //     options = e;
-            // else {
-            //     menuEntry *ptr = options;
-            //     while( ptr->next != nullptr )
-            //         ptr = ptr->next;
-            //     ptr->next = e;
-            // }
-            // return e;
+            options.insert(e);
+            // insertEnd_NextLinkedList( &options, e );
         }
 
     private:
@@ -128,23 +123,27 @@ class menuSet {
 
             // count options
             optionCount = 0;
-            menuEntry *ptr = options;
+            menuEntry *ptr = options.getFirst();
+            // menuEntry *ptr = options;
             while ( ptr != nullptr ) {
                 optionCount++;
-                ptr = ptr->next;
+                ptr = options.getNext();
+                // ptr = ptr->next;
             }
 
             // gather options/descriptions
             items = new const char*[optionCount];
             desc = new const char*[optionCount];
 
-            ptr = options;
+            ptr = options.getFirst();
+            // ptr = options;
             uint8_t i = 0;
             while ( ptr != nullptr ) {
                 items[i] = ptr->option;
                 desc[i] = ptr->description;
                 i++;
-                ptr = ptr->next;
+                ptr = options.getNext();
+                // ptr = ptr->next;
             }
 
             this->chooser = new LCDUtility::chooser( menuRow, optionCount, items );
@@ -190,9 +189,12 @@ class menuSet {
                 uint8_t key = ui::getRepeatingKey();
                 
                 if ( key == ui::kENTER ) {
-                    menuEntry *selected = options;
-                    for( int i = 0 ; i < chooser->selectedItem ; i++ )
-                        selected = selected->next;
+                    menuEntry *selected = options.getFirst();
+                    // menuEntry *selected = options;
+                    for( int i = 0 ; i < chooser->selectedItem ; i++ ) {
+                        selected = options.getNext();
+                        // selected = selected->next;
+                    }
                     if ( selected->submenu != nullptr ) {
                         // open submenu
                         selected->submenu->begin( *lcd, headerRow, menuRow, descriptionRow );

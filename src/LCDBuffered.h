@@ -764,15 +764,15 @@ class LCDBuffered : public LCDInterface {
             return btsThrottleInMs;
         }
 
-        enum updateResult {
-            Timeout,        // screen not yet fully updated
-            Completed,      // screen fully updated
-            BufferLock,     // user updates lock not released yet
-            Throttling,     // update not yet performed due to trottling
-            NotInitialized  // update skipped, begin() not called or invalid, ex. begin(16,0)
-        };
+        // enum updateResult {
+        //     Timeout,        // screen not yet fully updated
+        //     Completed,      // screen fully updated
+        //     BufferLock,     // user updates lock not released yet
+        //     Throttling,     // update not yet performed due to trottling
+        //     NotInitialized  // update skipped, begin() not called or invalid, ex. begin(16,0)
+        // };
 
-        updateResult update() {
+        LCDInterface::updateResult update() override {
             // send updates to LCD
             
             if ( bufferSize == 0 ) return NotInitialized;

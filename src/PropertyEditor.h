@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <spUtility.h>
+#include <spVector.h>
 #include <UserInterface.h>
 // #include <LCDEditor.h>
 #include <LCDEditorAlpha.h>
@@ -37,8 +38,10 @@ namespace StarterPack {
             //    friend void StarterPack::delete_NextLinkedList( entryCore* );
             public:
 
-                entryCore  *next      = nullptr;
-                bool       skipDelete = false;
+                // entryCore  *next      = nullptr;
+
+                // let user handle freeing memory
+                // bool       skipDelete = false;
             
             protected:
 
@@ -152,7 +155,7 @@ namespace StarterPack {
         class _bool : public entryCore { public:
             bool data;
             const char *trueValue = nullptr;
-            const char *falseValue = nullptr;;
+            const char *falseValue = nullptr;
             _bool( const char *caption, bool &data, bool readonly=false ) {
                 this->caption=caption; this->ptr=&data; this->data=data; this->readonly=readonly; }
             _bool( const char *caption, bool &data, const char *trueValue, const char *falseValue, bool readonly=false ) {
@@ -521,28 +524,35 @@ namespace StarterPack {
                 uint8_t lcdRows;            // number of rows of physical screen
 
                 // keep copy to find latched entry
-                StarterPack::PropertyEditorEntry::entryCore *head;
+                // StarterPack::PropertyEditorEntry::entryCore *head;
+                spVector<StarterPack::PropertyEditorEntry::entryCore> *head;
 
             public:
 
                 bool allowCrossover = false;
 
-                rowHandler( StarterPack::PropertyEditorEntry::entryCore *se, uint8_t lcdRows, bool allowCrossover = false ) {
+                rowHandler( spVector<StarterPack::PropertyEditorEntry::entryCore> *se,
+                // StarterPack::PropertyEditorEntry::entryCore *se, 
+                uint8_t lcdRows, bool allowCrossover = false ) {
                     head = se;
                     this->lcdRows = lcdRows;
                     this->allowCrossover = allowCrossover;
-                    while( se != nullptr ) {
-                        count++;
-                        se = se->next;
-                    }
+                    count = se->count;
+                    // while( se != nullptr ) {
+                    //     count++;
+                    //     se = se->next;
+                    // }
                     focusScanDownwards( 0 );
                 }
 
                 StarterPack::PropertyEditorEntry::entryCore *getEntry( uint8_t entryNo ) {
                     if ( entryNo < 0 || entryNo >= count ) return nullptr;
-                    auto *ptr = head;
-                    for( int i = 0 ; i < entryNo ; i++ )
-                        ptr = ptr->next;
+                    auto *ptr = head->getFirst();
+                    // auto *ptr = head;
+                    for( int i = 0 ; i < entryNo ; i++ ) {
+                        ptr = head->getNext();
+                        // ptr = ptr->next;
+                    }
                     return ptr;
                 }
 
@@ -715,7 +725,7 @@ namespace StarterPack {
 
             ~PropertyEditor() {
                 // in <spMacros.h>
-                StarterPack::delete_NextLinkedListWithSkip( head );
+                // StarterPack::delete_NextLinkedListWithSkip( head );
             }
 
             bool allowCrossover = false;
@@ -731,14 +741,19 @@ namespace StarterPack {
             //
 
             void add( StarterPack::PropertyEditorEntry::entryCore *property ) {
-                // let user handle freeing from memory
-                property->skipDelete = true;
+                // entry will be deleted
                 insert( property );
             }
 
-            void addAndDelete( StarterPack::PropertyEditorEntry::entryCore *property ) {
-                insert( property );
-            }
+            // void add( StarterPack::PropertyEditorEntry::entryCore *property ) {
+            //     // let user handle freeing memory
+            //     property->skipDelete = true;
+            //     insert( property );
+            // }
+
+            // void addAndDelete( StarterPack::PropertyEditorEntry::entryCore *property ) {
+            //     insert( property );
+            // }
 
             auto breaker( char ch = '-' ) {
                 namespace ui = StarterPack::UserInterface;
@@ -869,18 +884,12 @@ namespace StarterPack {
         //
         protected:
 
-            StarterPack::PropertyEditorEntry::entryCore *head = nullptr;
+            // StarterPack::PropertyEditorEntry::entryCore *head = nullptr;
+            spVector<StarterPack::PropertyEditorEntry::entryCore> head;
 
             inline void insert( StarterPack::PropertyEditorEntry::entryCore *se ) {
-                insertEnd_NextLinkedList( &head, se );
-                // if ( head == nullptr ) {
-                //     head = se;
-                // } else {
-                //     auto *ptr = head;
-                //     while ( ptr->next != nullptr )
-                //         ptr = ptr->next;
-                //     ptr->next = se;
-                // }
+                head.insert( se );
+                // insertEnd_NextLinkedList( &head, se );
             }
 
     //
@@ -986,7 +995,7 @@ namespace StarterPack {
             if ( lcd->isBuffered() )
                 lcdBuffered = (LCDBuffered*) lcd;
 
-            StarterPack::PropertyEditorEntry::rowHandler rowHandler( head, lcd->maxRows, allowCrossover );
+            StarterPack::PropertyEditorEntry::rowHandler rowHandler( &head, lcd->maxRows, allowCrossover );
 
             char buffer[lcd->maxColumns+1];
 
@@ -1063,7 +1072,8 @@ namespace StarterPack {
                             }
                             break;
                         }
-                        se = se->next;
+                        se = head.getNext();
+                        // se = se->next;
                     }
 
                     // se = getEntry( row.current );
@@ -1275,11 +1285,13 @@ namespace StarterPack {
 
         void acceptChanges() {
             if ( readOnly ) return;
-            auto *se = head;
+            auto *se = head.getFirst();
+            // auto *se = head;
             while( se != nullptr ) {
                 if ( !se->readonly )
                     se->acceptChange();
-                se = se->next;
+                se = head.getNext();
+                // se = se->next;
             }
         }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 
 namespace StarterPack {
 
@@ -21,30 +22,55 @@ namespace StarterPack {
     //     return ( delta * rise ) / run + outputMin;
     // }
 
+    template<typename T, typename U>
+    void spMapLimit(T& value, U min, U max) {
+        if (min <= max) {
+            if (value<min) value=min;
+            if (value>max) value=max;
+        } else {
+            if (value<max) value=max;
+            if (value>min) value=min;
+        }
+    }
+
     int spMap( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
         int run = inputMax - inputMin;
         if ( run == 0 ) return -1;
-        return ( (long)(value - inputMin) * (long)(outputMax - outputMin) ) / run + outputMin;
+        auto r = ( (long)(value - inputMin) * (long)(outputMax - outputMin) ) / run + outputMin;
+        spMapLimit(r, outputMin, outputMax);
+        return r;
     }
 
     long spMapLong( long value, long inputMin, long inputMax, long outputMin, long outputMax ) {
         int run = inputMax - inputMin;
         if ( run == 0 ) return -1;
-        return ( (long long)(value - inputMin) * (long long)(outputMax - outputMin) ) / run + outputMin;
+        auto r = ( (long long)(value - inputMin) * (long long)(outputMax - outputMin) ) / run + outputMin;
+        spMapLimit(r, outputMin, outputMax);
+        return r;
+    }
+
+    inline float spMapFloat( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
+        float run = inputMax - inputMin;
+        if ( run == 0 ) return -1;
+        auto r = (float) ( (value - inputMin) * (outputMax - outputMin) ) / run + outputMin;
+        spMapLimit(r, outputMin, outputMax);
+        return r;
     }
 
     inline float spMapFloat( float value, float inputMin, float inputMax, float outputMin, float outputMax ) {
         float run = inputMax - inputMin;
         if ( run == 0 ) return -1;
-        return ( (value - inputMin) * (outputMax - outputMin) ) / run + outputMin;
+        auto r = ( (value - inputMin) * (outputMax - outputMin) ) / run + outputMin;
+        spMapLimit(r, outputMin, outputMax);
+        return r;
     }
 
-    template <typename TType>
-    TType spLimit( TType value, TType min, TType max ) {
-        if ( value < min ) return min;
-        if ( value > max ) return max;
-        return value;
-    }
+    // template <typename TType>
+    // TType spLimit( TType value, TType min, TType max ) {
+    //     if ( value < min ) return min;
+    //     if ( value > max ) return max;
+    //     return value;
+    // }
 
 //
 // SERIAL
@@ -89,9 +115,63 @@ namespace StarterPack {
 // STRING
 //
 
-    bool isCharInString( uint8_t key, char *list ) {
+    bool isCharInString( uint8_t key, const char *list ) {
         if ( list == nullptr ) return false;
         return ( strchr( list, key ) != nullptr );
+    }
+
+    void sortCharsInString(char *str) {
+        auto n = strlen(str);
+        char temp;
+        for (size_t i = 0; i < n-1; i++) {
+            for (size_t j = i+1; j < n; j++) {
+                if (str[i] > str[j]) {
+                    temp = str[i];
+                    str[i] = str[j];
+                    str[j] = temp;
+                }
+            }
+        }
+    }
+
+    bool areCharsInStringSimple(const char *str1, const char *str2) {
+        // repetition not handled
+        // will match "ABB" and "BAA"
+        auto L1 = strlen(str1);
+        auto L2 = strlen(str2);
+        if (L1 != L2) return false;
+        for (size_t i=0; i<L1; i++) {
+            if (!isCharInString(str1[i],str2))
+                return false;
+        }
+        return true;
+    }
+
+    bool areCharsInString(const char *str1, const char *str2) {
+        // slower but repetition handled
+        // will NOT match "ABB" and "BAA"
+        auto L1 = strlen(str1);
+        auto L2 = strlen(str2);
+        if (L1 != L2) return false;
+
+        char buffer[L2+1];
+        strcpy(buffer,str2);
+
+        // for each char in str1
+        for (size_t i1=0; i1<L1; i1++) {
+            // ... find in buffer and flag it
+            auto found = false;
+            for (size_t i2=0; i2<L1; i2++) {
+                if (buffer[i2] == str1[i1]) {
+                    // match
+                    buffer[i2] = 0;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
     }
 
 //
@@ -130,6 +210,10 @@ namespace StarterPack {
 //
 // NEXT-LINKED LIST
 //
+
+    /*
+    
+    USE: spVector<>
 
     // insert new item as head or at end of list
     // A* head = nullptr;
@@ -193,5 +277,6 @@ namespace StarterPack {
         }
         delete head;
     }
+    */
 
 }

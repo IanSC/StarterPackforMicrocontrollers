@@ -89,19 +89,30 @@ namespace LCDUtility {
         //
         // BACKGROUND PROCESS/BREAKOUT
         //
-        protected:
-            // return false to breakout of loop
-            typedef std::function<bool(void)> backgroundProcessDelegate;
-            backgroundProcessDelegate backgroundProcess = nullptr;
-        public:
-            inline chooser* assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
-                this->backgroundProcess = backgroundProcess;
-                return this;
-            }        
-            inline chooser* assignBackgroundProcess( bool (*backgroundProcessFunc)() ) {
-                this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
-                return this;
-            }
+        #if defined(ESP8266) || defined(ESP32)
+            protected:
+                // return false to breakout of loop
+                typedef std::function<bool(void)> backgroundProcessDelegate;
+                backgroundProcessDelegate backgroundProcess = nullptr;
+            public:
+                inline chooser* assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
+                    this->backgroundProcess = backgroundProcess;
+                    return this;
+                }        
+                inline chooser* assignBackgroundProcess( bool (*backgroundProcessFunc)() ) {
+                    this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
+                    return this;
+                }
+        #else
+            protected:
+                // return anything but ui::kNone to breakout of loop
+                typedef bool (*backgroundProcessDelegate)();
+                backgroundProcessDelegate backgroundProcess = nullptr;
+            public:
+                void assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
+                    this->backgroundProcess = backgroundProcess;
+                }
+        #endif
 
         //
         // THROTTLER
@@ -737,7 +748,11 @@ namespace LCDUtility {
 // LONG MESSAGE
 //
 
-    typedef std::function<bool(void)> backgroundProcessDelegate;
+    #if defined(ESP8266) || defined(ESP32)
+        typedef std::function<bool(void)> backgroundProcessDelegate;
+    #else
+        typedef bool (*backgroundProcessDelegate)();
+    #endif
 
     // https://solarianprogrammer.com/2016/11/28/cpp-passing-c-style-array-with-size-information-to-function/
     template<size_t msgCount>

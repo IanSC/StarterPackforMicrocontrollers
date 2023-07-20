@@ -1,16 +1,53 @@
-#pragma once
-#include <stdint.h>
-#include <stdarg.h>
-#include <Arduino.h>
+// 2023/07
+//
+//     +---+---+---+---+
+//     | 1 | 2 | 3 | A |
+//     +---+---+---+---+
+//     | 4 | 5 | 6 | B |
+//     +---+---+---+---+
+//     | 7 | 8 | 9 | C |
+//     +---+---+---+---+
+//     | * | 0 | # | D |
+//     +---+---+---+---+
+//         ||||||||
+//         rrrrcccc
+//         12341234
+//
+//  example:
+//      obj.assignRows(r1,r2,r3,r4);
+//      obj.assignColumns(c1,c2,c3,c4);
+//      obj.begin();
+//      auto keys = obj.readMatrix();
 
-#include <Debouncer.h>
+#pragma once
+
+#include <Arduino.h>
+#include <inttypes.h>
+#include <stdarg.h>
 
 namespace StarterPack {
 
-class MatrixKeypadCore {
+class newMatrixKeypadCore {
 
-    // MAX 32 BUTTONS because of spBitPackedBoolean
+    // protected:
 
+    //     static constexpr int INACTIVE_STATE = 0;
+
+    //
+    // INIT
+    //
+    public:
+
+        virtual ~newMatrixKeypadCore() {
+            if ( rowPinList != nullptr ) delete[] rowPinList;
+            if ( colPinList != nullptr ) delete[] colPinList;
+        }
+
+    //
+    // INPUTS
+    //
+    // - specify pins for rows and columns
+    // - activeState = if pin will be turn HIGH or LOW for scanning 
     protected:
 
         uint8_t rowCount = 0; uint8_t *rowPinList = nullptr;
@@ -19,22 +56,10 @@ class MatrixKeypadCore {
         uint8_t sendPinCount = 0; uint8_t *sendPinList = nullptr;
         uint8_t recvPinCount = 0; uint8_t *recvPinList = nullptr;
 
-        // bool driveHighScanning = true;
+        // pin will be turned HIGH or LOW during scanning
         uint8_t activeState = LOW;
 
-    //
-    // INIT
-    //
     public:
-
-        MatrixKeypadCore() {
-            initMatrixDebouncers();
-        }
-
-        ~MatrixKeypadCore() {
-            if ( rowPinList != nullptr ) delete rowPinList;
-            if ( colPinList != nullptr ) delete colPinList;
-        }
 
         // user convenience, don't know how to count number of args without so much extra code
         // https://stackoverflow.com/questions/2124339/c-preprocessor-va-args-number-of-arguments/2124385#2124385
@@ -94,8 +119,7 @@ class MatrixKeypadCore {
         }
 
         void begin( bool driveLowScanning = true, bool driveColumnsIfMorePins = true ) {
-            // this->driveHighScanning = driveHighScanning;
-            // default do driving low since Arduino only has PULLUP
+            // default drive low since Arduino only has PULLUP
             // if using ESP32 input only pins for receivers, must drive high
             if ( driveLowScanning )
                 activeState = LOW;
@@ -119,8 +143,8 @@ class MatrixKeypadCore {
             } else {
                 // will set to HIGH the send pins when scanning
                 // pulldown LOW the receive pins (if possible)
-                // if no internal pulldown, must put externally
-                //    otherwise it will be floating and would not work
+                // if no internal pulldown, must put external resistor to ground
+                //    otherwise it will be floating and will not work
                 #if defined(ESP32)
                     for ( uint8_t i = 0 ; i < recvPinCount; i++ )
                         pinMode( recvPinList[i], INPUT_PULLDOWN );
@@ -147,9 +171,48 @@ class MatrixKeypadCore {
     //
     // READ DEVICE
     //
+    public:
+
+        char *readMatrix() {
+            keysPressed[0] = 0;
+            readMatrixCore( 0, sendPinCount - 1 );
+            return keysPressed;
+        }
+
     protected:
 
-        virtual void recordScanCode( uint8_t scanCode ) = 0;
+        static const uint8_t MAX_SIMULTANEOUS_KEYS = 5;
+        char keysPressed[MAX_SIMULTANEOUS_KEYS+1] = "";
+
+        virtual void recordScanCode( uint8_t scanCode ) {
+            // scanCode = 0-based
+            // this function will be called if a key press is detected
+            // save result into keysPressed
+            uint8_t l = strlen( keysPressed );
+            if ( l >= MAX_SIMULTANEOUS_KEYS ) return;
+            // uint8_t getKeymap( const uint8_t scanCode )
+            keysPressed[l] = scanCode+1;
+            keysPressed[l+1] = 0;
+        }
+
+        // other possible implementation using spBitPackedBoolean
+        // spBitPackedBoolean:
+        //      pro:  easier to debounce before mapping, combining, save time
+        //      cons: limited to 32 keys due to spBitPackedBoolean
+        // char *
+        //      pro:  255 number of keys
+        //      cons: difficult to debounce, so map, combine then debounce
+        //      cons: limited number of simultaneous keys
+        //
+        //      StarterPack::spBitPackedBoolean result;
+        //      void recordScanCode( uint8_t scanCode ) {
+        //          // up to 32 only, limited by spBitPackedBoolean
+        //          if (scanCode >= 32) return;
+        //          result.turnOn(scanCode);
+        //          ...
+        //          InputDebouncer<uint32_t> debouncer;
+        //          debouncer.debounce(result.data);
+        //      }
 
         // #define DEBUG_TRACE(x)   x;
         #define DEBUG_TRACE(x)   ;
@@ -159,6 +222,8 @@ class MatrixKeypadCore {
             setOutputPinsActive( sendFrom, sendTo );
             bool active = scanInputs( sendFrom, sendTo );
             if ( active ) {
+                // detected something active
+                // scan half at a time to narrow down
                 DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
                 DEBUG_TRACE( Serial.println( "ACTIVE" ) );
                 if ( sendFrom == sendTo ) {
@@ -224,10 +289,11 @@ class MatrixKeypadCore {
                     for ( int recvPin = 0 ; recvPin < recvPinCount ; recvPin++ ) {
                         uint8_t scanCode = sendFrom * recvPinCount + recvPin;
                         bool state = ( digitalRead( recvPinList[recvPin] ) == activeState );
-                        if ( state )
-                            state = debounceMatrix( scanCode, state );
-                        else
-                            state = debounceMatrixExisting( scanCode, state );
+                        // state = debouncer.debounce(state);
+                        // if ( state )
+                        //     state = debounceMatrix( scanCode, state );
+                        // else
+                        //     state = debounceMatrixExisting( scanCode, state );
                         if ( state ) {
                             DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
                             DEBUG_TRACE( SerialPrintf( "SET %d\n", scanCode ) );
@@ -238,10 +304,11 @@ class MatrixKeypadCore {
                     for ( int recvPin = 0 ; recvPin < recvPinCount ; recvPin++ ) {
                         uint8_t scanCode = recvPin * sendPinCount + sendFrom;
                         bool state = ( digitalRead( recvPinList[recvPin] ) == activeState );
-                        if ( state )
-                            state = debounceMatrix( scanCode, state );
-                        else
-                            state = debounceMatrixExisting( scanCode, state );
+                        // state = debouncer.debounce(state);
+                        // if ( state )
+                        //     state = debounceMatrix( scanCode, state );
+                        // else
+                        //     state = debounceMatrixExisting( scanCode, state );
                         if ( state ) recordScanCode( scanCode );
                     }
                 }
@@ -257,80 +324,6 @@ class MatrixKeypadCore {
         }
 
         #undef DEBUG_TRACE
-
-    //
-    // MATRIX DEBOUNCE
-    //
-    public:
-
-        void setPhysicalButtonDebounceTimeInMs( uint16_t activeState = 50, uint16_t inactiveState = 50, uint16_t minimum = 50 ) {
-            Debouncer::Settings *s = db[0].getSettings();
-            s->activeStatesDebounceInMs = activeState;
-            s->inactiveStateDebounceInMs = inactiveState;
-            s->minimumDebounceTimeInMs = minimum;
-        }
-
-    protected:
-
-        //  use 1 debouncer per scanCode:
-        //  - too much memory
-        //  use fixed number debouncers rotated to those pressed
-        //  - can't use this for musical keyboard ?
-
-        static const uint8_t DEBOUNCER_COUNT = 3;
-        Debouncer db[DEBOUNCER_COUNT];
-        uint8_t dbScanCode[DEBOUNCER_COUNT] = { 0xFF, 0xFF, 0xFF }; 
-        uint8_t dbPos = 0;
-
-        inline void initMatrixDebouncers() {
-            // create custom settings for db[0]
-            // then assign to all
-            db[0].useCustomSettings();
-            for( int i = 1 ; i < DEBOUNCER_COUNT ; i++ )
-                db[i].assignSettings( *db[0].getSettings() );
-        }
-
-        bool debounceMatrix( uint8_t scanCode, bool state ) {
-            for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
-                if ( dbScanCode[i] == scanCode ) {
-                    
-                    // if ( scanCode == 6 ) {
-                    //     // StarterPack::Debouncer::modes modeB4 = db[i].mode;
-                    //     int stateB4 = db[i].debouncedState;
-                    //     // bool keyupFlagB4 = db[i].waitForKeyupFlag;
-                    //     bool stateAfter = db[i].debounce( state );
-                    //     if ( state && !stateAfter ) {
-                    //         SerialPrintf( "T-->F %d\n", i );
-                    //         // SerialPrintf( "  0Mode: %d\n", modeB4 );
-                    //         SerialPrintf( "  0debouncedState: %d\n", stateB4 );
-                    //         // SerialPrintf( "  0waitForKeyupFlag: %d\n", keyupFlagB4 );
-                    //         // SerialPrintf( "  Mode: %d\n", db[i].mode );
-                    //         SerialPrintf( "  debouncedState: %d\n", db[i].debouncedState );
-                    //         // SerialPrintf( "  waitForKeyupFlag: %d\n", db[i].waitForKeyupFlag );
-                    //     }
-                    //     return stateAfter;
-                    // }
-                    
-                    return db[i].debounce( state );
-                }
-            }
-            // not found, add
-            uint8_t pos = dbPos;
-            dbPos++;
-            if ( dbPos >= DEBOUNCER_COUNT ) dbPos = 0;
-            dbScanCode[pos] = scanCode;
-            db[pos].setInitialValue( state );
-            return db[pos].debounce( state );
-        }
-
-        bool debounceMatrixExisting( uint8_t scanCode, bool state ) {
-            for( int i = 0 ; i < DEBOUNCER_COUNT ; i++ ) {
-                if ( dbScanCode[i] == scanCode ) {
-                    return db[i].debounce( state );
-                }
-            }
-            return state;
-        }
 
 };
 

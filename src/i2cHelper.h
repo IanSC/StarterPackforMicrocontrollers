@@ -200,18 +200,73 @@ class i2cHelper {
 
     public:
 
-        // https://github.com/espressif/arduino-esp32/issues/6616
-        // master/slave mode depends on variable type
-        inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl ) {
-            return wire.begin( (int) sda, (int) scl );
-        }
-        inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
-            return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
-        }
-        inline static bool beginSlave( TwoWire &wire, uint8_t sda, uint8_t scl ) {
-            // slave has no clock
-            return wire.begin( sda, scl );
-        }
+        #if defined(ARDUINO_ARCH_ESP32)
+            // https://github.com/espressif/arduino-esp32/issues/6616
+            // Confusing overload of Wire::begin
+            // master/slave mode depends on variable type
+            inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+                return wire.begin( (int) sda, (int) scl );
+            }
+            inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
+                return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
+            }
+            inline static bool beginSlave( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+                // slave has no clock
+                return wire.begin( sda, scl );
+            }
+        #elif defined(ARDUINO_ARCH_SAMD)
+            // SEEDUINO XIAO SAMD21
+            // https://community.platformio.org/t/using-preprocessor-directives-defined-in-platformio-ini/24169/2
+            inline static bool beginMaster( TwoWire &wire ) {
+                wire.begin();
+                return true;
+            }
+            inline static bool beginSlave( TwoWire &wire, uint8_t __defaultI2cAddress ) {
+                wire.begin(__defaultI2cAddress);
+                return true;
+            }
+        // #elif defined(ARDUINO_ARCH_AVR)
+        #else
+
+        #endif
+
+        // // https://github.com/espressif/arduino-esp32/issues/6616
+        // // Confusing overload of Wire::begin
+        // // master/slave mode depends on variable type
+        // inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+        //     #if defined(ARDUINO_ARCH_SAMD)
+        //         #error UNSUPPORTED: i2cHelper.h
+        //         // wire.begin();
+        //         // return true;
+        //     #else
+        //         return wire.begin( (int) sda, (int) scl );
+        //     #endif
+        // }
+        // inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
+        //     #if defined(ARDUINO_ARCH_SAMD)
+        //         #error UNSUPPORTED: i2cHelper.h
+        //         // wire.begin();
+        //         // return true;
+        //     #else
+        //         return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
+        //     #endif
+        // }
+        // inline static bool beginSlave( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+        //     #if defined(ARDUINO_ARCH_SAMD)
+        //         #error UNSUPPORTED: i2cHelper.h
+        //     #else
+        //         // slave has no clock
+        //         return wire.begin( sda, scl );
+        //     #endif
+        // }
+        // inline static bool beginSlave( TwoWire &wire, uint8_t __defaultI2cAddress ) {
+        //     #if defined(ARDUINO_ARCH_SAMD)
+        //         wire.begin(__defaultI2cAddress);
+        //         return true;
+        //     #else
+        //         #error UNSUPPORTED: i2cHelper.h
+        //     #endif
+        // }
 
     public:
 

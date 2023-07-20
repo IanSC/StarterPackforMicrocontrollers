@@ -6,13 +6,21 @@
 
 #include <AnalogIO.h>
 
-#include <DigitalIO.h>
-#include <DigitalIOGroup.h>
+// #include <DigitalIO.h>
+// #include <DigitalIOGroup.h>
+#include <DigitalIO/DigitalInput.h>
+#include <DigitalIO/DigitalInputDebounced.h>
+#include <DigitalIO/DigitalInputRepeated.h>
+#include <DigitalIO/DigitalInputGroup.h>
+#include <DigitalIO/DigitalInputGroupRepeated.h>
+#include <DigitalIO/DigitalOutput.h>
 
-#include <MatrixKeypad.h>
-#include <MatrixKeypad1Key.h>
+// #include <MatrixKeypad.h>
+// #include <MatrixKeypad1Key.h>
+#include <MatrixKeypad/MatrixKeypad.h>
+#include <MatrixKeypad/MatrixKeypadRepeated.h>
 
-#include <Debouncer.h>
+// #include <Debouncer.h>
 
 #include <UserInterface.h>
 
