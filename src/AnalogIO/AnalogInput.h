@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AnalogIO/AnalogInputBase.h>
+#include <Utility/spRangeMap.h>
 
 namespace StarterPack {
 
@@ -35,12 +36,12 @@ class AnalogInput : public AnalogInputBase {
 
         int readScaled() {
             auto value = readRaw();
-            return StarterPack::spMap(value,srcLow,srcHigh,dstLow,dstHigh);
+            return StarterPack::RangeMap::IntInt(value,srcLow,srcHigh,dstLow,dstHigh);
         }
 
         float readScaledFloat() {
             auto value = readRaw();
-            return StarterPack::spMapFloat(value,srcLow,srcHigh,dstLow,dstHigh);
+            return StarterPack::RangeMap::IntFloat(value,srcLow,srcHigh,dstLow,dstHigh);
         }
 
 };

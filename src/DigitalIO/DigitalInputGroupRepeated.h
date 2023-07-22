@@ -1,11 +1,12 @@
 #pragma once
 
+#include <DigitalIO/DigitalInputGroupDebounced.h>
 #include <DigitalIO/DigitalInputGroupBase.h>
 #include <UserInterface/UserInterfaceRepeated.h>
 
 namespace StarterPack {
 
-class DigitalInputGroupRepeated : public DigitalInputGroupBase,
+class DigitalInputGroupRepeated : public DigitalInputGroupDebounced, //Base,
                                   public UserInterfaceRepeated {
 
     protected:
@@ -17,6 +18,10 @@ class DigitalInputGroupRepeated : public DigitalInputGroupBase,
     // VIRTUAL OVERRIDES
     //
     public:
+
+        // inline KEY getDebouncedKey() override {
+        //     return DigitalInputGroupDebounced::getDebouncedKey();
+        // }
 
         inline KEY getNonDebouncedKey() override {
             return DigitalInputGroupBase::getNonDebouncedKey();

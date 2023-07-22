@@ -23,8 +23,8 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <spUtility.h>
-#include <spVector.h>
+#include <Utility/spStr.h>
+#include <Utility/spVector.h>
 
 namespace StarterPack {
 
@@ -38,7 +38,7 @@ class InputCombiner {
     //
     // SETTINGS
     //
-    protected:
+    private:
 
         // if 2 or more keys are presssed at the same time
         //    return another key instead
@@ -82,7 +82,7 @@ class InputCombiner {
                 keyCombination *e = keyCombinationList.getFirst();
                 while ( e != nullptr ) {
                     // check if same keys are pressed
-                    if (StarterPack::areCharsInString(keysPressed,e->combination))
+                    if (StarterPack::Str::matchUnordered(keysPressed,e->combination))
                         return e->result;
                     e = keyCombinationList.getNext();
                 }

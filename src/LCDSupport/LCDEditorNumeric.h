@@ -1,9 +1,9 @@
 #pragma once
 #include <UserInterface.h>
-#include <LCDInterface.h>
-#include <LCDBuffered.h>
-#include <LCDEditor.h>
-#include <WindowedText.h>
+#include <LCD/LCDInterface.h>
+#include <LCD/LCDBuffered.h>
+#include <LCDSupport/LCDEditor.h>
+#include <Utility/WindowedText.h>
 
 namespace StarterPack {
 
@@ -129,7 +129,8 @@ namespace StarterPack {
                             updateDisplay = true;
                         }
                     } else if ( key == ui::kDECIMAL && s->allowDecimal ) {                
-                        if ( !isCharInString(s->decimalPoint,buffer) ) {
+                        // if ( !isCharInString(s->decimalPoint,buffer) ) {
+                        if ( !Str::findCharacter(s->decimalPoint,buffer) ) {
                             if ( wText->insertAtCursor('.') ) {
                                 modified = true;
                                 updateDisplay = true;

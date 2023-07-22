@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <spUtility.h>
+// #include <spUtility.h>
 
 #if defined(ESP32)
     // FOR ESP32 NATIVE READ

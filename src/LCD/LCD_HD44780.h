@@ -13,7 +13,7 @@
 
 #pragma once
 #include <Arduino.h>
-#include <LCDInterface.h>
+#include <LCD/LCDInterface.h>
 
 namespace StarterPack {
 

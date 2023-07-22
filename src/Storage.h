@@ -2,7 +2,7 @@
 #include <Preferences.h>
 
 #include <UserInterface.h>
-#include <LCDUtility.h>
+#include <LCDSupport/LCDUtility.h>
 
 class Storage {
 
@@ -59,7 +59,7 @@ class Storage {
             } else {
                 ui::LCD->printStrAtRow( 3, "CANCELLED" );
                 ui::LCD->displayAll();
-                ui::waitForAnyKey();
+                ui::waitForAnyKeyPressed();
                 return wipeResult::wCancelled;
             }
         }

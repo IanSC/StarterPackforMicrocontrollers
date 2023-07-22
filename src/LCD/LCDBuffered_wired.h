@@ -1,7 +1,7 @@
 #pragma once
 
-#include <LCDBuffered.h>
-#include <LCD_wired.h>
+#include <LCD/LCD_wired.h>
+#include <LCD/LCDBuffered.h>
 
 // #define LCD_READ_WRITE_MODE       // R/W pin of LCD is used, otherwise R/W pin is hardwired as write (low)
 // #define LCD_USE_8BIT_PORT         // handle 8 bit data mode

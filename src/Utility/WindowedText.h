@@ -1,7 +1,9 @@
 #pragma once
-#include <stdint.h>
-#include <spMacros.h>
+#include <inttypes.h>
 #include <string.h>
+
+#include <Utility/spMacros.h>
+#include <spSerial.h>
 
 // #define DEBUG_TRACE(x)   x;
 #define DEBUG_TRACE(x)   ;
@@ -19,7 +21,7 @@ namespace StarterPack {
         //          ^
         //          startPos
 
-        enum cursorRangeOptions {
+        enum cursorRangeOptions : uint8_t {
             //fromDataStart      = 1, // if no data, no cursor ???
             fromBufferStart    = 2,
             fromDataEnd        = 4,

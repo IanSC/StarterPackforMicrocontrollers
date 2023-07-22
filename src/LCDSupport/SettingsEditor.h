@@ -1,17 +1,17 @@
 #pragma once
-#include <stdint.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <math.h>
 // #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
-#include <spUtility.h>
-#include <spVector.h>
+#include <Utility/spStr.h>
+#include <Utility/spVector.h>
 
-#include <LCDEditorAlpha.h>
-#include <LCDEditorNumeric.h>
-#include <LCDInterface.h>
+#include <LCDSupport/LCDEditorAlpha.h>
+#include <LCDSupport/LCDEditorNumeric.h>
+#include <LCD/LCDInterface.h>
 // #include <keypad.h>
 
 // using namespace StarterPack;
@@ -218,7 +218,7 @@ class SettingsEditor;
                     snprintf( buffer, len, "%f", data._flot );
                 else if ( type == _doob )
                     snprintf( buffer, len, "%f", data._doob );
-                if ( isCharInString( '.', buffer ) ) {
+                if ( Str::findCharacter( '.', buffer ) ) {
                     char *p = buffer + strlen(buffer) - 1;
                     while( *p == '0' ) *p-- = 0;
                     if ( *p == '.' ) *p = 0;

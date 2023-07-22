@@ -6,6 +6,9 @@ namespace StarterPack {
 
 class blinkSOS {
 
+    // blink a LED with SOS morse code
+    // eg. 3 short pulse, 3 long pulse, 3 short pulse
+
     private:
 
         uint8_t  PIN;
@@ -15,18 +18,18 @@ class blinkSOS {
         uint32_t lastAction;
         uint16_t nextDuration;
 
-        // SOS Pattern  . . .   --- --- ---   . . .
-        // on/off       101010  1  01  01  0  1010100
-        // 1 or 3 sec   000001  1  01  01  1  0000011
+        // SOS Pattern  . . .    --- --- ---    . . .
+        // on/off       10101 0  1  01  01   0  10101 00    0 = off / 1 = on
+        // duration     00000 1  1  01  01   1  00000 11    0 = 1s pause / 1 = 3s pause
         const uint32_t onOffBitsPattern    = 0B0010101010101010101;
         const uint32_t durationBitsPattern = 0B1100000110101100000;
 
-        //  ON  DUR 
-        //  --  --- --------------------
-        //  0   0   off - short duration
-        //  0   1   off - long  duration
-        //  1   0   on  - short duration
-        //  1   1   on  - long  duration
+        //  ON  DUR  PIN - PAUSE TIME
+        //  --  ---  --------------------
+        //  0   0    off - short duration
+        //  0   1    off - long  duration
+        //  1   0    on  - short duration
+        //  1   1    on  - long  duration
 
     public:
     

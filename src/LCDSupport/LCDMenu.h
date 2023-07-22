@@ -1,8 +1,8 @@
 #pragma once
-#include <stdint.h>
+#include <inttypes.h>
 
-#include <spVector.h>
-#include <LCDUtility.h>
+#include <Utility/spVector.h>
+#include <LCDSupport/LCDUtility.h>
 #include <UserInterface.h>
 
 namespace StarterPack {
@@ -13,6 +13,8 @@ namespace StarterPack {
 
 class menuSet { 
 
+    private:
+    
         class menuEntry { public:            
             const char *option;
             const char *description;

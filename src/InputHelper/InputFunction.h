@@ -4,13 +4,12 @@ namespace StarterPack {
 
 class InputFunction {
 
-        typedef int (*intIntFunction) (int);
-
     //
     // SETTINGS
     //
-    protected:
+    private:
 
+        typedef int (*intIntFunction) (int);
         intIntFunction mapFunction = nullptr;
 
     public:

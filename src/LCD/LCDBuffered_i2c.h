@@ -1,7 +1,7 @@
 #pragma once
 
-#include <LCDBuffered.h>
-#include <LCD_i2c.h>
+#include <LCD/LCD_i2c.h>
+#include <LCD/LCDBuffered.h>
 
 namespace StarterPack {
 

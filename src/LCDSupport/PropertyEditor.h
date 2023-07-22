@@ -1,14 +1,14 @@
 #pragma once
-#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include <spUtility.h>
-#include <spVector.h>
+#include <Utility/spStr.h>
+#include <Utility/spVector.h>
 #include <UserInterface.h>
 // #include <LCDEditor.h>
-#include <LCDEditorAlpha.h>
-#include <LCDEditorNumeric.h>
+#include <LCDSupport/LCDEditorAlpha.h>
+#include <LCDSupport/LCDEditorNumeric.h>
 
 using namespace StarterPack;
 
@@ -282,7 +282,8 @@ namespace StarterPack {
             }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
                 snprintf( buffer, bufferSize, "%f", data );
-                if ( isCharInString( '.', buffer ) ) {
+                if ( Str::findCharacter( '.', buffer ) ) {
+                // if ( isCharInString( '.', buffer ) ) {
                     // remove trailing '0' and '.'
                     char *p = buffer + strlen(buffer) - 1;
                     while( *p == '0' ) *p-- = 0;

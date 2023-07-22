@@ -16,19 +16,19 @@
 //      lcd.begin( 16, 2 );
 
 #pragma once
-#include <LCD_HD44780.h>
+#include <LCD/LCD_HD44780.h>
 
 // NOT FULLY TESTED: !!!
 // - R/W mode
 // - 8-bit port
 // - read routines
-// WHY NOT? no one is goint to use it anyway, everything's i2c
+// WHY NOT? no one is going to use it anyway, everything's i2c
 
 // define these before calling header (all unused funcs are stripped out)
 //
 // #define LCD_READ_WRITE_MODE       // R/W pin of LCD is used, otherwise R/W pin is hardwired as write (low)
 // #define LCD_USE_8BIT_PORT         // handle 8 bit data mode
-// #define LCD_INCLUDE_READ_ROUTINES // even in R/W mode, option to include reading routines
+// #define LCD_INCLUDE_READ_ROUTINES // even in read-only mode, include reading routines
 
 namespace StarterPack {
 

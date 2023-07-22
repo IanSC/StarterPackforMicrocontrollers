@@ -7,64 +7,78 @@
 
 namespace StarterPack {
 
+//
+// SETTINGS
+//
+
+    struct InputRepeaterSettings {
+        uint16_t repeatDelayInMs = 400;      // time before 1st repeat
+        uint16_t repeatRateInMs  = 250;      // time between succeeding repeats
+    };
+
+    static struct InputRepeaterSettings globalInputRepeaterSettings;  // global single instance setting to save space
+
+template<typename T>
 class InputRepeater {
 
     private:
 
-        typedef uint8_t KEY;
+        typedef T KEY;
         static constexpr KEY INACTIVE_KEY = 0;
-
-    // DERIVED CLASS
-    //
-    //      newMatrixKeypad::KEY readRepeated() {
-    //          // read debounced value, then feed to repeater
-    //          auto value = read();
-    //          return InputRepeater::getRepeatingKey( value );
-    //      }
 
     //
     // SETTINGS
     //
     public:
 
-        struct Settings {
-            // uint16_t activeStatesDebounceInMs = 50;     // debouncing keyDown time
-            // uint16_t inactiveStateDebounceInMs = 50;    // debouncing keyUp time
-            // uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
-            // uint16_t confirmActiveStateTimeInMs = 0;    // time delay to confirm keyDown time
-            // uint16_t confirmInactiveStateTimeInMs = 0;  // time delay to confirm keyUp time
-            uint16_t repeatDelayInMs = 400;     // time before 1st repeat
-            uint16_t repeatRateInMs  = 250;     // time between succeeding repeats
-        };
+        // struct Settings {
+        //     uint16_t repeatDelayInMs = 400;      // time before 1st repeat
+        //     uint16_t repeatRateInMs  = 250;      // time between succeeding repeats
+        // };
 
-        static Settings defaultRepeaterSettings;            // global single instance setting to save space
+        // static Settings globalRepeaterSettings;  // global single instance setting to save space
 
-        Settings *repeaterSettings = &defaultRepeaterSettings;
+        // Settings *repeaterSettings = &globalRepeaterSettings;
 
-        void assignRepeaterSettings( Settings &settings ) {
-            // caller is still owner
-            // and should handle freeing memory
+        // create reference so user can go: obj.globalDebouncerSettings->stabilizedTimePressedInMs = 50;
+        static constexpr InputRepeaterSettings *globalRepeaterSettings = &StarterPack::globalInputRepeaterSettings;
+
+        // actual settings per instance, by default points to global
+        InputRepeaterSettings *repeaterSettings = &StarterPack::globalInputRepeaterSettings;
+
+        InputRepeaterSettings *createRepeaterSettings(uint16_t repeatDelayInMs=400, uint16_t repeatRateInMs=250) {
+            // create and use a new settings, caller should handle freeing memory
+            auto s = new InputRepeaterSettings();
+            s->repeatDelayInMs = repeatDelayInMs;
+            s->repeatRateInMs = repeatRateInMs;
+            this->repeaterSettings = s;
+            return s;
+        }
+
+        void assignRepeaterSettings( InputRepeaterSettings &settings ) {
+            // caller is still owner and should handle freeing memory
             this->repeaterSettings = &settings;
+        }
+
+        void assignRepeaterSettings( InputRepeaterSettings *settings ) {
+            // caller is still owner and should handle freeing memory
+            this->repeaterSettings = settings;
         }
 
     //
     // ACTION
     //
-    public:
+    private:
 
-        KEY inactiveValue = INACTIVE_KEY; // value that is considered not pressed
-
-    protected:
-
-        enum class repeatModeStates : uint8_t {
-            Idle,
+        enum class repeatModeEnum : uint8_t {
+            Idle,         // waiting for key
             SentFirstKey, // waiting for [repeatDelay] to go into Repeating
             Repeating     // send every [repeatRate]
         };
-        repeatModeStates repeatMode = repeatModeStates::Idle;
+        repeatModeEnum repeatMode = repeatModeEnum::Idle;
 
-        uint32_t lastRepeatActionTime;
-        KEY keyBeingRepeated = -1;
+        uint32_t repeatLastActionTime;
+        KEY repeatTargetKey = -1;
 
     public:
 
@@ -74,58 +88,58 @@ class InputRepeater {
         KEY actionGetRepeatingKey( KEY current ) {
 
             // key released...
-            if ( current == inactiveValue ) {
-                repeatMode = repeatModeStates::Idle;
+            if ( current == INACTIVE_KEY ) {
+                repeatMode = repeatModeEnum::Idle;
                 return current;
             }
 
             // pressed another key
-            if ( current != keyBeingRepeated ) {
+            if ( current != repeatTargetKey ) {
                 DEBUG_TRACE( Serial.println( "REPEAT: different key" ) );
-                repeatMode = repeatModeStates::Idle;
+                repeatMode = repeatModeEnum::Idle;
             }
 
             switch( repeatMode ) {
 
-            case repeatModeStates::Idle:
+            case repeatModeEnum::Idle:
 
-                repeatMode = repeatModeStates::SentFirstKey;
-                keyBeingRepeated = current;
-                lastRepeatActionTime = millis();
+                repeatMode = repeatModeEnum::SentFirstKey;
+                repeatTargetKey = current;
+                repeatLastActionTime = millis();
                 DEBUG_TRACE( Serial.print( "A" ) );
                 DEBUG_TRACE( Serial.print( current ) );
                 // DEBUG_TRACE( SerialPrintfln( "1st: %d", current ) );
                 return current;
 
-            case repeatModeStates::SentFirstKey: {
+            case repeatModeEnum::SentFirstKey: {
 
                     uint32_t now = millis();
-                    if ( now - lastRepeatActionTime >= repeaterSettings->repeatDelayInMs ) {
-                        repeatMode = repeatModeStates::Repeating;
-                        lastRepeatActionTime = now;
+                    if ( now - repeatLastActionTime >= repeaterSettings->repeatDelayInMs ) {
+                        repeatMode = repeatModeEnum::Repeating;
+                        repeatLastActionTime = now;
                         DEBUG_TRACE( Serial.print( "B" ) );
                         DEBUG_TRACE( Serial.print( current ) );
                         // DEBUG_TRACE( SerialPrintfln( "2nd: %d", current ) );
                         return current;
                     } else {
                         // still waiting for repeat delay to kick in
-                        return inactiveValue;
+                        return INACTIVE_KEY;
                     }
                 }
                 break;
                 
-            case repeatModeStates::Repeating: {
+            case repeatModeEnum::Repeating: {
 
                     uint32_t now = millis();
-                    if ( now - lastRepeatActionTime >= repeaterSettings->repeatRateInMs ) {
+                    if ( now - repeatLastActionTime >= repeaterSettings->repeatRateInMs ) {
                         DEBUG_TRACE( Serial.print( "C" ) );
                         DEBUG_TRACE( Serial.print( current ) );
                         // DEBUG_TRACE( SerialPrintfln( "Nth: %d", current ) );
-                        lastRepeatActionTime = now;
+                        repeatLastActionTime = now;
                         return current;
                     } else {
                         // still waiting for next repeat cycle
-                        return inactiveValue;
+                        return INACTIVE_KEY;
                     }
                 }
                 break;
@@ -133,13 +147,14 @@ class InputRepeater {
             }
             // ... just to remove warning
             DEBUG_TRACE( Serial.println( "WTF ???" ) );
-            return inactiveValue;
+            return INACTIVE_KEY;
         }
 
         #undef DEBUG_TRACE
 
 };
 
-InputRepeater::Settings InputRepeater::defaultRepeaterSettings;
+// template <typename T>
+// struct InputRepeater<T>::Settings InputRepeater<T>::globalRepeaterSettings;
 
 }

@@ -1,9 +1,9 @@
 #pragma once
 #include <UserInterface.h>
-#include <LCDInterface.h>
-#include <LCDBuffered.h>
-#include <LCDEditor.h>
-#include <WindowedText.h>
+#include <LCD/LCDInterface.h>
+#include <LCD/LCDBuffered.h>
+#include <LCDSupport/LCDEditor.h>
+#include <Utility/WindowedText.h>
 
 // #define DEBUG_TRACE(x)   x;
 #define DEBUG_TRACE(x)   ;
@@ -267,18 +267,18 @@ namespace StarterPack {
                         lcd->printStrAtRow( 2, "  . symbols" );
                         lcd->printStrAtRow( 3, "  0 numbers" );
                         lcd->displayAll();
-                        if ( ui::waitForAnyKey() == ui::kQUESTION ) {
+                        if ( ui::waitForAnyKeyPressed() == ui::kQUESTION ) {
                             lcd->printStrAtRow( 0, "[1] change case" );
                             lcd->printStrAtRow( 1, "[U] insert" );
                             lcd->printStrAtRow( 2, "BS  delete" );
                             lcd->clearRow( 3 );
                             lcd->displayAll();
-                            if ( ui::waitForAnyKey() == ui::kQUESTION ) {
+                            if ( ui::waitForAnyKeyPressed() == ui::kQUESTION ) {
                                 lcd->printStrAtRow( 0, "Ok accept" );
                                 lcd->printStrAtRow( 1, "X  go back" );
                                 lcd->clearRow( 2 );
                                 lcd->displayAll();
-                                ui::waitForAnyKey();
+                                ui::waitForAnyKeyPressed();
                             }
                         }
                         lcd->cursorOn();

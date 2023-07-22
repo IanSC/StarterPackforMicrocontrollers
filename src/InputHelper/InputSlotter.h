@@ -60,15 +60,15 @@ class InputSlotter {
         static const KEY INACTIVE_KEY = 0;
 
     //
-    // INIT
+    // SETTINGS
     //
-    protected:
+    private:
     
         class slotRange { public:
-            int from;
+            int value;  // user specified value
+            int from;   // expanded range for slot
             int to;
-            int value;
-            KEY slot;
+            KEY slot;   // value to return if within range
         };
         slotRange *slotRangeList = nullptr;
         uint8_t slotCount;

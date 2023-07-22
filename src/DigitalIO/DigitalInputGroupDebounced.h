@@ -18,9 +18,9 @@ class DigitalInputGroupDebounced : public DigitalInputGroupBase,
         typedef UserInterfaceKeyUpDown::KEY KEY;
         static constexpr UserInterfaceKeyUpDown::KEY INACTIVE_KEY = UserInterfaceKeyUpDown::INACTIVE_KEY;
 
-    public:
+    // public:
 
-        virtual ~DigitalInputGroupDebounced() {}
+    //     virtual ~DigitalInputGroupDebounced() {}
 
     //
     // INPUTS

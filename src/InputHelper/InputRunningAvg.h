@@ -4,33 +4,37 @@
 
 // #define DEBUG_DIAGNOSE
 
-class JitterRemover {
+template<typename T>
+class InputRunningAvg {
+
+    private:
+
+        typedef T KEY;
+        // static constexpr KEY INACTIVE_KEY = 0;
 
     public:
 
-        ~JitterRemover() {
+        virtual ~InputRunningAvg() {
             destroyJitter();
         }
 
     protected:
 
-        typedef int16_t valueType;    // make it same as AnalogIO
-        // static const int16_t valueTypeMin = (-INT_MAX-1);
-        // static const int16_t valueTypeMax =  INT_MAX;
-        // valueType min = std::numeric_limits<int16_t>::max();
-        // valueType max = std::numeric_limits<int16_t>::min();
-        static const int16_t valueTypeMin = std::numeric_limits<valueType>::max();
-        static const int16_t valueTypeMax = std::numeric_limits<valueType>::min();
+        // typedef int16_t valueType;    // make it same as AnalogIO
+        // // static const int16_t valueTypeMin = (-INT_MAX-1);
+        // // static const int16_t valueTypeMax =  INT_MAX;
+        // // valueType min = std::numeric_limits<int16_t>::max();
+        // // valueType max = std::numeric_limits<int16_t>::min();
+        static const KEY valueTypeMin = std::numeric_limits<valueType>::max();
+        static const KEY valueTypeMax = std::numeric_limits<valueType>::min();
 
-        // bool jitterEnabled = false; // just test jBucket
-        uint8_t jMaxSlots = 9;        // max number of slots
-        valueType 
-        //float
-        *jBucket = nullptr; // storage
-        int8_t jSlot = 0;             // current slot
-        uint32_t jSum = 0;            // sum of stored entries
-        bool jFillingMode = true;     // storage is filled, old values are to be removed already
-        uint8_t jRangeTolerance;      // new value must exceed from the average to be considered relevant
+        // bool jitterEnabled = false;  // just test jBucket
+        uint8_t  jMaxSlots = 9;         // max number of slots
+        KEY     *jBucket = nullptr;     // storage
+        int8_t   jSlot = 0;             // current slot
+        uint32_t jSum = 0;              // sum of stored entries
+        bool     jFillingMode = true;   // storage is filled, old values are to be removed already
+        uint8_t  jRangeTolerance;       // new value delta from the average to be considered relevant
 
         inline void destroyJitter() {
             if ( jBucket != nullptr ) {
@@ -55,7 +59,7 @@ class JitterRemover {
             destroyJitter();
         }
 
-        valueType removeJitter( valueType value ) {
+        KEY actionRemoveJitter( KEY value ) {
             //  bucket   0   1   2   3
             //  1        +               add new entry
             //  2            +           add new entry
@@ -73,7 +77,7 @@ class JitterRemover {
             jBucket[jSlot] = value;
             jSlot++;
             if ( jSlot >= jMaxSlots ) {
-                // reached 3, reset to 0
+                // reached end, reset to 0
                 jSlot = 0;
                 #if defined( DEBUG_DIAGNOSE )
                     if ( jFillingMode ) {
@@ -117,7 +121,7 @@ class JitterRemover {
             }
             */
 
-            valueType result;
+            KEY result;
             if ( average == value ) {
                 // #if defined( DEBUG_DIAGNOSE )
                 //     Serial.print( "= " );

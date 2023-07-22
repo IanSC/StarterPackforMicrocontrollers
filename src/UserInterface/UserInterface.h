@@ -1,7 +1,7 @@
 #pragma once
 
 #include <UserInterface/UserInterfaceRepeated.h>
-#include <LCDInterface.h>
+#include <LCD/LCDInterface.h>
 
 namespace StarterPack {
     
@@ -476,6 +476,11 @@ namespace UserInterface {
         //     if ( KeyHandler == nullptr ) return nullptr;
         //     return KeyHandler->getContinuousKeys( allowedKeys );
         // }
+
+        KEY getContinuousKey( char *allowedKeys = nullptr ) {
+            if ( KeyHandler == nullptr ) return 0;
+            return KeyHandler->getDebouncedKey();
+        }
         // KEY getContinuousKey( char *allowedKeys = nullptr ) {
         //     if ( KeyHandler == nullptr ) return 0;
         //     return KeyHandler->getContinuousKey( allowedKeys );
@@ -516,16 +521,17 @@ namespace UserInterface {
         //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKeys, allowedKeys );
         // }
 
-        void skipDelayWait() {
+        void skipDebounceDelay() {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->skipDelayWait();
+            KeyHandler->skipDebounceDelay();
         }
 
-        void cancelDelayWait() {
+        void cancelDebounceDelay() {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->cancelDelayWait();
+            KeyHandler->cancelDebounceDelay();
         }
 
+        void flagWaitForKeyup() {}
         // void flagWaitForKeyup() {
         //     if ( KeyHandler == nullptr ) return;
         //     return KeyHandler->flagWaitForKeyup();

@@ -26,8 +26,8 @@
 //      }
 
 #pragma once
-#include <LCD_HD44780.h>
-#include <i2cHelper.h>
+#include <LCD/LCD_HD44780.h>
+#include <Utility/i2cHelper.h>
 
 namespace StarterPack {
 

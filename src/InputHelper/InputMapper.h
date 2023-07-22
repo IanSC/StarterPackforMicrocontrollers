@@ -42,7 +42,7 @@ class InputMapper {
     //
     // SETTINGS
     //
-    protected:
+    private:
 
         const char *keyMap = nullptr;
 
@@ -56,6 +56,7 @@ class InputMapper {
     // ACTION
     //
     public:
+    
         KEY actionMapKey( const uint8_t scanCode ) {
             // 1-based
             // eg. scanCode=1, will give keyMap[0]

@@ -106,13 +106,14 @@
 //          }
 
 #pragma once
-#include <stdint.h>
 
 #if defined(ESP32)
     #include <Arduino.h>
 #endif
-#include <LCDInterface.h>
-#include <spSemaphore.h>
+#include <inttypes.h>
+
+#include <LCD/LCDInterface.h>
+#include <Utility/spSemaphore.h>
 
 namespace StarterPack {
 

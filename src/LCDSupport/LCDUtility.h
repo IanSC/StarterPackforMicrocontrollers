@@ -7,10 +7,12 @@
 //      
 
 #pragma once
-#include <LCDInterface.h>
-#include <spUtility.h>
-#include <Throttle_OLD.h>
+
 #include <UserInterface.h>
+#include <LCD/LCDInterface.h>
+
+#include <Throttle_OLD.h>
+// #include <spUtility.h>
 
 namespace StarterPack {
 

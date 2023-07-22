@@ -14,11 +14,33 @@ class UserInterfaceKeyUpDown : public InputDebouncer<uint8_t> {
         static constexpr KEY INACTIVE_KEY = 0;
 
     //
+    // ???
+    //
+    public:
+
+        void cancelDebouncing() {}
+
+    //
     // VIRTUAL
     //
     public:
 
         virtual KEY getNonDebouncedKey() = 0;
+
+    // //
+    // // DEBOUNCER SETTINGS
+    // //
+    // public:
+
+    //     static inline InputDebouncer::Settings getGlobalDebouncerSettings() {
+    //         return InputDebouncer<KEY>::globalDebouncerSettings;
+    //     }
+
+    //     inline InputDebouncer<uint8_t>::Settings *createDebouncerSettings() {
+    //         auto s = new InputDebouncer<uint8_t>::Settings();
+    //         InputDebouncer::assignDebouncerSettings(s);
+    //         return s;
+    //     }
 
     //
     // BASIC

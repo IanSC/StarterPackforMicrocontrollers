@@ -1,6 +1,6 @@
 #pragma once
 
-#include <spVector.h>
+#include <Utility/spVector.h>
 
 #include <DigitalIO/DigitalInput.h>
 #include <InputHelper/InputCombiner.h>
