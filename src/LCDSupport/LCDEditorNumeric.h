@@ -1,9 +1,14 @@
 #pragma once
+
+// #include <Utility/cSupport.h>
+#include <Utility/spNum.h>
+
 #include <UserInterface.h>
 #include <LCD/LCDInterface.h>
 #include <LCD/LCDBuffered.h>
-#include <LCDSupport/LCDEditor.h>
 #include <Utility/WindowedText.h>
+
+#include <LCDSupport/LCDEditor.h>
 
 namespace StarterPack {
 
@@ -15,7 +20,7 @@ namespace StarterPack {
 
         protected:
 
-            editorSettings *s = nullptr;
+            numericEditorSettings *s = nullptr;
             char *buffer = nullptr;
 
         public:
@@ -23,10 +28,14 @@ namespace StarterPack {
             bool modified = false;
             WindowedText *wText = nullptr; // give access
 
-            numericEditor( char *buffer, editorSettings &s ) {
+            // insert vs overwrite character
+            bool insertText = false;
+
+            numericEditor( char *buffer, numericEditorSettings &s ) {
                 this->buffer = buffer;
                 this->s = &s;
-                wText = new WindowedText( buffer, s.bufferLength, s.windowSize, WindowedText::cursorRangeOptions::EndOfDataPlusOne );
+                wText = new WindowedText( buffer, s.bufferLength, s.windowSize,
+                    s.cursorRangeOptions );
             }
 
             ~numericEditor() {
@@ -37,7 +46,6 @@ namespace StarterPack {
                 wText->reset();
             }
 
-            // uint8_t editNumeric( char *buffer, editorSettings &s ) {
             uint8_t prompt() {
                 namespace ui = StarterPack::UserInterface;
 
@@ -46,9 +54,36 @@ namespace StarterPack {
                 //    kESCAPE - escape pressed, cancelled
                 //    <key>   - unknown key detected
                 // automatically handles:
+                //    kBACKSPACE, kDELETE
+                //    kLEFT, kRIGHT
                 //    kDECIMAL
                 //    kMINUS
                 //    '0' .. '9'
+
+                // scenario:
+                // - user does not need decimal entry
+                // - decimal key is reused for another purpose
+                //   while editing
+                //   ex. goto current value, or check validity
+                // - but if detected here and ignored
+                //   caller will not get key press
+                //
+                // solution 1:
+                // - map ui::kDECIMAL to dummy value
+                // - call this function, eg. prompt()
+                // - decimal will not get detected
+                //   hence passed to caller
+                // - restore
+                // - too much code to reuse keys
+                //
+                // solution 2:
+                // - pass all keys to caller if not handled
+                // - if not reused, simply ignored by caller
+                //
+                // so, pass key to caller if:
+                // - unknown key
+                // - decimal key and not allowDecimal
+                // - minus key and not allowNegative
 
                 if ( !ui::hasScreen() ) return ui::kESCAPE;
                 LCDInterface *lcd = ui::LCD;
@@ -63,6 +98,9 @@ namespace StarterPack {
 
                 while( true ) {
 
+                    //
+                    // UPDATE DISPLAY
+                    //
                     if ( updateDisplay ) {
                         updateDisplay = false;
 
@@ -82,39 +120,21 @@ namespace StarterPack {
                     if ( lcdBuffered != nullptr )
                         lcdBuffered->update();
 
+                    //
+                    // KEYSTROKES
+                    //
+
                     uint8_t key = ui::getRepeatingKey();
 
                     if ( key == ui::kENTER || key == ui::kESCAPE ) {
                         lcd->cursorOff();
                         // ui::flagWaitForKeyup();
-                        ui::waitUntilNothingIsPressed();
+                        ui::skipRepeatingCurrentKey();
+                        // ui::waitUntilNothingIsPressed();
                         return key;
                     }
                     
-                    // scanario:
-                    // - user does not need decimal entry
-                    // - decimal key is reused for another purpose
-                    //   while editing
-                    //   ex. goto current value, or check validity
-                    // - but if detected here and ignored here
-                    //   caller will not get key press
-                    //
-                    // solution 1:
-                    // - map ui::kDECIMAL to dummy value
-                    // - call this function
-                    // - decimal will not get detected
-                    //   hence passed to caller
-                    // - restore
-                    // - too much code to reuse keys
-                    //
-                    // solution 2:
-                    // - pass all keys to caller if not handled
-                    // - if not reused, simply ignore by caller
-                    //
-                    // so, pass key to caller if:
-                    // - unknown key
-                    // - decimal key and not allowedDecimal
-                    // - minus key and not allowedNegative
+                    char charToAdd = 0;
 
                     if ( key == ui::kNONE ) {
                         // ...
@@ -128,56 +148,155 @@ namespace StarterPack {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kDECIMAL && s->allowDecimal ) {                
-                        // if ( !isCharInString(s->decimalPoint,buffer) ) {
-                        if ( !Str::findCharacter(s->decimalPoint,buffer) ) {
-                            if ( wText->insertAtCursor('.') ) {
-                                modified = true;
-                                updateDisplay = true;
-                            }
+                    } else if ( key == ui::kLEFT ) {
+                        if ( wText->cursorBackward() ) {
+                            // modified = true;
+                            updateDisplay = true;
                         }
-                        ui::flagWaitForKeyup();
-                    } else if ( key == ui::kMINUS && s->allowNegative ) {
-                        char *ptr = wText->charPtrAt( 0 );
-                        if ( ptr != nullptr ) {
-                            if ( *ptr == '-' )
-                                wText->deleteAt( 0 );
-                            else
-                                wText->insertAt( '-', 0 );
-                        }
-                        ui::flagWaitForKeyup();
-                        modified = true;
-                        updateDisplay = true;
-                    } else if ( key >= '0' && key <= '9' ) {
-                        if ( wText->insertAtCursor( key ) ) {
+                    } else if ( key == ui::kRIGHT ) {
+                        if ( wText->cursorForward() ) {
                             modified = true;
                             updateDisplay = true;
                         }
-                    // } else if ( key == ui::kQUESTION ) {
-                    //     lcd->cursorOff();
-                    //     lcd->printStrAtRow( 0, "use \x7F \x7E to highlight" );
-                    //     lcd->printStrAtRow( 1, "  cut position" );
-                    //     lcd->printStrAtRow( 2, "Ok - edit" );
-                    //     lcd->printStrAtRow( 3, "X  - go back" );
-                    //     lcd->displayAll();
-                    //     if ( ui::waitForAnyKey() == ui::kQUESTION ) {
-                    //         lcd->printStrAtRow( 0, ". or \x03 - insert" );
-                    //         lcd->printStrAtRow( 1, "  cut on cursor" );
-                    //         lcd->printStrAtRow( 2, "BS or \x04 - delete" );
-                    //         lcd->printStrAtRow( 3, "  cut on cursor" );
-                    //         lcd->displayAll();
-                    //         ui::waitForAnyKey();
-                    //     }
-                    //     lcd->clearRow( 2 );
-                    //     lcd->clearRow( 3 );
-                    //     ui::waitUntilNothingIsPressed();
-                    //     updateDisplay = true;
+                    } else if ( key == ui::kDECIMAL && s->allowDecimal ) {
+
+                        if ( !Str::findCharacter(s->decimalPoint,buffer) ) {
+                            charToAdd = '.';
+
+                            // CASE (1): INSERT addCharacter() CONTENTS HERE
+                            // eg. if (insertText) { if ( wText->canAddChar() ) { ... } }
+                            // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                            // Flash: [====      ]  40.8% (used 12532 bytes from 30720 bytes)
+
+                            // CASE (2): CALL addCharacter(), ADDS ALMOST 100 BYTES ???
+                            // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                            // Flash: [====      ]  41.1% (used 12620 bytes from 30720 bytes)
+                            // if ( addCharacter( '.' ) ) {
+                            //     modified = true;
+                            //     updateDisplay = true;
+                            // }
+
+                            // CASE (3): ADD ROUTINES AFTER IFs
+                            // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                            // Flash: [====      ]  40.6% (used 12482 bytes from 30720 bytes)
+
+                        }
+                        ui::skipRepeatingCurrentKey();
+                        // ui::flagWaitForKeyup();
+
+                    } else if ( key == ui::kMINUS && s->allowNegative ) {
+
+                        char *ptr = wText->charPtrAt( 0 );
+                        if ( ptr != nullptr ) {
+                            if ( *ptr == '-' ) {
+                                if ( wText->deleteAt( 0 ) ) {
+                                    modified = true;
+                                    updateDisplay = true;
+                                }
+                            } else {
+                                if (wText->canAddChar()) {
+                                    if ( wText->insertAt( '-', 0 ) ) {
+                                        modified = true;
+                                        updateDisplay = true;
+                                    }
+                                }
+                            }
+                        }
+                        ui::skipRepeatingCurrentKey();
+                        // ui::flagWaitForKeyup();
+                        // ui::skipRepeatingCurrentKey();
+                        
+                        // updateDisplay = true;
+                    } else if ( key >= '0' && key <= '9' ) {
+                        charToAdd = key;
+
+                        // CASE (1): INSERT addCharacter() CONTENTS HERE
+                        // eg. if (insertText) { if ( wText->canAddChar() ) { ... } }
+                        // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                        // Flash: [====      ]  40.8% (used 12532 bytes from 30720 bytes)
+
+                        // CASE (2): CALL addCharacter(), ADDS ALMOST 100 BYTES ???
+                        // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                        // Flash: [====      ]  41.1% (used 12620 bytes from 30720 bytes)
+                        // if ( addCharacter( '.' ) ) {
+                        //     modified = true;
+                        //     updateDisplay = true;
+                        // }
+
+                        // CASE (3): ADD ROUTINES AFTER IFs
+                        // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                        // Flash: [====      ]  40.6% (used 12482 bytes from 30720 bytes)
+
+                    } else if ( key == ui::kQUESTION ) {
+                        // specific to cutter app
+                        lcd->cursorOff();
+                        lcd->printStrAtRow( 0, "use \x7F \x7E to highlight" );
+                        lcd->printStrAtRow( 1, "  cut position" );
+                        lcd->printStrAtRow( 2, "Ok - edit" );
+                        lcd->printStrAtRow( 3, "X  - go back" );
+                        lcd->displayAll();
+                        if ( ui::waitForAnyKeyPressed() == ui::kQUESTION ) {
+                            lcd->printStrAtRow( 0, ". or \x03 - insert" );
+                            lcd->printStrAtRow( 1, "  cut on cursor" );
+                            lcd->printStrAtRow( 2, "BS or \x04 - delete" );
+                            lcd->printStrAtRow( 3, "  cut on cursor" );
+                            lcd->displayAll();
+                            ui::waitForAnyKeyPressed();
+                        }
+                        lcd->clearRow( 2 );
+                        lcd->clearRow( 3 );
+                        ui::waitUntilNothingIsPressed();
+                        updateDisplay = true;
                     } else {
                         // unknown key, pass back for caller to handle
-                        // possible include kDECIMAL, kMINUS if not handled
+                        // possibly includes kDECIMAL, kMINUS if not allowed
                         return key;
                     }
+
+                    // CASE (3-A): ADD ROUTINES AFTER IFs
+                    // RAM:   [====      ]  41.7% (used 854 bytes from 2048 bytes)
+                    // Flash: [====      ]  40.6% (used 12482 bytes from 30720 bytes)
+                    if (charToAdd != 0) {
+                        if (insertText) {
+                            if ( wText->canAddChar() ) {
+                                if ( wText->insertAtCursor( charToAdd ) ) {
+                                    wText->cursorForward();
+                                    modified = true;
+                                    updateDisplay = true;
+                                }
+                            }
+                        } else {
+                            if ( wText->canModifyCharAtCursor() ) {
+                                if ( wText->setCharAtCursor( charToAdd ) ) {
+                                    wText->cursorForward();
+                                    modified = true;
+                                    updateDisplay = true;
+                                }
+                            }
+                        }
+                    }
                 }
+            }
+
+        protected:
+
+            bool addCharacter( char ch ) {
+                if (insertText) {
+                    if ( wText->canAddChar() ) {
+                        if ( wText->insertAtCursor( ch ) ) {
+                            wText->cursorForward();
+                            return true;
+                        }
+                    }
+                } else {
+                    if ( wText->canModifyCharAtCursor() ) {
+                        if ( wText->setCharAtCursor( ch ) ) {
+                            wText->cursorForward();
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
 
     };
@@ -196,7 +315,7 @@ namespace StarterPack {
         if ( ui::LCD->isBuffered() )
             bufferedLCD = (LCDBuffered*) ui::LCD;
 
-        editorSettings s;
+        numericEditorSettings s;
         s.setPosition( col, row, windowSize );
         s.allowDecimal = false;
         s.allowNegative = NEG;
@@ -206,7 +325,9 @@ namespace StarterPack {
         if ( value == 0 )
             buffer[0] = 0;
         else
-            snprintf( buffer, BUFFERSIZE, "%d", value );
+            Num::mySnprintf(buffer, BUFFERSIZE, value);
+            // snprintf( buffer, BUFFERSIZE, printfToken, value );
+            // snprintf( buffer, BUFFERSIZE, "%d", value );
 
         numericEditor nEdit( buffer, s );
 
@@ -233,7 +354,9 @@ namespace StarterPack {
                 return false;
             }
             if ( key == ui::kENTER ) {
-                int64_t tmp = atoll( buffer );
+                // int64_t tmp = Num::myAtoll( buffer );
+                int64_t tmp;
+                Num::StrToNum( buffer, tmp );
                 if ( tmp < min ) {
                     if ( bufferedLCD != nullptr )
                         bufferedLCD->virtualCursorChar = 'v';
@@ -279,14 +402,14 @@ namespace StarterPack {
     void TEST_editorNumeric() {
         namespace ui = StarterPack::UserInterface;
 
-        editorSettings s;
+        numericEditorSettings s;
         s.setPosition( 1, 1, 10 );
         // s.setUnit( 11, 1 );
         s.bufferLength = 5;
         s.allowNegative = true;
         s.allowDecimal = true;
 
-        char buffer[21];
+        char buffer[21] = "";
         strcpy( buffer, "123" );
 
         // set values and check if wrong buffer editing

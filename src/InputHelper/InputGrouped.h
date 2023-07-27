@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MatrixKeypad/MatrixKeypadMapped.h>
+#include <InputHelper/InputGroupedBase.h>
 
 #include <UserInterface/UserInterfaceDebounced.h>
 #include <UserInterface/UserInterfaceRepeated.h>
@@ -12,13 +12,13 @@ namespace StarterPack {
 //
 // DEBOUNCED
 //
-class MatrixKeypadDB : public MatrixKeypadMapped,
+class InputGroupedDB : public InputGroupedBase,
                        public UserInterfaceDebounced {
-
+  
     public:
 
         inline UserInterfaceDebounced::KEY getNonDebouncedKey() override {
-            return MatrixKeypadMapped::getMappedKey();
+            return InputGroupedBase::getNonDebouncedKey();
         }
 
 };
@@ -26,13 +26,13 @@ class MatrixKeypadDB : public MatrixKeypadMapped,
 //
 // DEBOUNCED REPEATED
 //
-class MatrixKeypadRP : public MatrixKeypadMapped,
+class InputGroupedRP : public InputGroupedBase,
                        public UserInterfaceRepeated {
 
     public:
 
         inline UserInterfaceRepeated::KEY getNonDebouncedKey() override {
-            return MatrixKeypadMapped::getMappedKey();
+            return InputGroupedBase::getNonDebouncedKey();
         }
 
 };
@@ -40,13 +40,13 @@ class MatrixKeypadRP : public MatrixKeypadMapped,
 //
 // DEBOUNCED MULTI-CLICK
 //
-class MatrixKeypadMC : public MatrixKeypadMapped,
+class InputGroupedMC : public InputGroupedBase,
                        public UserInterfaceMultiClick {
 
     public:
 
-        inline UserInterfaceRepeated::KEY getNonDebouncedKey() override {
-            return MatrixKeypadMapped::getMappedKey();
+        inline UserInterfaceMultiClick::KEY getNonDebouncedKey() override {
+            return InputGroupedBase::getNonDebouncedKey();
         }
 
 };
@@ -54,13 +54,13 @@ class MatrixKeypadMC : public MatrixKeypadMapped,
 //
 // DEBOUNCED MULTI-CLICK WITH REAL REPEATED LOGIC
 //
-class MatrixKeypad : public MatrixKeypadMapped,
+class InputGrouped : public InputGroupedBase,
                      public UserInterfaceAllKeys {
 
     public:
 
         inline UserInterfaceAllKeys::KEY getNonDebouncedKey() override {
-            return MatrixKeypadMapped::getMappedKey();
+            return InputGroupedBase::getNonDebouncedKey();
         }
 
 };

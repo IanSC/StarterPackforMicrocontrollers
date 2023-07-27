@@ -1,0 +1,76 @@
+Verbose Function/Variable Names
+
+    to prevent collision during multiple inheritance
+
+Multiple Inheritance
+
+    possible to use each functionality by composition instead of inheritance
+    eg. create InputDebouncer, InputCombiner, ...
+        as objects inside another class
+        but will need extra pointer for each
+
+    using multiple inheritance, less pointers
+
+Settings
+    eg. debounce time, repeat delay, ...
+
+    Options:
+    A. global settings
+       by default each instance points to global settings
+       modify global settings to apply to all
+       create new settings to apply to specific instances
+
+       PRO:  saves memory, easy to apply to several instances
+       CONS: involves pointer and confusing
+             must prevent creation on stack
+             if template, must create global outside the class, for single instance
+    B. separate copy per instance
+       CONS: have to apply to each if default is not acceptable
+             waste of memory
+
+    Since it's part of the UI, there won't be too many instances.
+    Also for numerous buttons, it would be better to group it,
+        hence only a single settings will be created for the whole group.
+
+    OLD CODE:
+
+        struct InputDebouncerSettings {
+            // prevent creation on stack and be referenced
+            private: InputDebouncerSettings() {}
+            public: static InputDebouncerSettings *create() { return new InputDebouncerSettings; }
+
+            uint16_t debounceDelayPressedInMs = 0;      // time delay before checking for stabilized signal
+            uint16_t debounceDelayReleasedInMs = 0;
+            uint16_t stabilizedTimePressedInMs = 50;    // debouncing keyDown time
+            uint16_t stabilizedTimeReleasedInMs = 10;   // debouncing keyUp time
+            // uint16_t minimumDebounceTimeInMs = 50;   // minimum debounce time before allowed to be cancelled 
+        };
+
+        static struct InputDebouncerSettings *globalInputDebouncerSettings = InputDebouncerSettings::create();
+
+        template<typename T>
+        class InputDebouncer {
+
+            // DOESN'T WORK ANYMORE IF FORCE TO HEAP
+            // create reference so user can go: obj.globalDebouncerSettings->stabilizedTimePressedInMs = 50;
+            // static constexpr InputDebouncerSettings *globalDebouncerSettings = &StarterPack::globalInputDebouncerSettings;
+
+            // actual settings per instance, by default points to global
+            InputDebouncerSettings *debouncerSettings = StarterPack::globalInputDebouncerSettings;
+
+            void changeDebouncerSettings(...) { ... }
+            InputDebouncerSettings *createDebouncerSettings(...) {
+                // create and use a new settings, caller should handle freeing memory
+                auto s = new InputDebouncerSettings();
+                ...
+                this->debouncerSettings = s;
+                return s;
+            }
+            void assignDebouncerSettings( InputDebouncerSettings *settings ) {
+                // caller is still owner and should handle freeing memory
+                this->debouncerSettings = settings;
+            }
+        }
+        // template <typename T>
+        // struct InputDebouncer<T>::Settings InputDebouncer<T>::globalDebouncerSettings;
+

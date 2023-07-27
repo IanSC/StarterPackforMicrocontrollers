@@ -4,13 +4,20 @@
 
 #include <InputHelper/InputDebouncer.h>
 
+// add filter ??? just use 0 for key map
+// #include <InputHelper/InputKeyFilter.h>
+
 namespace StarterPack {
 
-class UserInterfaceKeyUpDown : public InputDebouncer<uint8_t> {
+// class UserInterfaceDebounced : public InputDebouncer<uint8_t>
+class UserInterfaceDebounced : public InputDebouncer<char>
+                              //,public InputKeyFilter<uint8_t>
+                              {
 
     public:
 
-        typedef uint8_t KEY;
+        // typedef uint8_t KEY;
+        typedef char KEY;
         static constexpr KEY INACTIVE_KEY = 0;
 
     //
@@ -27,38 +34,14 @@ class UserInterfaceKeyUpDown : public InputDebouncer<uint8_t> {
 
         virtual KEY getNonDebouncedKey() = 0;
 
-    // //
-    // // DEBOUNCER SETTINGS
-    // //
-    // public:
-
-    //     static inline InputDebouncer::Settings getGlobalDebouncerSettings() {
-    //         return InputDebouncer<KEY>::globalDebouncerSettings;
-    //     }
-
-    //     inline InputDebouncer<uint8_t>::Settings *createDebouncerSettings() {
-    //         auto s = new InputDebouncer<uint8_t>::Settings();
-    //         InputDebouncer::assignDebouncerSettings(s);
-    //         return s;
-    //     }
-
     //
     // BASIC
     //
     public:
 
-        // bool first = true;
-
         KEY getDebouncedKey() {
             auto key = getNonDebouncedKey();
-            // auto db = getDebouncer()->debounce(key);
-            // if (first) {
-            //     first = false;
-            //     Serial.print(key);
-            //     Serial.print('.');
-            //     Serial.println(db);
-            // }
-            // return db;
+            // key = InputKeyFilter.actionFilterKey(key);
             return InputDebouncer::actionDebounce(key);
         }
 

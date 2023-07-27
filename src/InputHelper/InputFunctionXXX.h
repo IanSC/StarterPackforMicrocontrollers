@@ -2,7 +2,12 @@
 
 namespace StarterPack {
 
+template<typename T>
 class InputFunction {
+
+    private:
+
+        typedef T DATA_TYPE;
 
     //
     // SETTINGS

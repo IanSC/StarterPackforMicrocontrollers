@@ -1,21 +1,21 @@
-// combine multiple key press to single value
+// combine multiple key press to a single value
 //
 // ex. 4 arrow keys
 //     return diagonals if multiple keys are pressed
 //
 // example: U,D,L,R - up,down,left,right
 //      InputCombiner c;
-//      c.addKeyCombination("UL","1");
-//      c.addKeyCombination("UR","2");
-//      c.addKeyCombination("DL","3");
-//      c.addKeyCombination("DR","4");
+//      c.addKeyCombination("UL","W");
+//      c.addKeyCombination("UR","X");
+//      c.addKeyCombination("DL","Y");
+//      c.addKeyCombination("DR","Z");
 //      ...
 //      auto keyList = getFromInput();
 //      auto key = c.combineKeys(keyList);
 //      switch( key ) {
-//      case 'U': ... up
-//      case '1': ... up/left
-//      case '2': ... up/right
+//      case 'U': ... up        if keyList="U"
+//      case 'W': ... up/left,  if keyList="UL" or "LU"
+//      case 'X': ... up/right, if keyList="UR" or "RU" 
 //      } 
 
 #pragma once
@@ -28,12 +28,17 @@
 
 namespace StarterPack {
 
+template<typename T>
 class InputCombiner {
 
     private:
 
-        typedef uint8_t KEY;
-        static constexpr KEY INACTIVE_KEY = 0;
+        typedef char*    IN;
+        typedef T        OUT;
+        static constexpr OUT INACTIVE_KEY = 0;
+
+        // typedef uint8_t KEY;
+        // static constexpr KEY INACTIVE_KEY = 0;
 
     //
     // SETTINGS
@@ -45,13 +50,18 @@ class InputCombiner {
         // ex. [up] and [left] --> [diagUL]
         struct keyCombination {
             const char *combination;
-            KEY result;
+            OUT result;
         };
         StarterPack::spVector<keyCombination> keyCombinationList;
 
     public:
 
-        void addKeyCombination( const char *combination, char result ) {
+        void clearKeyCombinations() {
+            keyCombinationList.deletePayload = true;
+            keyCombinationList.clear();
+        }
+
+        void addKeyCombination( const char *combination, OUT result ) {
             auto e = new keyCombination;
             e->combination = combination;
             e->result = result;
@@ -61,12 +71,20 @@ class InputCombiner {
             keyCombinationList.insert(e);
         }
 
+        void addKeyCombination( const char key1, const char key2, OUT result ) {
+            auto keys = new char[3];
+            keys[0] = key1;
+            keys[1] = key2;
+            keys[2] = 0;
+            addKeyCombination(keys, result);
+        }
+
     //
     // ACTION
     //
     public:
 
-        KEY actionCombineKeys(const char *keysPressed) {
+        OUT actionCombineKeys(const IN keysPressed) {
 
             // combine multiple keys into single key
 

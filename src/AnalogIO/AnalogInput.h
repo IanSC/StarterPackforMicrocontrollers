@@ -1,47 +1,30 @@
 #pragma once
 
-#include <AnalogIO/AnalogInputBase.h>
-#include <Utility/spRangeMap.h>
+#include <Utility/spVector.h>
+
+#include <AnalogIO/AnalogInputRaw.h>
+#include <InputHelper/InputFilterList.h>
 
 namespace StarterPack {
 
-class AnalogInput : public AnalogInputBase {
+class AnalogInput : public AnalogInputRaw, public InputFilterList<AnalogInputRaw::DATA_TYPE,int32_t> {
 
     public:
 
-        AnalogInput( uint8_t pin ) : AnalogInputBase( pin ) {}
-
-    //
-    // SCALE
-    //
-    protected:
-
-        int srcLow, srcHigh;
-        int dstLow, dstHigh;
+        typedef AnalogInputRaw::DATA_TYPE DATA_TYPE;
 
     public:
 
-        inline void setScale(int srcLow, int srcHigh, int dstLow, int dstHigh) {
-            this->srcLow = srcLow; this->srcHigh = srcHigh;
-            this->dstLow = dstLow; this->dstHigh = dstHigh;
-        }
+        AnalogInput( uint8_t pin ) : AnalogInputRaw( pin ) {}
 
-        inline void setSourceScale(int srcLow, int srcHigh) {
-            this->srcLow = srcLow; this->srcHigh = srcHigh;
-        }
+    //
+    // FILTERS
+    //
+    public:
 
-        inline void setDestinationScale(int dstLow, int dstHigh) {
-            this->dstLow = dstLow; this->dstHigh = dstHigh;
-        }
-
-        int readScaled() {
-            auto value = readRaw();
-            return StarterPack::RangeMap::IntInt(value,srcLow,srcHigh,dstLow,dstHigh);
-        }
-
-        float readScaledFloat() {
-            auto value = readRaw();
-            return StarterPack::RangeMap::IntFloat(value,srcLow,srcHigh,dstLow,dstHigh);
+        DATA_TYPE readFiltered() {
+            auto raw = readRaw();
+            return InputFilterList::actionApplyFilter(raw);
         }
 
 };

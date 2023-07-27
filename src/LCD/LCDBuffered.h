@@ -644,8 +644,8 @@ class LCDBuffered : public LCDInterface {
     public:
 
         char virtualCursorChar = 0xFF;             // cursor character
-        uint16_t cursorBlinkOnDurationInMs  = 400; // blinking duration
-        uint16_t cursorBlinkOffDurationInMs = 600; //    ON better shorter than OFF to not obscure text
+        uint16_t cursorBlinkOnDurationInMs  = 300; // blinking duration
+        uint16_t cursorBlinkOffDurationInMs = 800; //    ON better shorter than OFF to not obscure text
 
         void setVirtualCursor( uint8_t col, uint8_t row ) {
             vCursorX = col; vCursorY = row;

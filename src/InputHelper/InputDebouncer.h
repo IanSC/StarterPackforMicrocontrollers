@@ -2,7 +2,7 @@
 // StabilizedTime vs DebounceDelay
 // -------------------------------
 // DebounceDelay  - time to ignore any changes in signal after initially detected
-// StabilizedTime - time duration with no signal change before being accepted
+// StabilizedTime - time duration the signal does not change anymore before being accepted
 //
 // eg. very noisy signal, that bounces around for 1000 ms
 //     if only StabilizedTime is set to 1100ms
@@ -18,7 +18,7 @@
 // -------------------
 // Pressed vs Released
 // -------------------
-// if a button is pressed, there will be more noise vs releasing
+// if a button is pressed, there will be more noise than when releasing
 // also for application that requires immediate stop
 
 #pragma once
@@ -26,87 +26,100 @@
 #include <Arduino.h>
 #include <inttypes.h>
 
+#include <InputHelper/InputFilterInterface.h>
+
 namespace StarterPack {
 
-//
-// SETTINGS
-//
-
-    // TO CHECK: if not referenced will be stripped away by compiler ???
-
-    struct InputDebouncerSettings {
-        uint16_t debounceDelayPressedInMs = 0;      // time delay before checking for stabilized signal
-        uint16_t debounceDelayReleasedInMs = 0;
-        uint16_t stabilizedTimePressedInMs = 50;    // debouncing keyDown time
-        uint16_t stabilizedTimeReleasedInMs = 10;   // debouncing keyUp time
-        // uint16_t minimumDebounceTimeInMs = 50;   // minimum debounce time before allowed to be cancelled 
-    };
-
-    static struct InputDebouncerSettings globalInputDebouncerSettings;
-
-template<typename T>
-class InputDebouncer {
+template<typename DATA_TYPE>
+class InputDebouncer : public InputFilterInterface<DATA_TYPE>
+{
 
     private:
 
-        typedef T KEY;
-        static constexpr KEY INACTIVE_KEY = 0;
+        // typedef T DATA_TYPE;
+        static constexpr DATA_TYPE INACTIVE_KEY = 0;
+
+    //
+    // FILTER BASE
+    //
+    public:
+        inline DATA_TYPE actionApplyFilter( DATA_TYPE value ) override {
+            return actionDebounce(value);
+        }
 
     //
     // SETTINGS
     //
     public:
 
-        // struct Settings {
-        //     uint16_t debounceDelayPressedInMs = 0;      // time delay before checking for stabilized signal
-        //     uint16_t debounceDelayReleasedInMs = 0;
-        //     uint16_t stabilizedTimePressedInMs = 50;    // debouncing keyDown time
-        //     uint16_t stabilizedTimeReleasedInMs = 10;   // debouncing keyUp time
-        //     // uint16_t minimumDebounceTimeInMs = 50;      // minimum debounce time before allowed to be cancelled 
-        // };
+        // debounceDelayPressedInMs     time delay before checking for stabilized signal
+        // debounceDelayReleasedInMs
+        // stabilizedTimePressedInMs    debouncing keyDown time
+        // stabilizedTimeReleasedInMs   debouncing keyUp time
+        #if defined(SP_INPUTDEBOUNCER_DEBOUNCE_DELAY_PRESSED_MS)
+            uint16_t debounceDelayPressedInMs = SP_INPUTDEBOUNCER_DEBOUNCE_DELAY_PRESSED_MS;
+        #else
+            uint16_t debounceDelayPressedInMs = 0;
+        #endif
+        #if defined(SP_INPUTDEBOUNCER_DEBOUNCE_DELAY_RELEASED_MS)
+            uint16_t debounceDelayReleasedInMs = SP_INPUTDEBOUNCER_DEBOUNCE_DELAY_RELEASED_MS;
+        #else
+            uint16_t debounceDelayReleasedInMs = 0;
+        #endif
+        #if defined(SP_INPUTDEBOUNCER_STABILIZED_TIME_PRESSED_MS)
+            uint16_t stabilizedTimePressedInMs = SP_INPUTDEBOUNCER_STABILIZED_TIME_PRESSED_MS;
+        #else
+            uint16_t stabilizedTimePressedInMs = 50;
+        #endif
+        #if defined(SP_INPUTDEBOUNCER_STABILIZED_TIME_RELEASED_MS)
+            uint16_t stabilizedTimeReleasedInMs = SP_INPUTDEBOUNCER_STABILIZED_TIME_RELEASED_MS;
+        #else
+            uint16_t stabilizedTimeReleasedInMs = 10;
+        #endif
 
-        // // note: each version will create a new settings
-        // // eg. InputDebouncerBase<uint8_t>
-        // //     InputDebouncerBase<int>
-        // //     ... will have separate settings and occupy memory
-        // //     but making one single global will 
-        // static Settings globalDebouncerSettings;           // global single instance setting to save space
-
-        // create reference so user can go: obj.globalDebouncerSettings->stabilizedTimePressedInMs = 50;
-        static constexpr InputDebouncerSettings *globalDebouncerSettings = &StarterPack::globalInputDebouncerSettings;
-
-        // actual settings per instance, by default points to global
-        InputDebouncerSettings *debouncerSettings = &StarterPack::globalInputDebouncerSettings;
-
-        InputDebouncerSettings *createDebouncerSettings(
-        uint16_t stabilizedTimePressedInMs = 50,
-        uint16_t stabilizedTimeReleasedInMs = 10,
-        uint16_t debounceDelayPressedInMs = 0,
-        uint16_t debounceDelayReleasedInMs = 0 ) {
-            // create and use a new settings, caller should handle freeing memory
-            auto s = new InputDebouncerSettings();
-            this->stabilizedTimePressedInMs = stabilizedTimePressedInMs;
-            this->stabilizedTimeReleasedInMs = stabilizedTimeReleasedInMs;
-            this->debounceDelayPressedInMs = debounceDelayPressedInMs;
-            this->debounceDelayReleasedInMs = debounceDelayReleasedInMs;
-            this->debouncerSettings = s;
-            return s;
+        inline void setDebouncerDelayInMs(uint16_t whenPressed, uint16_t whenReleased) {
+            debounceDelayPressedInMs  = whenPressed;
+            debounceDelayReleasedInMs = whenReleased;
         }
 
-        void assignDebouncerSettings( InputDebouncerSettings &settings ) {
-            // caller is still owner and should handle freeing memory
-            this->debouncerSettings = &settings;
+        inline void setStabilizationTimeInMs(uint16_t whenPressed, uint16_t whenReleased) {
+            stabilizedTimePressedInMs  = whenPressed;
+            stabilizedTimeReleasedInMs = whenReleased;
         }
 
-        void assignDebouncerSettings( InputDebouncerSettings *settings ) {
-            // caller is still owner and should handle freeing memory
-            this->debouncerSettings = settings;
+        void copyDebounceSettings(InputDebouncer &instance) {
+            debounceDelayPressedInMs   = instance.debounceDelayPressedInMs;
+            debounceDelayReleasedInMs  = instance.debounceDelayReleasedInMs;
+            stabilizedTimePressedInMs  = instance.stabilizedTimePressedInMs;
+            stabilizedTimeReleasedInMs = instance.stabilizedTimeReleasedInMs;
         }
+
+        // example:
+        //                                             keyDown     keyUp
+        // device                      inactiveState   stability   stability   confirm   notes
+        // -------------------------   -------------   ---------   ---------   -------   -----
+        // push button (active high)   false           50          50          0
+        // push button (active low)    true            50          50          0
+        // analog keypad               [depends]       50          50          0         1
+        // analog rotary switch        [depends]       50          50          50        2
+        
+        // 1. resistor network style keys wired to a single analog pin
+        //    similar to dfrobot lcd keypad shield
+        // 2. rotary switch wired with resistor network same as #1
+        //    when switching there is small gap between contacts that is unconnected
+        //    switching A->B will be: A --> unconnected --> B
+        //    to eliminate the momentary disconnection, put a confirm time value
+        //
+        // note: analog values must be mapped to button number before feeding to debouncer
 
     //
     // ACTION
     //
     private:
+
+        //  (A) pressed -->
+        //  (B)            delay: start --> end -->
+        //  (C)                                     stability: start --> end
 
         enum class debounceModeEnum : uint8_t {
             Waiting,        // waiting for key
@@ -116,17 +129,17 @@ class InputDebouncer {
         };
         debounceModeEnum debounceMode = debounceModeEnum::Waiting;
 
-        KEY debounceCandidateKey = INACTIVE_KEY;        // new key being debounced
-        unsigned long debounceTimerStart = 0;           // time key was first detected or start of stability test
+        DATA_TYPE debounceCandidateKey = INACTIVE_KEY;      // new key being debounced
+        unsigned long debounceTimerStart = 0;               // time key was first detected or start of stability test
 
-        KEY debounceLastApprovedKey = INACTIVE_KEY;     // last key debounced
+        DATA_TYPE debounceLastApprovedKey = INACTIVE_KEY;   // last key debounced
 
     public:
 
         // #define DEBUG_TRACE(x)   x;
         #define DEBUG_TRACE(x)   ;
 
-        KEY actionDebounce(KEY key) {
+        DATA_TYPE actionDebounce(DATA_TYPE key) {
             switch( debounceMode ) {
 
             case debounceModeEnum::Waiting:
@@ -134,21 +147,21 @@ class InputDebouncer {
                 debounceCandidateKey = key;
 
                 if (key == INACTIVE_KEY) {
-                    if (debouncerSettings->debounceDelayReleasedInMs != 0) {
+                    if (debounceDelayReleasedInMs != 0) {
                         debounceMode = debounceModeEnum::TimeDelay;
                         DEBUG_TRACE( Serial.print("[DELAY1 ") );
                         DEBUG_TRACE( Serial.print(debounceCandidateKey) );
                         DEBUG_TRACE( Serial.print("]") );
-                        // return lastApprovedKey;
+                        // return debounceLastApprovedKey;
                         break;
                     }
                 } else {
-                    if (debouncerSettings->debounceDelayPressedInMs != 0) {
+                    if (debounceDelayPressedInMs != 0) {
                         debounceMode = debounceModeEnum::TimeDelay;
                         DEBUG_TRACE( Serial.print("[DELAY2 ") );
                         DEBUG_TRACE( Serial.print(debounceCandidateKey) );
                         DEBUG_TRACE( Serial.print("]") );
-                        // return lastApprovedKey;
+                        // return debounceLastApprovedKey;
                         break;
                     }
                 }
@@ -156,7 +169,7 @@ class InputDebouncer {
                 DEBUG_TRACE( Serial.print(debounceCandidateKey) );
                 DEBUG_TRACE( Serial.print("]") );
                 debounceMode = debounceModeEnum::CheckStability;
-                // return lastApprovedKey;
+                // return debounceLastApprovedKey;
                 break;
 
             case debounceModeEnum::TimeDelay:
@@ -164,13 +177,13 @@ class InputDebouncer {
                     auto now = millis();
                     auto elapsed = now - debounceTimerStart;
                     if (key == INACTIVE_KEY) {
-                        if (elapsed < debouncerSettings->debounceDelayReleasedInMs) {
-                            // return lastApprovedKey;
+                        if (elapsed < debounceDelayReleasedInMs) {
+                            // return debounceLastApprovedKey;
                             break;
                         }
                     } else {
-                        if (elapsed < debouncerSettings->debounceDelayPressedInMs) {
-                            // return lastApprovedKey;
+                        if (elapsed < debounceDelayPressedInMs) {
+                            // return debounceLastApprovedKey;
                             break;
                         }
                     }
@@ -180,7 +193,7 @@ class InputDebouncer {
                     debounceMode = debounceModeEnum::CheckStability;
                     debounceTimerStart = now;
                 }
-                // return lastApprovedKey;
+                // return debounceLastApprovedKey;
                 break;
 
             case debounceModeEnum::CheckStability:
@@ -191,20 +204,20 @@ class InputDebouncer {
                     DEBUG_TRACE( Serial.print("-->") );
                     DEBUG_TRACE( Serial.print(key) );
                     DEBUG_TRACE( Serial.print("]") );
-                    // return lastApprovedKey;
+                    // return debounceLastApprovedKey;
                     break;
                 }
 
                 {
                     auto elapsed = millis() - debounceTimerStart;
                     if (key == INACTIVE_KEY) {
-                        if (elapsed < debouncerSettings->stabilizedTimeReleasedInMs) {
-                            // return lastApprovedKey;
+                        if (elapsed < stabilizedTimeReleasedInMs) {
+                            // return debounceLastApprovedKey;
                             break;
                         }
                     } else {
-                        if (elapsed < debouncerSettings->stabilizedTimePressedInMs) {
-                            // return lastApprovedKey;
+                        if (elapsed < stabilizedTimePressedInMs) {
+                            // return debounceLastApprovedKey;
                             break;
                         }
                     }
@@ -214,7 +227,7 @@ class InputDebouncer {
                 DEBUG_TRACE( Serial.print("]") );
                 debounceMode = debounceModeEnum::SteadyState;
                 debounceLastApprovedKey = debounceCandidateKey;
-                // return lastApprovedKey;
+                // return debounceLastApprovedKey;
                 break;
 
             case debounceModeEnum::SteadyState:
@@ -226,7 +239,7 @@ class InputDebouncer {
                     DEBUG_TRACE( Serial.print("]") );
                     debounceMode = debounceModeEnum::Waiting;
                 }
-                // return lastApprovedKey;
+                // return debounceLastApprovedKey;
                 break;
             }
             return debounceLastApprovedKey;
@@ -254,7 +267,7 @@ class InputDebouncer {
     //
     public:
 
-        KEY actionGetKeyDown( KEY value ) {
+        DATA_TYPE actionGetKeyDown( DATA_TYPE value ) {
             // return key, if transitioning
             auto origApproved = debounceLastApprovedKey;
             auto newApproved = actionDebounce(value);
@@ -268,7 +281,7 @@ class InputDebouncer {
             return INACTIVE_KEY;
         }
 
-        KEY actionGetKeyUp( KEY value ) {
+        DATA_TYPE actionGetKeyUp( DATA_TYPE value ) {
             // return key, if transitioning
             auto origApproved = debounceLastApprovedKey;
             auto newApproved = actionDebounce(value);

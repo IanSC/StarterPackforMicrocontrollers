@@ -31,6 +31,10 @@ public:
     bool deletePayload = true;
 
     ~spVector() {
+        clear();
+    }
+
+    void clear() {
         data *parent = head;
         while( parent != nullptr ) {
             data *child = parent->next;
@@ -39,6 +43,7 @@ public:
             delete parent;
             parent = child;
         }
+        parent = nullptr;
     }
 
 //

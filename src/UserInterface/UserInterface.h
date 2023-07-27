@@ -1,14 +1,14 @@
 #pragma once
 
-#include <UserInterface/UserInterfaceRepeated.h>
+#include <UserInterface/UserInterfaceAllKeys.h>
 #include <LCD/LCDInterface.h>
 
 namespace StarterPack {
     
 namespace UserInterface {
 
-    typedef UserInterfaceKeyUpDown::KEY KEY;
-    static const KEY INACTIVE_KEY = UserInterfaceKeyUpDown::INACTIVE_KEY;
+    typedef UserInterfaceAllKeys::KEY KEY;
+    static const KEY INACTIVE_KEY = UserInterfaceAllKeys::INACTIVE_KEY;
 
     //
     // LCD
@@ -386,6 +386,7 @@ namespace UserInterface {
         // since kXXX occupies space, anything not used in other modules were commented out
 
         // static const KEY    cNONE      = UserInputDevice::cNONE; // 0x00;
+        static const KEY    cNONE      = 0x00;
         static const KEY    cENTER     = 0x0D; // 13
         static const KEY    cESCAPE    = 0x1B; // 27
         static const KEY    cBACKSPACE = 0x08; //  8 
@@ -444,47 +445,69 @@ namespace UserInterface {
     // ASSIGN KEY HANDLER DEVICE
     //
 
-        UserInterfaceRepeated  *KeyHandler = nullptr;
+        UserInterfaceAllKeys *KeyHandler = nullptr;
 
-        void assignKeyHandler( UserInterfaceRepeated &handler ) {
+        void assignKeyHandler( UserInterfaceAllKeys &handler ) {
             KeyHandler  = &handler;
         }
 
-        void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 50, uint16_t minimum = 50 ) {
+        void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 10, uint16_t minimum = 50 ) {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->debouncerSettings->stabilizedTimePressedInMs = activeStateStabilizeTime;
-            KeyHandler->debouncerSettings->stabilizedTimeReleasedInMs = inactiveStateStabilizeTime;
+            KeyHandler->setStabilizationTimeInMs(activeStateStabilizeTime, inactiveStateStabilizeTime);
+            // KeyHandler->debouncerSettings->stabilizedTimePressedInMs = activeStateStabilizeTime;
+            // KeyHandler->debouncerSettings->stabilizedTimeReleasedInMs = inactiveStateStabilizeTime;
         }
 
         void setDebounceDelayTimeInMs( uint16_t activeStateDelayTime = 0, uint16_t inactiveStateDelayTime = 0 ) {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->debouncerSettings->debounceDelayPressedInMs = activeStateDelayTime;
-            KeyHandler->debouncerSettings->debounceDelayReleasedInMs = inactiveStateDelayTime;
+            KeyHandler->setDebouncerDelayInMs(activeStateDelayTime, inactiveStateDelayTime);
+            // KeyHandler->debouncerSettings->debounceDelayPressedInMs = activeStateDelayTime;
+            // KeyHandler->debouncerSettings->debounceDelayReleasedInMs = inactiveStateDelayTime;
         }
 
         void setRepeatDelayAndRateInMs( uint16_t repeatDelay = 400, uint16_t repeatRate = 250 ) {
             if ( KeyHandler == nullptr ) return;
-            KeyHandler->repeaterSettings->repeatDelayInMs = repeatDelay;
-            KeyHandler->repeaterSettings->repeatRateInMs = repeatRate;
+            KeyHandler->setRepeatSettingsInMs(repeatDelay, repeatRate);
+            // KeyHandler->repeaterSettings->repeatDelayInMs = repeatDelay;
+            // KeyHandler->repeaterSettings->repeatRateInMs = repeatRate;
+        }
+
+        void setMultiClickSettingsInMs(uint16_t maxInterval, uint16_t repeatRate = 0) {
+            if ( KeyHandler == nullptr ) return;
+            KeyHandler->setMultiClickSettingsInMs(maxInterval, repeatRate);
         }
 
     //
-    // KEYS
+    // MISC
     //
 
         // char *getContinuousKeys( char *allowedKeys = nullptr ) {
         //     if ( KeyHandler == nullptr ) return nullptr;
         //     return KeyHandler->getContinuousKeys( allowedKeys );
         // }
-
         KEY getContinuousKey( char *allowedKeys = nullptr ) {
             if ( KeyHandler == nullptr ) return 0;
-            return KeyHandler->getDebouncedKey();
+            return KeyHandler->getNonDebouncedKey();
         }
         // KEY getContinuousKey( char *allowedKeys = nullptr ) {
         //     if ( KeyHandler == nullptr ) return 0;
         //     return KeyHandler->getContinuousKey( allowedKeys );
         // }
+
+        void flagWaitForKeyup() {}
+        // void flagWaitForKeyup() {
+        //     if ( KeyHandler == nullptr ) return;
+        //     return KeyHandler->flagWaitForKeyup();
+        // }
+
+        // void flagWaitForKeyup( uint8_t key ) {
+        //     if ( KeyHandler == nullptr ) return;
+        //     return KeyHandler->flagWaitForKeyupSpecific( key );
+        // }
+
+    //
+    // FROM DEBOUNCER
+    //
 
         KEY getNonDebouncedKey() {
             if ( KeyHandler == nullptr ) return INACTIVE_KEY;
@@ -506,46 +529,6 @@ namespace UserInterface {
             return KeyHandler->getKeyUp();
         }
 
-        KEY getRepeatingKey() {
-            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
-            return KeyHandler->getRepeatingKey();
-        }
-
-        // KEY getRepeatingKeyExcept( KEY nonRepeatingKey, char *allowedKeys = nullptr ) {
-        //     if ( KeyHandler == nullptr ) return 0;
-        //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKey, allowedKeys );
-        // }
-
-        // KEY getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
-        //     if ( KeyHandler == nullptr ) return 0;
-        //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKeys, allowedKeys );
-        // }
-
-        void skipDebounceDelay() {
-            if ( KeyHandler == nullptr ) return;
-            KeyHandler->skipDebounceDelay();
-        }
-
-        void cancelDebounceDelay() {
-            if ( KeyHandler == nullptr ) return;
-            KeyHandler->cancelDebounceDelay();
-        }
-
-        void flagWaitForKeyup() {}
-        // void flagWaitForKeyup() {
-        //     if ( KeyHandler == nullptr ) return;
-        //     return KeyHandler->flagWaitForKeyup();
-        // }
-
-        // void flagWaitForKeyup( uint8_t key ) {
-        //     if ( KeyHandler == nullptr ) return;
-        //     return KeyHandler->flagWaitForKeyupSpecific( key );
-        // }
-
-    //
-    // BASIC
-    //
-
         bool isKeyPressed( KEY key ) {
             if ( KeyHandler == nullptr ) return false;
             return KeyHandler->isKeyPressed( key );
@@ -565,6 +548,77 @@ namespace UserInterface {
             if ( KeyHandler == nullptr ) while( true ); // hang it ???
             return KeyHandler->waitForAnyKeyReleased();
         }
+
+        void skipDebounceDelay() {
+            if ( KeyHandler == nullptr ) return;
+            KeyHandler->skipDebounceDelay();
+        }
+
+        void cancelDebounceDelay() {
+            if ( KeyHandler == nullptr ) return;
+            KeyHandler->cancelDebounceDelay();
+        }
+
+    //
+    // FROM MULTI-CLICK
+    //
+
+        KEY getMultiClickKey() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getMultiClick_Key();
+        }
+
+        bool getMultiClickInfo(uint8_t &count, bool &isLongPressed, bool &isRepeated) {
+            if ( KeyHandler == nullptr ) {
+                count         = 0;
+                isLongPressed = false;
+                isRepeated    = false;
+                return false;
+            }
+            count         = KeyHandler->multiClick_count;
+            isLongPressed = KeyHandler->multiClick_isLongPressed;
+            isRepeated    = KeyHandler->multiClick_isRepeated;
+            return true;
+        }
+
+        uint8_t getMultiClickCount() {
+            if ( KeyHandler == nullptr ) return 0;
+            return KeyHandler->multiClick_count;
+        }
+
+        bool getMultiClickIsLongPressed() {
+            if ( KeyHandler == nullptr ) return false;
+            return KeyHandler->multiClick_isLongPressed;
+        }
+
+        bool getMultiClickIsRepeated() {
+            if ( KeyHandler == nullptr ) return false;
+            return KeyHandler->multiClick_isRepeated;
+        }
+
+    //
+    // FROM REPEATED
+    //
+
+        KEY getRepeatingKey() {
+            if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+            return KeyHandler->getRepeatingKey();
+        }
+
+        void skipRepeatingCurrentKey() {
+            if ( KeyHandler == nullptr ) return;
+            return KeyHandler->skipRepeatingCurrentKey();
+        }
+
+        // KEY getRepeatingKeyExcept( KEY nonRepeatingKey, char *allowedKeys = nullptr ) {
+        //     if ( KeyHandler == nullptr ) return 0;
+        //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKey, allowedKeys );
+        // }
+
+        // KEY getRepeatingKeyExcept( char *nonRepeatingKeys, char *allowedKeys = nullptr ) {
+        //     if ( KeyHandler == nullptr ) return 0;
+        //     return KeyHandler->getRepeatingKeyExcept( nonRepeatingKeys, allowedKeys );
+        // }
 
     //
     // EDITORS

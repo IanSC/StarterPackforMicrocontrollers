@@ -27,7 +27,7 @@
 
 namespace StarterPack {
 
-class newMatrixKeypadCore {
+class MatrixKeypadBase {
 
     // protected:
 
@@ -38,7 +38,7 @@ class newMatrixKeypadCore {
     //
     public:
 
-        virtual ~newMatrixKeypadCore() {
+        virtual ~MatrixKeypadBase() {
             if ( rowPinList != nullptr ) delete[] rowPinList;
             if ( colPinList != nullptr ) delete[] colPinList;
         }
@@ -63,6 +63,14 @@ class newMatrixKeypadCore {
 
         // user convenience, don't know how to count number of args without so much extra code
         // https://stackoverflow.com/questions/2124339/c-preprocessor-va-args-number-of-arguments/2124385#2124385
+        // NOT WORKING: int pins[] = { 2, 3, 4, 5 };
+        //              keypad.assignRows( pins );
+        // template<size_t rowCount>
+        // static uint8_t assignRows( uint8_t (&rows)[rowCount] ) {
+        //     // each call with a different parameter count will generate a new version
+        //     // must put body separately to save space
+        //     return assignRowsN( rowCount, rows );
+        // }
         // 1 to 10 pins
         inline void assignRows( uint8_t r1 ) { assignRowsN( 1, r1 ); }
         inline void assignRows( uint8_t r1, uint8_t r2 ) { assignRowsN( 2, r1, r2 ); }

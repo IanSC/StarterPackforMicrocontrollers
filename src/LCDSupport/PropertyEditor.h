@@ -5,12 +5,12 @@
 
 #include <Utility/spStr.h>
 #include <Utility/spVector.h>
+// #include <Utility/cSupport.h>
+#include <Utility/spNum.h>
+
 #include <UserInterface.h>
-// #include <LCDEditor.h>
 #include <LCDSupport/LCDEditorAlpha.h>
 #include <LCDSupport/LCDEditorNumeric.h>
-
-using namespace StarterPack;
 
 namespace StarterPack {
 
@@ -74,7 +74,7 @@ namespace StarterPack {
 
             public:
 
-                enum specialCase {
+                enum class specialCase {
                     cNone,
                     cAccept,
                     cCancel
@@ -105,7 +105,9 @@ namespace StarterPack {
             bool isSingleLiner() override { return true;  }
             bool isSelectable()  override { return false; }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
-                bufferSize = std::min( bufferSize, (uint8_t) (length+1) );
+                if (bufferSize > length+1)
+                    bufferSize = length+1;
+                // bufferSize = std::min( bufferSize, (uint8_t) (length+1) );
                 memset( buffer, ch, bufferSize-1 );
                 buffer[bufferSize-1] = 0;
             }
@@ -182,27 +184,44 @@ namespace StarterPack {
         //
         // INTEGERS
         //
-
-        template <typename T, size_t BUFFERSIZE, bool NEG>
+        // RAM:   [========= ]  86.3% (used 1768 bytes from 2048 bytes)
+        // Flash: [==========]  102.4% (used 31464 bytes from 30720 bytes)
         class entryRangedInt : public entryCore { public:
-            T data;
-            T min;
-            T max;
-            entryRangedInt( const char *caption, T &data, T min, T max, bool readonly ) {
-                this->caption = caption; ptr = &data; this->readonly = readonly;
-                this->data = data; this->min = min; this->max = max;
+            // typedef int64_t DATA_TYPE;
+            // RAM:   [======    ]  57.7% (used 1182 bytes from 2048 bytes)
+            // Flash: [=======   ]  70.9% (used 21786 bytes from 30720 bytes)
+            // typedef uint64_t DATA_TYPE;
+            // RAM:   [======    ]  57.6% (used 1180 bytes from 2048 bytes)
+            // Flash: [=======   ]  69.5% (used 21350 bytes from 30720 bytes)
+            // typedef uint32_t DATA_TYPE;
+            // RAM:   [======    ]  57.3% (used 1174 bytes from 2048 bytes)
+            // Flash: [======    ]  63.9% (used 19618 bytes from 30720 bytes)
+            // typedef int32_t DATA_TYPE;
+            // RAM:   [======    ]  57.3% (used 1174 bytes from 2048 bytes)
+            // Flash: [======    ]  63.9% (used 19638 bytes from 30720 bytes)
+            typedef int64_t DATA_TYPE;
+            DATA_TYPE data;
+            DATA_TYPE min;
+            DATA_TYPE max;
+            uint8_t bufferSize;
+            entryRangedInt( const char *caption, void *dataPtr, DATA_TYPE dataValue, DATA_TYPE min, DATA_TYPE max, 
+            uint8_t bufferSize,
+            bool readonly ) {
+                this->caption = caption; ptr = dataPtr; this->readonly = readonly;
+                this->data = dataValue; this->min = min; this->max = max;
+                this->bufferSize = bufferSize;
             }
             bool moveLeft()  override { if ( data>min ) { data--; return true; } else return false; }
             bool moveRight() override { if ( data<max ) { data++; return true; } else return false; }
-            uint8_t editBufferSize() override { return BUFFERSIZE; }
+            uint8_t editBufferSize() override { return bufferSize; }
             editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
                 namespace ui = StarterPack::UserInterface;
-                StarterPack::editorSettings eSet;
-                eSet.col = wPos.col; eSet.row = wPos.row; eSet.windowSize = wPos.windowSize;
-                eSet.allowDecimal = false;
-                eSet.allowNegative = NEG && min<0;
-                eSet.bufferLength = BUFFERSIZE;
-                StarterPack::numericEditor editor( editBuffer, eSet );
+                StarterPack::numericEditorSettings nSet;
+                nSet.setPosition(wPos.col, wPos.row, wPos.windowSize);
+                nSet.allowDecimal = false;
+                nSet.allowNegative = min<0;
+                nSet.bufferLength = bufferSize;
+                StarterPack::numericEditor editor( editBuffer, nSet );
                 while( true ) {
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
@@ -216,16 +235,19 @@ namespace StarterPack {
                 }
             }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
-                snprintf( buffer, bufferSize, "%d", data );
+                Num::mySnprintf( buffer, bufferSize, data );
+                // snprintf( buffer, bufferSize, "%d", data );
             }
             void toEditString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
                 if ( data == 0 )
                     buffer[0] = 0;
                 else
-                    snprintf( buffer, bufferSize, "%d", data );
+                    Num::mySnprintf( buffer, bufferSize, data );
+                    // Num::mySnprintf( buffer, bufferSize, "%d", data );
             }
             bool parseUserEntry( char *buffer ) override {
-                int64_t I = atoll( buffer );
+                DATA_TYPE I;
+                Num::StrToNum( buffer, I );
                 if ( I < min || I > max ) return false;
                 data = I;
                 return true;
@@ -233,9 +255,9 @@ namespace StarterPack {
         };
 
         #define CLS(dType,D,LEN,NEG) \
-            class D : public entryRangedInt<dType,LEN,NEG> { public: \
+            class D : public entryRangedInt { public: \
                 D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
-                    : entryRangedInt(caption,data,min,max,readonly) {} \
+                    : entryRangedInt(caption,&data,data,min,max,LEN,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
         CLS( int8_t,   _si08, 4+1 , true  )  //        -127
@@ -246,28 +268,109 @@ namespace StarterPack {
         CLS( uint32_t, _ui32, 10+1, false )  //  4294967295
         #undef CLS
 
+        // ====== ]  86.4% (used 1770 bytes from 2048 bytes)
+        // Flash: [==========]  107.9% (used 33148 bytes from 30720 bytes)
+        //
+        // INTEGERS
+        //
+        // template <typename T, size_t BUFFERSIZE, bool NEG>
+        // class entryRangedInt : public entryCore { public:
+        //     T data;
+        //     T min;
+        //     T max;
+        //     entryRangedInt( const char *caption, T &data, T min, T max, bool readonly ) {
+        //         this->caption = caption; ptr = &data; this->readonly = readonly;
+        //         this->data = data; this->min = min; this->max = max;
+        //     }
+        //     bool moveLeft()  override { if ( data>min ) { data--; return true; } else return false; }
+        //     bool moveRight() override { if ( data<max ) { data++; return true; } else return false; }
+        //     uint8_t editBufferSize() override { return BUFFERSIZE; }
+        //     editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
+        //         namespace ui = StarterPack::UserInterface;
+        //         StarterPack::numericEditorSettings nSet;
+        //         nSet.setPosition(wPos.col, wPos.row, wPos.windowSize);
+        //         // nSet.col = wPos.col; nSet.row = wPos.row; nSet.windowSize = wPos.windowSize;
+        //         nSet.allowDecimal = false;
+        //         nSet.allowNegative = NEG && min<0;
+        //         nSet.bufferLength = BUFFERSIZE;
+        //         StarterPack::numericEditor editor( editBuffer, nSet );
+        //         while( true ) {
+        //             uint8_t r = editor.prompt();
+        //             if ( r == ui::kESCAPE )
+        //                 return cancelled;
+        //             if ( r == ui::kENTER ) {
+        //                 if ( parseUserEntry( editBuffer ) )
+        //                     return accepted;
+        //                 else
+        //                     return invalid;
+        //             }
+        //         }
+        //     }
+        //     void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
+        //         Num::mySnprintf( buffer, bufferSize, data );
+        //         // snprintf( buffer, bufferSize, "%d", data );
+        //     }
+        //     void toEditString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
+        //         if ( data == 0 )
+        //             buffer[0] = 0;
+        //         else
+        //             Num::mySnprintf( buffer, bufferSize, data );
+        //             // Num::mySnprintf( buffer, bufferSize, "%d", data );
+        //     }
+        //     bool parseUserEntry( char *buffer ) override {
+        //         // int64_t I = Num::myAtoll( buffer );
+        //         int64_t I;
+        //         Num::StrToNum( buffer, I );
+        //         if ( I < min || I > max ) return false;
+        //         data = I;
+        //         return true;
+        //     }
+        // };
+
+        // #define CLS(dType,D,LEN,NEG) \
+        //     class D : public entryRangedInt<dType,LEN,NEG> { public: \
+        //         D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
+        //             : entryRangedInt(caption,data,min,max,readonly) {} \
+        //         void acceptChange() override { *((dType*) ptr) = data; } \
+        //     };
+        // CLS( int8_t,   _si08, 4+1 , true  )  //        -127
+        // CLS( uint8_t,  _ui08, 3+1 , false )  //         255
+        // CLS( int16_t,  _si16, 6+1 , true  )  //      -32768
+        // CLS( uint16_t, _ui16, 5+1 , false )  //       65535
+        // CLS( int32_t,  _si32, 11+1, true  )  // -2147483647
+        // CLS( uint32_t, _ui32, 10+1, false )  //  4294967295
+        // #undef CLS
+
+
+        // RAM:   [========= ]  86.3% (used 1768 bytes from 2048 bytes)
+        // Flash: [==========]  102.4% (used 31448 bytes from 30720 bytes)
         //
         // FLOATING POINT
         //
 
-        template <typename T, size_t BUFFERSIZE, bool NEG>
-        class entryRangedFloat : public entryCore { public:
-            T data;
-            T min;
-            T max;
-            entryRangedFloat( const char *caption, T &data, T min, T max, bool readonly ) {
-                this->caption = caption; ptr = &data; this->readonly = readonly;
-                this->data = data; this->min = min; this->max = max;
+        // template <typename T, size_t BUFFERSIZE, bool NEG>
+        class entryRangedDouble : public entryCore { public:
+            double data;
+            double min;
+            double max;
+            uint8_t bufferSize;
+            entryRangedDouble( const char *caption, void *data, double dataValue, double min, double max, 
+            uint8_t bufferSize,
+            bool readonly ) {
+                this->caption = caption; ptr = data; this->readonly = readonly;
+                this->data = dataValue; this->min = min; this->max = max;
+                this->bufferSize = bufferSize;
             }
-            uint8_t editBufferSize() override { return BUFFERSIZE; }
+            uint8_t editBufferSize() override { return bufferSize; }
             editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
                 namespace ui = StarterPack::UserInterface;
-                StarterPack::editorSettings eSet;
-                eSet.col = wPos.col; eSet.row = wPos.row; eSet.windowSize = wPos.windowSize;
-                eSet.allowDecimal = true;
-                eSet.allowNegative = min<0;
-                eSet.bufferLength = BUFFERSIZE;
-                StarterPack::numericEditor editor( editBuffer, eSet );
+                StarterPack::numericEditorSettings nSet;
+                nSet.setPosition(wPos.col, wPos.row, wPos.windowSize);
+                // eSet.col = wPos.col; eSet.row = wPos.row; eSet.windowSize = wPos.windowSize;
+                nSet.allowDecimal = true;
+                nSet.allowNegative = min<0;
+                nSet.bufferLength = bufferSize;
+                StarterPack::numericEditor editor( editBuffer, nSet );
                 while( true ) {
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
@@ -281,7 +384,8 @@ namespace StarterPack {
                 }
             }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
-                snprintf( buffer, bufferSize, "%f", data );
+                Num::mySnprintf( buffer, bufferSize, data );
+                // snprintf( buffer, bufferSize, "%f", data );
                 if ( Str::findCharacter( '.', buffer ) ) {
                 // if ( isCharInString( '.', buffer ) ) {
                     // remove trailing '0' and '.'
@@ -305,9 +409,9 @@ namespace StarterPack {
         };
 
         #define CLS(dType,D,LEN,NEG) \
-            class D : public entryRangedFloat<dType,LEN,NEG> { public: \
+            class D : public entryRangedDouble { public: \
                 D( const char *caption, dType &data, dType min, dType max, bool readonly) \
-                    : entryRangedFloat(caption,data,min,max,readonly) {} \
+                    : entryRangedDouble(caption,&data,data,min,max,LEN,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
         CLS( float,  _flot, 20, true )
@@ -394,7 +498,7 @@ namespace StarterPack {
             editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
                 namespace ui = StarterPack::UserInterface;
 
-                StarterPack::editorSettings eSet;
+                StarterPack::alphaEditorSettings eSet;
                 eSet.col = wPos.col; eSet.row = wPos.row; eSet.windowSize = wPos.windowSize;
                 eSet.bufferLength = length;
 
@@ -429,34 +533,38 @@ namespace StarterPack {
             }
         };
 
+        // RAM:   [==========]  97.6% (used 1998 bytes from 2048 bytes)
+        // Flash: [==========]  108.7% (used 33406 bytes from 30720 bytes)
         //
         // SLIDER
         //
 
-        template <typename T>
+        // template <typename T>
         class sliderInt : public entryCore { public:
-            T data;
-            T min;
-            T max;
-            sliderInt( const char *caption, T &data, T min, T max, bool readonly ) {
-                this->caption = caption; ptr = &data; this->readonly = readonly;
-                this->data = data; this->min = min; this->max = max;
+            int64_t data;
+            int64_t min;
+            int64_t max;
+            sliderInt( const char *caption, void *dataPtr, int64_t dataValue, int64_t min, int64_t max,
+            bool readonly ) {
+                this->caption = caption; ptr = dataPtr; this->readonly = readonly;
+                this->data = dataValue; this->min = min; this->max = max;
             }
             bool moveLeft()  override { if ( data>min ) { data--; return true; } else return false; }
             bool moveRight() override { if ( data<max ) { data++; return true; } else return false; }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
-                snprintf( buffer, bufferSize, "%d", data );
+                Num::mySnprintf( buffer, bufferSize, data );
+                // snprintf( buffer, bufferSize, "%d", data );
             }
-            T incLow  = 1;
-            T incMed  = 10;
-            T incHigh = 100;
+            int64_t incLow  = 1;
+            int64_t incMed  = 10;
+            int64_t incHigh = 100;
             bool decrement( incrementLevel level ) override {
                 // switch( level ) {
                 // case incrementLevel::small:  if ( data>min+incLow  ) { data-=incLow; Serial.println("s"); return true; } break;
                 // case incrementLevel::medium: if ( data>min+incMed  ) { data-=incMed; Serial.println("m"); return true; } break;
                 // case incrementLevel::large:  if ( data>min+incHigh ) { data-=incHigh; Serial.println("h"); return true; } break;
                 // }
-                T delta;
+                int64_t delta;
                 switch( level ) {
                 case incrementLevel::small:  delta = incLow;  break;
                 case incrementLevel::medium: delta = incMed;  break;
@@ -478,7 +586,7 @@ namespace StarterPack {
                 // case incrementLevel::medium: if ( data+incMed <max ) { data+=incMed; Serial.println("M"); return true; } break;
                 // case incrementLevel::large:  if ( data+incHigh<max ) { data+=incHigh; Serial.println("H"); return true; } break;
                 // }
-                T delta;
+                int64_t delta;
                 switch( level ) {
                 case incrementLevel::small:  delta = incLow;  break;
                 case incrementLevel::medium: delta = incMed;  break;
@@ -496,9 +604,9 @@ namespace StarterPack {
             }
         };
         #define CLS(dType,D) \
-            class D : public sliderInt<dType> { public: \
+            class D : public sliderInt { public: \
                 D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
-                    : sliderInt(caption,data,min,max,readonly) {} \
+                    : sliderInt(caption,&data,data,min,max,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
         CLS( int8_t,   _si08_slider )
@@ -508,6 +616,90 @@ namespace StarterPack {
         CLS( int32_t,  _si32_slider )
         CLS( uint32_t, _ui32_slider )
         #undef CLS
+
+
+        // RAM:   98.0% (used 2008 bytes from 2048 bytes)
+        // Flash: [==========]  110.4% (used 33910 bytes from 30720 bytes)
+        // //
+        // // SLIDER
+        // //
+
+        // template <typename T>
+        // class sliderInt : public entryCore { public:
+        //     T data;
+        //     T min;
+        //     T max;
+        //     sliderInt( const char *caption, T &data, T min, T max, bool readonly ) {
+        //         this->caption = caption; ptr = &data; this->readonly = readonly;
+        //         this->data = data; this->min = min; this->max = max;
+        //     }
+        //     bool moveLeft()  override { if ( data>min ) { data--; return true; } else return false; }
+        //     bool moveRight() override { if ( data<max ) { data++; return true; } else return false; }
+        //     void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
+        //         Num::mySnprintf( buffer, bufferSize, data );
+        //         // snprintf( buffer, bufferSize, "%d", data );
+        //     }
+        //     T incLow  = 1;
+        //     T incMed  = 10;
+        //     T incHigh = 100;
+        //     bool decrement( incrementLevel level ) override {
+        //         // switch( level ) {
+        //         // case incrementLevel::small:  if ( data>min+incLow  ) { data-=incLow; Serial.println("s"); return true; } break;
+        //         // case incrementLevel::medium: if ( data>min+incMed  ) { data-=incMed; Serial.println("m"); return true; } break;
+        //         // case incrementLevel::large:  if ( data>min+incHigh ) { data-=incHigh; Serial.println("h"); return true; } break;
+        //         // }
+        //         T delta;
+        //         switch( level ) {
+        //         case incrementLevel::small:  delta = incLow;  break;
+        //         case incrementLevel::medium: delta = incMed;  break;
+        //         case incrementLevel::large:  delta = incHigh; break;
+        //         }
+        //         if ( data > min + delta  ) {
+        //             data -= delta;
+        //             // Serial.printf( "DEC: %d - %d\n", data, delta );
+        //             return true;
+        //         }  else if ( data > min ) {
+        //             data = min;
+        //             return true;
+        //         }
+        //         return false;
+        //     }
+        //     bool increment( incrementLevel level ) override {
+        //         // switch( level ) {
+        //         // case incrementLevel::small:  if ( data+incLow <max ) { data+=incLow; Serial.println("S"); return true; } break;
+        //         // case incrementLevel::medium: if ( data+incMed <max ) { data+=incMed; Serial.println("M"); return true; } break;
+        //         // case incrementLevel::large:  if ( data+incHigh<max ) { data+=incHigh; Serial.println("H"); return true; } break;
+        //         // }
+        //         T delta;
+        //         switch( level ) {
+        //         case incrementLevel::small:  delta = incLow;  break;
+        //         case incrementLevel::medium: delta = incMed;  break;
+        //         case incrementLevel::large:  delta = incHigh; break;
+        //         }
+        //         if ( data + delta < max ) {
+        //             data += delta;
+        //             // Serial.printf( "INC: %d + %d\n", data, delta );
+        //             return true;
+        //         } else if ( data < max ) {
+        //             data = max;
+        //             return true;
+        //         }
+        //         return false;
+        //     }
+        // };
+        // #define CLS(dType,D) \
+        //     class D : public sliderInt<dType> { public: \
+        //         D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
+        //             : sliderInt(caption,data,min,max,readonly) {} \
+        //         void acceptChange() override { *((dType*) ptr) = data; } \
+        //     };
+        // CLS( int8_t,   _si08_slider )
+        // CLS( uint8_t,  _ui08_slider )
+        // CLS( int16_t,  _si16_slider )
+        // CLS( uint16_t, _ui16_slider )
+        // CLS( int32_t,  _si32_slider )
+        // CLS( uint32_t, _ui32_slider )
+        // #undef CLS
 
         //
         // ROW HANDLER
@@ -525,15 +717,14 @@ namespace StarterPack {
                 uint8_t lcdRows;            // number of rows of physical screen
 
                 // keep copy to find latched entry
-                // StarterPack::PropertyEditorEntry::entryCore *head;
-                spVector<StarterPack::PropertyEditorEntry::entryCore> *head;
+                // PropertyEditorEntry::entryCore *head;
+                spVector<PropertyEditorEntry::entryCore> *head;
 
             public:
 
                 bool allowCrossover = false;
 
-                rowHandler( spVector<StarterPack::PropertyEditorEntry::entryCore> *se,
-                // StarterPack::PropertyEditorEntry::entryCore *se, 
+                rowHandler( spVector<PropertyEditorEntry::entryCore> *se,
                 uint8_t lcdRows, bool allowCrossover = false ) {
                     head = se;
                     this->lcdRows = lcdRows;
@@ -546,7 +737,7 @@ namespace StarterPack {
                     focusScanDownwards( 0 );
                 }
 
-                StarterPack::PropertyEditorEntry::entryCore *getEntry( uint8_t entryNo ) {
+                PropertyEditorEntry::entryCore *getEntry( uint8_t entryNo ) {
                     if ( entryNo < 0 || entryNo >= count ) return nullptr;
                     auto *ptr = head->getFirst();
                     // auto *ptr = head;
@@ -565,10 +756,10 @@ namespace StarterPack {
                     if ( focusedEntry == 0xFF ) return 0xFF;
                     return focusedEntry - itemOnTop;
                 }
-                inline StarterPack::PropertyEditorEntry::entryCore *getFocusedEntry() {
+                inline PropertyEditorEntry::entryCore *getFocusedEntry() {
                     return getEntry( focusedEntry );
                 }
-                inline StarterPack::PropertyEditorEntry::entryCore *getItemOnTopRow() {
+                inline PropertyEditorEntry::entryCore *getItemOnTopRow() {
                     return getEntry( itemOnTop );
                 }
 
@@ -720,6 +911,8 @@ namespace StarterPack {
 // CORE
 //
 
+    typedef StarterPack::PropertyEditorEntry::entryCore entryCore;
+
     class PropertyEditor {
 
         public:
@@ -741,30 +934,30 @@ namespace StarterPack {
             //
             //
 
-            void add( StarterPack::PropertyEditorEntry::entryCore *property ) {
+            void add( PropertyEditorEntry::entryCore *property ) {
                 // entry will be deleted
                 insert( property );
             }
 
-            // void add( StarterPack::PropertyEditorEntry::entryCore *property ) {
+            // void add( PropertyEditorEntry::entryCore *property ) {
             //     // let user handle freeing memory
             //     property->skipDelete = true;
             //     insert( property );
             // }
 
-            // void addAndDelete( StarterPack::PropertyEditorEntry::entryCore *property ) {
+            // void addAndDelete( PropertyEditorEntry::entryCore *property ) {
             //     insert( property );
             // }
 
-            auto breaker( char ch = '-' ) {
+            PropertyEditorEntry::breaker *breaker( char ch = '-' ) {
                 namespace ui = StarterPack::UserInterface;
-                auto *se = new StarterPack::PropertyEditorEntry::breaker( ch, ui::LCD->maxColumns );
+                auto *se = new PropertyEditorEntry::breaker( ch, ui::LCD->maxColumns );
                 insert( se );
                 return se;
             }
 
-            auto message( const char *str ) {
-                auto *se = new StarterPack::PropertyEditorEntry::message(str);
+            PropertyEditorEntry::message *message( const char *str ) {
+                auto *se = new PropertyEditorEntry::message(str);
                 insert( se );
                 return se;
             }
@@ -777,26 +970,26 @@ namespace StarterPack {
             //     auto *se = new StarterPack::PropertyEditorEntry::acceptButton();
             //     insert( se );
             // }
-            auto acceptButton( const char *str = "\x7F ACCEPT" ) {
+            PropertyEditorEntry::acceptButton *acceptButton( const char *str = "\x7F ACCEPT" ) {
                 namespace ui = StarterPack::UserInterface;
-                auto *se = new StarterPack::PropertyEditorEntry::acceptButton( str );
+                auto *se = new PropertyEditorEntry::acceptButton( str );
                 insert( se );
                 return se;
             }
             // void cancelButton() {
             //     namespace ui = StarterPack::UserInterface;
-            //     auto *se = new StarterPack::PropertyEditorEntry::cancelButton();
+            //     auto *se = new PropertyEditorEntry::cancelButton();
             //     insert( se );
             // }
-            auto cancelButton( const char *str = "\x7F CANCEL" ) {
+            PropertyEditorEntry::cancelButton *cancelButton( const char *str = "\x7F CANCEL" ) {
                 namespace ui = StarterPack::UserInterface;
-                auto *se = new StarterPack::PropertyEditorEntry::cancelButton( str );
+                auto *se = new PropertyEditorEntry::cancelButton( str );
                 insert( se );
                 return se;
             }
-            auto exitButton( const char *str = "\x7F EXIT" ) {
+            PropertyEditorEntry::acceptButton *exitButton( const char *str = "\x7F EXIT" ) {
                 namespace ui = StarterPack::UserInterface;
-                auto *se = new StarterPack::PropertyEditorEntry::acceptButton( str );
+                auto *se = new PropertyEditorEntry::acceptButton( str );
                 insert( se );
                 return se;
             }
@@ -805,14 +998,14 @@ namespace StarterPack {
             // BOOL
             //
 
-            auto add( const char *caption, bool &data, bool readonly=false ) {
-                auto *se = new StarterPack::PropertyEditorEntry::_bool(caption,data,readonly);
+            PropertyEditorEntry::_bool *add( const char *caption, bool &data, bool readonly=false ) {
+                auto *se = new PropertyEditorEntry::_bool(caption,data,readonly);
                 insert( se );
                 return se;
             }
 
-            auto add( const char *caption, bool &data, const char *trueValue, const char *falseValue, bool readonly=false ) {
-                auto *se = new StarterPack::PropertyEditorEntry::_bool(caption,data,trueValue,falseValue,readonly);
+            PropertyEditorEntry::_bool *add( const char *caption, bool &data, const char *trueValue, const char *falseValue, bool readonly=false ) {
+                auto *se = new PropertyEditorEntry::_bool(caption,data,trueValue,falseValue,readonly);
                 insert( se );
                 return se;
             }
@@ -821,13 +1014,13 @@ namespace StarterPack {
             // INTEGER/FLOAT
             //
             #define ADD(dType,D,MIN,MAX) \
-                auto add( const char *caption, dType &data, bool readonly=false ) { \
-                    auto *se = new StarterPack::PropertyEditorEntry::D(caption,data,MIN,MAX,readonly); \
+                PropertyEditorEntry::D *add( const char *caption, dType &data, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D(caption,data,MIN,MAX,readonly); \
                     insert( se ); \
                     return se; \
                 } \
-                auto add( const char *caption, dType &data, dType min, dType max, bool readonly=false ) { \
-                    auto *se = new StarterPack::PropertyEditorEntry::D(caption,data,min,max,readonly); \
+                PropertyEditorEntry::D *add( const char *caption, dType &data, dType min, dType max, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D(caption,data,min,max,readonly); \
                     insert( se ); \
                     return se; \
                 }
@@ -845,15 +1038,15 @@ namespace StarterPack {
             // PICK
             //
             template<size_t optCount>
-            auto addPicker( const char *caption, uint8_t &selected, const char* (&options)[optCount], bool readonly=false ) {
-                auto *se = new StarterPack::PropertyEditorEntry::pick(
+            PropertyEditorEntry::pick *addPicker( const char *caption, uint8_t &selected, const char* (&options)[optCount], bool readonly=false ) {
+                auto *se = new PropertyEditorEntry::pick(
                     caption,selected,options,optCount,readonly);
                 insert( se );
                 return se;
             }
 
-            auto addString( const char *caption, char *buffer, uint8_t size, bool readonly=false ) {
-                auto *se = new StarterPack::PropertyEditorEntry::_string(caption,buffer,size,readonly);
+            PropertyEditorEntry::_string *addString( const char *caption, char *buffer, uint8_t size, bool readonly=false ) {
+                auto *se = new PropertyEditorEntry::_string(caption,buffer,size,readonly);
                 insert( se );
                 return se;
             }
@@ -862,13 +1055,13 @@ namespace StarterPack {
             // SLIDERS
             //
             #define ADD(dType,D,MIN,MAX) \
-                auto addSlider( const char *caption, dType &data, bool readonly=false ) { \
-                    auto *se = new StarterPack::PropertyEditorEntry::D ## _slider(caption,data,MIN,MAX,readonly); \
+                PropertyEditorEntry::D ## _slider *addSlider( const char *caption, dType &data, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D ## _slider(caption,data,MIN,MAX,readonly); \
                     insert( se ); \
                     return se; \
                 } \
-                auto addSlider( const char *caption, dType &data, dType min, dType max, bool readonly=false ) { \
-                    auto *se = new StarterPack::PropertyEditorEntry::D ## _slider(caption,data,min,max,readonly); \
+                PropertyEditorEntry::D ## _slider *addSlider( const char *caption, dType &data, dType min, dType max, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D ## _slider(caption,data,min,max,readonly); \
                     insert( se ); \
                     return se; \
                 }
@@ -885,10 +1078,10 @@ namespace StarterPack {
         //
         protected:
 
-            // StarterPack::PropertyEditorEntry::entryCore *head = nullptr;
-            spVector<StarterPack::PropertyEditorEntry::entryCore> head;
+            // PropertyEditorEntry::entryCore *head = nullptr;
+            spVector<PropertyEditorEntry::entryCore> head;
 
-            inline void insert( StarterPack::PropertyEditorEntry::entryCore *se ) {
+            inline void insert( PropertyEditorEntry::entryCore *se ) {
                 head.insert( se );
                 // insertEnd_NextLinkedList( &head, se );
             }
@@ -896,10 +1089,22 @@ namespace StarterPack {
     //
     // BACKGROUND PROCESS/BREAKOUT
     //
-    protected:
-        // return anything but ui::kNone to breakout of loop
-        typedef std::function<uint8_t(void)> backgroundProcessDelegate;
-        backgroundProcessDelegate backgroundProcess = nullptr;
+    #if defined(ESP8266) || defined(ESP32)
+        protected:
+            // return anything but ui::kNone to breakout of loop
+            typedef std::function<uint8_t(void)> backgroundProcessDelegate;
+            backgroundProcessDelegate backgroundProcess = nullptr;
+        public:
+            void assignBackgroundProcess( uint8_t (*backgroundProcessFunc)() ) {
+                this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
+            }
+    #else
+        protected:
+            // return anything but ui::kNone to breakout of loop
+            typedef bool (*backgroundProcessDelegate)();
+            backgroundProcessDelegate backgroundProcess = nullptr;
+    #endif
+
     public:
         static uint8_t backgroundProcessNoAction() {
             namespace ui = StarterPack::UserInterface;
@@ -907,9 +1112,6 @@ namespace StarterPack {
         }
         void assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
             this->backgroundProcess = backgroundProcess;
-        }        
-        void assignBackgroundProcess( uint8_t (*backgroundProcessFunc)() ) {
-            this->backgroundProcess = [backgroundProcessFunc]() { return backgroundProcessFunc(); };
         }
 
     public:
@@ -943,13 +1145,13 @@ namespace StarterPack {
         static markerStruct markers;
 
     //
-    // PRESSED TIME
+    // SLIDER SPEED
     //
     public:
-        uint32_t longPressMs = 4000;
-        uint32_t mediumPressMs = 2000;
+        uint16_t longPressMs = 4000;
+        uint16_t mediumPressMs = 2000;
     protected:
-        uint64_t pressedTime;
+        unsigned long pressedTime;
         PropertyEditorEntry::incrementLevel calcIncrementLevel() {
             auto pressedDuration = millis() - pressedTime;
 // Serial.println( pressedDuration );
@@ -996,7 +1198,7 @@ namespace StarterPack {
             if ( lcd->isBuffered() )
                 lcdBuffered = (LCDBuffered*) lcd;
 
-            StarterPack::PropertyEditorEntry::rowHandler rowHandler( &head, lcd->maxRows, allowCrossover );
+            PropertyEditorEntry::rowHandler rowHandler( &head, lcd->maxRows, allowCrossover );
 
             char buffer[lcd->maxColumns+1];
 
@@ -1045,14 +1247,14 @@ namespace StarterPack {
                         }
                         lcd->setCursor( 0, r );
                         switch( se->sCase ) {
-                        case StarterPack::PropertyEditorEntry::entryCore::specialCase::cAccept:
-                        case StarterPack::PropertyEditorEntry::entryCore::specialCase::cCancel:
+                        case PropertyEditorEntry::entryCore::specialCase::cAccept:
+                        case PropertyEditorEntry::entryCore::specialCase::cCancel:
                             lcd->write( ' ' );
                             se->toString( buffer, lcd->maxColumns-2+1, rowWindow );
                             lcd->printStrN( buffer, lcd->maxColumns-2, true );
                             lcd->write( ' ' );
                             break;
-                        case StarterPack::PropertyEditorEntry::entryCore::specialCase::cNone:
+                        case PropertyEditorEntry::entryCore::specialCase::cNone:
                             if ( se->isSingleLiner() ) {
                                 rowWindow.row = r;
                                 se->toString( buffer, lcd->maxColumns+1, rowWindow );
@@ -1083,12 +1285,12 @@ namespace StarterPack {
                         if ( se->isSelectable() ) {
                             int r = rowHandler.focusedOnScreenRow();
                             switch( se->sCase ) {
-                            case StarterPack::PropertyEditorEntry::entryCore::specialCase::cAccept:
-                            case StarterPack::PropertyEditorEntry::entryCore::specialCase::cCancel:
+                            case PropertyEditorEntry::entryCore::specialCase::cAccept:
+                            case PropertyEditorEntry::entryCore::specialCase::cCancel:
                                 lcd->printAt( 0, r, markers.Left ); // '[' );
                                 lcd->printAt( lcd->maxColumns-1, r, markers.Right ); // ']' );
                                 break;
-                            case StarterPack::PropertyEditorEntry::entryCore::specialCase::cNone:
+                            case PropertyEditorEntry::entryCore::specialCase::cNone:
                                 if ( keypad == kpadStyle::kSlidersOnly && kpadSliderOnlyEditing ) {
                                     lcd->printAt( captionWidth, r, markers.EditingLeft ); // 0b10100010 ); // '*' );
                                     lcd->printAt( lcd->maxColumns-1, r, markers.EditingRight ); // 0b10100011 ); // '*' );
@@ -1179,13 +1381,13 @@ namespace StarterPack {
                     if ( se == nullptr ) continue;
 
                     switch( se->sCase ) {
-                    case StarterPack::PropertyEditorEntry::entryCore::specialCase::cAccept:
+                    case PropertyEditorEntry::entryCore::specialCase::cAccept:
                         ui::waitUntilNothingIsPressed();
                         return ui::kENTER;
-                    case StarterPack::PropertyEditorEntry::entryCore::specialCase::cCancel:
+                    case PropertyEditorEntry::entryCore::specialCase::cCancel:
                         ui::waitUntilNothingIsPressed();
                         return ui::kESCAPE;
-                    case StarterPack::PropertyEditorEntry::entryCore::specialCase::cNone:
+                    case PropertyEditorEntry::entryCore::specialCase::cNone:
                         if ( keypad == kpadStyle::kSlidersOnly ) {
                             kpadSliderOnlyEditing = !kpadSliderOnlyEditing;
                             updateScreen = true;
@@ -1205,13 +1407,13 @@ namespace StarterPack {
 
                     while( true ) {
                         auto r = se->enterEditMode( editBuffer, dataWindow );
-                        if ( r == StarterPack::PropertyEditorEntry::entryCore::editResult::accepted ) {
+                        if ( r == PropertyEditorEntry::entryCore::editResult::accepted ) {
                             hasChanges = true;
                             break;
                         }
-                        if ( r == StarterPack::PropertyEditorEntry::entryCore::editResult::cancelled )
+                        if ( r == PropertyEditorEntry::entryCore::editResult::cancelled )
                             break;
-                        if ( r == StarterPack::PropertyEditorEntry::entryCore::editResult::invalid ) {
+                        if ( r == PropertyEditorEntry::entryCore::editResult::invalid ) {
                             // invalid, show warning and edit again
                             dataWindow.windowSize = dataWidth-1;
                             ui::LCD->writeAt( dataWindow.col+dataWidth-1, dataWindow.row, ']' );
@@ -1234,7 +1436,7 @@ namespace StarterPack {
             }
         }
 
-        bool doLeft( StarterPack::PropertyEditorEntry::rowHandler rowHandler ) {
+        bool doLeft( PropertyEditorEntry::rowHandler rowHandler ) {
             auto se = actionableEntry( rowHandler );
             if ( se == nullptr ) return false;
             if ( se->moveLeft() ) {
@@ -1244,7 +1446,7 @@ namespace StarterPack {
             return false;
         }
 
-        bool doRight( StarterPack::PropertyEditorEntry::rowHandler rowHandler ) {
+        bool doRight( PropertyEditorEntry::rowHandler rowHandler ) {
             auto se = actionableEntry( rowHandler );
             if ( se == nullptr ) return false;
             if ( se->moveRight() ) {
@@ -1254,7 +1456,7 @@ namespace StarterPack {
             return false;
         }
 
-        bool doDecrement( StarterPack::PropertyEditorEntry::rowHandler rowHandler, PropertyEditorEntry::incrementLevel level  ) {
+        bool doDecrement( PropertyEditorEntry::rowHandler rowHandler, PropertyEditorEntry::incrementLevel level  ) {
             auto se = actionableEntry( rowHandler );
             if ( se == nullptr ) return false;
             if ( se->decrement( level ) ) {
@@ -1264,7 +1466,7 @@ namespace StarterPack {
             return false;
         }
 
-        bool doIncrement( StarterPack::PropertyEditorEntry::rowHandler rowHandler, PropertyEditorEntry::incrementLevel level ) {
+        bool doIncrement( PropertyEditorEntry::rowHandler rowHandler, PropertyEditorEntry::incrementLevel level ) {
             auto se = actionableEntry( rowHandler );
             if ( se == nullptr ) return false;
             if ( se->increment( level ) ) {
@@ -1274,7 +1476,7 @@ namespace StarterPack {
             return false;
         }
 
-        StarterPack::PropertyEditorEntry::entryCore *actionableEntry( StarterPack::PropertyEditorEntry::rowHandler &rowHandler ) {
+        PropertyEditorEntry::entryCore *actionableEntry( PropertyEditorEntry::rowHandler &rowHandler ) {
             if ( readOnly ) return nullptr;
             if ( !rowHandler.hasFocusedEntry() ) return nullptr;
             auto se = rowHandler.getFocusedEntry();
@@ -1300,11 +1502,15 @@ namespace StarterPack {
 
 PropertyEditor::markerStruct PropertyEditor::markers;
 
+}
+
 //
 // TEST
 //
 
     #include <Arduino.h>
+
+namespace StarterPack {
 
     void TEST_propertyEditorBasic() {
         PropertyEditor se;
@@ -1312,11 +1518,15 @@ PropertyEditor::markerStruct PropertyEditor::markers;
         // se.allowCrossover = true;
         se.allowCrossover = false;
 
+        // ATOLL
         float a = atof( "hello" );
         Serial.println( a );
-        long i = atoll( "hello 123" );
+        // long i = Num::myAtoll( "hello 123" );
+        long i;
+        Num::StrToNum( "hello 123", i );
         Serial.println( i );
-        i = atoll( "456 123" );
+        // i = Num::myAtoll( "456 123" );
+        Num::StrToNum( "456 123", i );
         Serial.println( i );
 
         se.message( "Editable Options" );
@@ -1337,6 +1547,7 @@ PropertyEditor::markerStruct PropertyEditor::markers;
         uint32_t ui32 = 100;
         se.add( "si32", si32 );
         se.add( "ui32", ui32 );
+
         float  flot1 = -1234567890.123456789;
         float  flot2 = 1234567890.123456789;
         double doob1 = -1234567890.123456789;

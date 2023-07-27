@@ -6,15 +6,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <float.h>
+
 #include <Utility/spStr.h>
 #include <Utility/spVector.h>
+#include <Utility/spNum.h>
 
 #include <LCDSupport/LCDEditorAlpha.h>
 #include <LCDSupport/LCDEditorNumeric.h>
 #include <LCD/LCDInterface.h>
-// #include <keypad.h>
 
-// using namespace StarterPack;
+#include <LCDSupport/editorRowHandler.h>
 
 namespace StarterPack {
 
@@ -22,11 +23,11 @@ namespace StarterPack {
 // ITEMS
 //
 
-class SettingsEditor;
+    class SettingsEditor;
 
     struct seEntry {
 
-        enum dataType {
+        enum class dataType {
             custom,
             _dash,
             _bool,
@@ -42,8 +43,20 @@ class SettingsEditor;
             _text
         };
 
+        struct boolData {
+            bool value;             // value chosen
+            bool rollover;          // go to start if past end, etc.
+        };
+
+        struct pickData {
+            uint8_t selected;       // number picked
+            uint8_t optionCount;    // # of options
+            bool    rollover;       // go to start if past end, etc.
+        };
+
         union dataUnion {
-            bool       _bool;
+            boolData   _bool;
+            // bool       _bool;
             int8_t     _si08;
             uint8_t    _ui08;
             int16_t    _si16;
@@ -52,26 +65,24 @@ class SettingsEditor;
             uint32_t   _ui32;
             float      _flot;
             double     _doob;
-            const char **pickOptions; // tuck here instead of in min/max
+            pickData   _pick;
+            // const char **pickOptions; // tuck here instead of in min/max
             char*      _text;
         };
 
-        struct pickData {
-            uint8_t  selected; // number picked
-            uint8_t  length;   // # of picks
-        };
-
         union rangeUnion {
-            int8_t   _si08;
-            uint8_t  _ui08;
-            int16_t  _si16;
-            uint16_t _ui16;
-            int32_t  _si32;
-            uint32_t _ui32;
-            float    _flot;
-            double   _doob;
-            pickData _pick;
-            uint8_t  length; // text buffer length
+            int8_t     _si08;
+            uint8_t    _ui08;
+            int16_t    _si16;
+            uint16_t   _ui16;
+            int32_t    _si32;
+            uint32_t   _ui32;
+            float      _flot;
+            double     _doob;
+            // pickData   _pick;
+            const char **pickOptions; // tuck here instead of in min/max
+            uint8_t    length;        // text buffer length
+            const char *text;
         };
 
         const char *caption;
@@ -84,27 +95,144 @@ class SettingsEditor;
         // seEntry *next = nullptr;
 
     //
+    // ACCESS MAPPING
     //
+
+        #define BoolValue         data._bool.value
+        #define BoolRollover      data._bool.rollover
+
+        #define PickSelected      data._pick.selected
+        #define PickOptionsCount  data._pick.optionCount
+        #define PickRollover      data._pick.rollover
+        #define PickOptions       max.pickOptions
+
     //
+    // INTEGER
+    //
+
+        int64_t getIntegerData() {
+            switch( type ) {
+            case dataType::_si08: return data._si08;
+            case dataType::_ui08: return data._ui08;
+            case dataType::_si16: return data._si16;
+            case dataType::_ui16: return data._ui16;
+            case dataType::_si32: return data._si32;
+            case dataType::_ui32: return data._ui32;
+            default: break; // to disable warning
+            }
+            return 0;
+        }
+
+        int64_t getIntegerMin() {
+            switch( type ) {
+            case dataType::_si08: return min._si08;
+            case dataType::_ui08: return min._ui08;
+            case dataType::_si16: return min._si16;
+            case dataType::_ui16: return min._ui16;
+            case dataType::_si32: return min._si32;
+            case dataType::_ui32: return min._ui32;
+            default: break; // to disable warning
+            }
+            return 0;
+        }
+
+        int64_t getIntegerMax() {
+            switch( type ) {
+            case dataType::_si08: return max._si08;
+            case dataType::_ui08: return max._ui08;
+            case dataType::_si16: return max._si16;
+            case dataType::_ui16: return max._ui16;
+            case dataType::_si32: return max._si32;
+            case dataType::_ui32: return max._ui32;
+            default: break; // to disable warning
+            }
+            return 0;
+        }
+
+        uint32_t getIntegerRange() {
+            auto range = abs(getIntegerMax()-getIntegerMin());
+            return range;
+        }
+
+        bool canSpeedSlide() {
+            switch( type ) {
+            case dataType::_si08:
+            case dataType::_ui08:
+            case dataType::_si16:
+            case dataType::_ui16:
+            case dataType::_si32:
+            case dataType::_ui32: return true;
+            default: return false;
+            }
+        }
+
+        void setIntegerData(int64_t value) {
+            switch( type ) {
+            case dataType::_si08: data._si08 = value; break;
+            case dataType::_ui08: data._ui08 = value; break;
+            case dataType::_si16: data._si16 = value; break;
+            case dataType::_ui16: data._ui16 = value; break;
+            case dataType::_si32: data._si32 = value; break;
+            case dataType::_ui32: data._ui32 = value; break;
+            default: break; // to disable warning
+            }
+        }
+
+        bool setIntegerDelta(int64_t delta) {
+            switch( type ) {
+            case dataType::_si08: break;
+            case dataType::_ui08: break;
+            case dataType::_si16: break;
+            case dataType::_ui16: break;
+            case dataType::_si32: break;
+            case dataType::_ui32: break;
+            default: return false;
+            }
+            auto orig = getIntegerData();
+            auto min = getIntegerMin();
+            auto max = getIntegerMin();            
+            auto value = orig + delta;
+            if (value < min) value = min;
+            if (value > max) value = max;
+            if (value != orig) {
+                setIntegerData( value );
+                return true;
+            }
+            return true;
+        }
 
         bool moveLeft() {
             if ( readonly ) return false;
             switch( type ) {
             case dataType::_bool:
-                if ( data._bool ) {
-                    data._bool = false;
+                if ( !BoolValue && !BoolRollover )
+                    return false;
+                BoolValue = !BoolValue;
+                return true;
+            case dataType::_pick: {
+                    auto orig = PickSelected;
+                    if ( orig < 1 ) {
+                        PickSelected = 1;
+                        return true;
+                    }
+                    auto value = orig - 1;
+                    if ( value < 1 ) {
+                        if ( !PickRollover ) return false;
+                        value = PickOptionsCount;
+                    }
+                    PickSelected = value;
                     return true;
                 }
                 break;
-            case dataType::_pick:
-                if ( max._pick.selected == 0 || max._pick.selected > max._pick.length ) {
-                    max._pick.selected = 1;
-                    return true;
-                } else if ( max._pick.selected > 1 ) {
-                    max._pick.selected--;
-                    return true;
-                }
-                break;
+            case dataType::_si08:
+            case dataType::_ui08:
+            case dataType::_si16:
+            case dataType::_ui16:
+            case dataType::_si32:
+            case dataType::_ui32:
+                return setIntegerDelta(-1);
+            // case dataType::_flot:
+            // case dataType::_doob:
             default: break;
             }
             return false;
@@ -114,26 +242,43 @@ class SettingsEditor;
             if ( readonly ) return false;
             switch( type ) {
             case dataType::_bool:
-                if ( !data._bool ) {
-                    data._bool = true;
+                if ( BoolValue && !BoolRollover )
+                    return false;
+                BoolValue = !BoolValue;
+                return true;
+            case dataType::_pick: {
+                    auto orig = PickSelected;
+                    if ( orig > PickOptionsCount ) {
+                        PickSelected = 1;
+                        return true;
+                    }
+                    auto value = orig + 1;
+                    if ( value > PickOptionsCount ) {
+                        if ( !PickRollover ) return false;
+                        value = 1;
+                    }
+                    PickSelected = value;
                     return true;
                 }
-                break;
-            case dataType::_pick:
-                if ( max._pick.selected == 0 || max._pick.selected > max._pick.length ) {
-                    max._pick.selected = 1;
-                    return true;
-                } else if ( max._pick.selected < max._pick.length ) {
-                    max._pick.selected++;
-                    return true;
-                }
-                break;
+            case dataType::_si08:
+            case dataType::_ui08:
+            case dataType::_si16:
+            case dataType::_ui16:
+            case dataType::_si32:
+            case dataType::_ui32:
+                return setIntegerDelta(1);
+            // case dataType::_flot:
+            // case dataType::_doob:
             default: break;
             }
             return false;
         }
 
-        bool enterEditMode( StarterPack::editorSettings &eSet ) {
+    //
+    // EDIT
+    //
+
+        bool enterEditMode( StarterPack::alphaEditorSettings &aSet, StarterPack::numericEditorSettings &nSet ) {
             namespace ui = StarterPack::UserInterface;
             if ( readonly ) return false;
 
@@ -141,20 +286,20 @@ class SettingsEditor;
             case dataType::custom:
                  break;
             case dataType::_bool:
-                data._bool = !data._bool;
+                BoolValue = !BoolValue;
                 return true;
             case dataType::_pick:
                 // with rollover
-                max._pick.selected++;
-                if ( max._pick.selected < 1 || max._pick.selected > max._pick.length )
-                    max._pick.selected = 1;
+                PickSelected++;
+                if ( PickSelected < 1 || PickSelected > PickOptionsCount )
+                    PickSelected = 1;
                 return true;
             case dataType::_text: {
                     char buffer[max.length];
-                    eSet.bufferLength = max.length;
+                    aSet.bufferLength = max.length;
                     strncpy( buffer, data._text, max.length );
                     buffer[max.length-1] = 0;
-                    StarterPack::alphanumericEditor editor( buffer, eSet );
+                    StarterPack::alphanumericEditor editor( buffer, aSet );
                     while( true ) {
                         uint8_t r = editor.prompt();
                         if ( r == ui::kESCAPE )
@@ -168,13 +313,14 @@ class SettingsEditor;
                 }
                 break;
             default: {
+                    // integers, floats and doubles
                     char buffer[maxLength()];
-                    eSet.bufferLength = maxLength();
-                    eSet.allowDecimal = isDecimalAllowed();
-                    eSet.allowNegative = isNegativeAllowed();
+                    nSet.bufferLength = maxLength();
+                    nSet.allowDecimal = isDecimalAllowed();
+                    nSet.allowNegative = isNegativeAllowed();
                     ToString( buffer, maxLength() );
-                    StarterPack::numericEditor editor( buffer, eSet );
-                    uint8_t origWindowSize = eSet.windowSize;
+                    StarterPack::numericEditor editor( buffer, nSet );
+                    uint8_t origWindowSize = nSet.windowSize;
                     while( true ) {
                         uint8_t r = editor.prompt();
                         if ( r == ui::kESCAPE )
@@ -184,8 +330,8 @@ class SettingsEditor;
                                 break;
                             } else {
                                 // not valid, show warning and edit again
-                                eSet.windowSize = origWindowSize-1;
-                                ui::LCD->writeAt( eSet.col+origWindowSize-2, eSet.row, ']' );
+                                nSet.windowSize = origWindowSize-1;
+                                ui::LCD->writeAt( nSet.col+origWindowSize-2, nSet.row, ']' );
                                 ui::LCD->write( 0b11101111 ); // pikachu face
                             }
                         }
@@ -201,22 +347,30 @@ class SettingsEditor;
     // ROUTINES
     //
 
+        static constexpr const char *defaultTrueValue = "YES";
+        static constexpr const char *defaultFalseValue = "NO";
+
         void ToString( char *buffer, uint8_t len ) {
             switch( type ) {
             // case _void:
             // case _dash:
-            case _bool: strncpy( buffer, data._bool ?  "TRUE" : "FALSE", len ); break;
-            case _si08: snprintf( buffer, len, "%d", data._si08 ); break;
-            case _ui08: snprintf( buffer, len, "%u", data._ui08 ); break;
-            case _si16: snprintf( buffer, len, "%d", data._si16 ); break;
-            case _ui16: snprintf( buffer, len, "%u", data._ui16 ); break;
-            case _si32: snprintf( buffer, len, "%d", data._si32 ); break;
-            case _ui32: snprintf( buffer, len, "%u", data._ui32 ); break;
-            case _flot:
-            case _doob:
-                if ( type == _flot )
-                    snprintf( buffer, len, "%f", data._flot );
-                else if ( type == _doob )
+            case dataType::_bool:
+                if ( BoolValue )
+                    strncpy( buffer, max.text != nullptr ? max.text : defaultTrueValue, len );
+                else
+                    strncpy( buffer, min.text != nullptr ? min.text : defaultFalseValue, len );
+                break;
+            case dataType::_si08: snprintf( buffer, len, "%d",  data._si08 ); break;
+            case dataType::_ui08: snprintf( buffer, len, "%u",  data._ui08 ); break;
+            case dataType::_si16: snprintf( buffer, len, "%d",  data._si16 ); break;
+            case dataType::_ui16: snprintf( buffer, len, "%u",  data._ui16 ); break;
+            case dataType::_si32: snprintf( buffer, len, "%ld", data._si32 ); break;
+            case dataType::_ui32: snprintf( buffer, len, "%lu", data._ui32 ); break;
+            case dataType::_flot:
+            case dataType::_doob:
+                if ( type == dataType::_flot )
+                    snprintf( buffer, len, "%f", (double) data._flot );
+                else if ( type == dataType::_doob )
                     snprintf( buffer, len, "%f", data._doob );
                 if ( Str::findCharacter( '.', buffer ) ) {
                     char *p = buffer + strlen(buffer) - 1;
@@ -224,20 +378,26 @@ class SettingsEditor;
                     if ( *p == '.' ) *p = 0;
                 }
                 break;
-            case _pick:
+            case dataType::_pick:
                 // 1-based index
-                Serial.println("PICK");
-                Serial.println( max._pick.selected );
-                Serial.println( data.pickOptions[max._pick.selected-1] );
+                // Serial.println("PICK");
+                // Serial.println( max._pick.selected );
+                // Serial.println( data.pickOptions[max._pick.selected-1] );
 
-                if ( max._pick.selected < 1 || max._pick.selected > max._pick.length ) {
+                if ( PickSelected < 1 || PickSelected > PickOptionsCount ) {
                     buffer[0] = 0;
                 } else {
-                    strncpy( buffer, data.pickOptions[max._pick.selected-1], len );
+                    strncpy( buffer, PickOptions[PickSelected-1], len );
                     buffer[len-1] = 0; // in case option is too long
                 }
+                // if ( max._pick.selected < 1 || max._pick.selected > max._pick.optionCount ) {
+                //     buffer[0] = 0;
+                // } else {
+                //     strncpy( buffer, data.pickOptions[max._pick.selected-1], len );
+                //     buffer[len-1] = 0; // in case option is too long
+                // }
                 break;
-            case _text:
+            case dataType::_text:
                 strncpy( buffer, data._text, len );
                 buffer[len-1] = 0; // in case text is too long
                 break;
@@ -256,11 +416,11 @@ class SettingsEditor;
 
         bool isNegativeAllowed() {
             switch( type ) {
-            case _si08:
-            case _si16:
-            case _si32:
-            case _flot:
-            case _doob: return true;
+            case dataType::_si08: return min._si08 < 0;
+            case dataType::_si16: return min._si16 < 0;
+            case dataType::_si32: return min._si32 < 0;
+            case dataType::_flot: 
+            case dataType::_doob: return true;
             default: return false;
             }
         }
@@ -273,14 +433,14 @@ class SettingsEditor;
             switch( type ) {
             // case _void:
             // case _bool:
-            case _si08: return 4+1;    //        -127
-            case _ui08: return 3+1;    //         255
-            case _si16: return 6+1;    //      -32768
-            case _ui16: return 5+1;    //       65535
-            case _si32: return 11+1;   // -2147483647
-            case _ui32: return 10+1;   //  4294967295
-            case _flot: return 0xFF;
-            case _doob: return 0xFF;
+            case dataType::_si08: return 4+1;    //        -127
+            case dataType::_ui08: return 3+1;    //         255
+            case dataType::_si16: return 6+1;    //      -32768
+            case dataType::_ui16: return 5+1;    //       65535
+            case dataType::_si32: return 11+1;   // -2147483647
+            case dataType::_ui32: return 10+1;   //  4294967295
+            case dataType::_flot: return 0xFF;
+            case dataType::_doob: return 0xFF;
             // case _pick:
             default: return 0;
             }
@@ -291,15 +451,26 @@ class SettingsEditor;
             switch( type ) {
             // case _void:
             // case _bool:
-            case _si08: I = atoll( buffer ); if ( I < min._si08 || I > max._si08 ) return false; data._si08 = I; break;
-            case _ui08: I = atoll( buffer ); if ( I < min._ui08 || I > max._ui08 ) return false; data._ui08 = I; break;
-            case _si16: I = atoll( buffer ); if ( I < min._si16 || I > max._si16 ) return false; data._si16 = I; break;
-            case _ui16: I = atoll( buffer ); if ( I < min._ui16 || I > max._ui16 ) return false; data._ui16 = I; break;
-            case _si32: I = atoll( buffer ); if ( I < min._si32 || I > max._si32 ) return false; data._si32 = I; break;
-            case _ui32: I = atoll( buffer ); if ( I < min._ui32 || I > max._ui32 ) return false; data._ui32 = I; break;
-            case _flot: F = atof ( buffer );
-                if ( F < min._flot || F > max._flot ) return false; data._flot = F; break;
-            case _doob: F = atof ( buffer ); if ( F < min._doob || F > max._doob ) return false; data._doob = F; break;            
+            case dataType::_si08: Num::StrToNum(buffer,I); if ( I < min._si08 || I > max._si08 ) return false; data._si08 = I; break;
+            case dataType::_ui08: Num::StrToNum(buffer,I); if ( I < min._ui08 || I > max._ui08 ) return false; data._ui08 = I; break;
+            case dataType::_si16: Num::StrToNum(buffer,I); if ( I < min._si16 || I > max._si16 ) return false; data._si16 = I; break;
+            case dataType::_ui16: Num::StrToNum(buffer,I); if ( I < min._ui16 || I > max._ui16 ) return false; data._ui16 = I; break;
+            case dataType::_si32: Num::StrToNum(buffer,I); if ( I < min._si32 || I > max._si32 ) return false; data._si32 = I; break;
+            case dataType::_ui32: Num::StrToNum(buffer,I); if ( I < min._ui32 || I > max._ui32 ) return false; data._ui32 = I; break;
+            // case _si08: I = atoll( buffer ); if ( I < min._si08 || I > max._si08 ) return false; data._si08 = I; break;
+            // case _ui08: I = atoll( buffer ); if ( I < min._ui08 || I > max._ui08 ) return false; data._ui08 = I; break;
+            // case _si16: I = atoll( buffer ); if ( I < min._si16 || I > max._si16 ) return false; data._si16 = I; break;
+            // case _ui16: I = atoll( buffer ); if ( I < min._ui16 || I > max._ui16 ) return false; data._ui16 = I; break;
+            // case _si32: I = atoll( buffer ); if ( I < min._si32 || I > max._si32 ) return false; data._si32 = I; break;
+            // case _ui32: I = atoll( buffer ); if ( I < min._ui32 || I > max._ui32 ) return false; data._ui32 = I; break;
+            case dataType::_flot:
+                F = atof ( buffer );
+                if ( F < min._flot || F > max._flot )
+                    return false;
+                data._flot = F;
+                break;
+            case dataType::_doob:
+                F = atof ( buffer ); if ( F < min._doob || F > max._doob ) return false; data._doob = F; break;            
             // case _pick:
             default: return false;
             }
@@ -309,17 +480,17 @@ class SettingsEditor;
         void acceptChange() {
             switch( type ) {
             // case _void:
-            case _bool: *((bool*)     ptr) = data._bool; break;
-            case _si08: *((int8_t*)   ptr) = data._si08; break;            
-            case _ui08: *((uint8_t*)  ptr) = data._ui08; break;  
-            case _si16: *((int16_t*)  ptr) = data._si16; break;  
-            case _ui16: *((uint16_t*) ptr) = data._ui16; break;  
-            case _si32: *((int32_t*)  ptr) = data._si32; break;  
-            case _ui32: *((uint32_t*) ptr) = data._ui32; break;  
-            case _flot: *((float*)    ptr) = data._flot; break;  
-            case _doob: *((double*)   ptr) = data._doob; break;
-            case _pick: *((uint8_t*)  ptr) = max. _pick.selected; break;
-            case _text: strcpy( (char*) ptr, data._text );
+            case dataType::_bool: *((bool*)     ptr) = data._bool.value; break;
+            case dataType::_si08: *((int8_t*)   ptr) = data._si08; break;            
+            case dataType::_ui08: *((uint8_t*)  ptr) = data._ui08; break;  
+            case dataType::_si16: *((int16_t*)  ptr) = data._si16; break;  
+            case dataType::_ui16: *((uint16_t*) ptr) = data._ui16; break;  
+            case dataType::_si32: *((int32_t*)  ptr) = data._si32; break;  
+            case dataType::_ui32: *((uint32_t*) ptr) = data._ui32; break;  
+            case dataType::_flot: *((float*)    ptr) = data._flot; break;  
+            case dataType::_doob: *((double*)   ptr) = data._doob; break;
+            case dataType::_pick: *((uint8_t*)  ptr) = data._pick.selected; break;
+            case dataType::_text: strcpy( (char*) ptr, data._text );
             default:
                 break;
             }
@@ -387,25 +558,53 @@ class SettingsEditor {
         ADD( double,   _doob, -__DBL_MAX__, __DBL_MAX__ );
         #undef ADD
 
-        void add( const char *caption, bool &data, bool readonly=false ) {
+        void addBoolean( const char *caption, bool &data,
+        bool rollover=false, bool readonly=false ) {
             seEntry *se = new seEntry();
             se->caption = caption;
             se->ptr = &data;
             se->type = seEntry::dataType::_bool;
-            se->data._bool = data;
+            se->data._bool.value = data;
+            se->data._bool.rollover = rollover;
+            // se->min.text = nullptr;
+            // se->max.text = nullptr;
+            se->readonly = readonly;
+            insert( se );
+        }
+
+        void addBoolean( const char *caption, bool &data, const char *trueValue, const char *falseValue,
+        bool rollover=false, bool readonly=false ) {
+            seEntry *se = new seEntry();
+            se->caption = caption;
+            se->ptr = &data;
+            se->type = seEntry::dataType::_bool;
+            se->data._bool.value = data;
+            se->data._bool.rollover = rollover;
+            se->min.text = falseValue;
+            se->max.text = trueValue;
             se->readonly = readonly;
             insert( se );
         }
 
         template<size_t optCount>
-        void addPick( const char *caption, uint8_t &data, const char* (&options)[optCount], bool readonly=false ) {
+        void addPick( const char *caption, uint8_t &defaultSelection, const char* (&options)[optCount],
+        bool rollover = false, bool readonly=false ) {
             seEntry *se = new seEntry();
             se->caption = caption;
-            se->ptr = &data;
+            se->ptr = &defaultSelection;
             se->type = seEntry::dataType::_pick;
-            se->data.pickOptions = options;
-            se->max._pick.selected = data;
-            se->max._pick.length = optCount;
+
+            se->data._pick.selected = defaultSelection;
+            se->data._pick.optionCount = optCount;
+            se->data._pick.rollover = rollover;
+            se->max.pickOptions = options;
+
+            // se->data.pickOptions = options;
+            // se->max._pick.selected = defaultSelection;
+            // // se->max._pick.length = optCount;
+            // se->max._pick.optionCount = optCount;
+            // se->max._pick.rollover = rollover;
+
             se->readonly = readonly;
             insert( se );
         }
@@ -437,16 +636,16 @@ class SettingsEditor {
 
         seEntry *getEntry( uint8_t entryNo ) {
             seEntry *ptr = head.getFirst();
-            // seEntry *ptr = head;
-            for( int i = 0 ; i < entryNo ; i++ ) {
+            for( int i = 0 ; i < entryNo ; i++ )
                 ptr = head.getNext();
-                // ptr = ptr->next;
-            }
             return ptr;
         }
 
     public:
 
+        bool readOnly = false;
+
+/*
         struct rowData {
 
             // OLD <PropertyEditor.h>'s is better
@@ -547,6 +746,7 @@ class SettingsEditor {
                 // SerialPrintfln( "count     : %d", count );
             }
         };
+*/
 
         void prompt( uint8_t captionWidth ) {
             namespace ui = StarterPack::UserInterface;
@@ -554,8 +754,10 @@ class SettingsEditor {
             if ( StarterPack::UserInterface::LCD == nullptr ) return;
             LCDInterface *lcd = StarterPack::UserInterface::LCD;
 
-            rowData row;
-            row.compute( &head, lcd->maxRows );
+            rowHandler<StarterPack::seEntry> rowHandler( &head, lcd->maxRows, allowCrossover );
+
+            // rowData row;
+            // row.compute( &head, lcd->maxRows );
 
             seEntry *se;
 
@@ -565,22 +767,29 @@ class SettingsEditor {
                 captionWidth = lcd->maxColumns;
             uint8_t dataWidth = lcd->maxColumns - captionWidth - 2;
             
-            StarterPack::editorSettings editorSettings;
-            editorSettings.col = captionWidth+1;
+            // StarterPack::editorSettings editorSettings;
+            // editorSettings.col = captionWidth+1;
 
             bool updateScreen = true;
+
+            // bool leftPressed = false;
+            // bool rightPressed = false;
+            uint8_t prevActualKey = -1;
+
+            ui::waitUntilNothingIsPressed();
 
             while( true ) {
 
                 if ( updateScreen ) {
                     updateScreen = false;
 
-                    se = head.getFirst();
-                    // se = head;
-                    for( int i = 0 ; i < row.itemOnTop ; i++ ) {
-                        se = head.getNext();
-                        // se = se->next;
-                    }
+                    // ORIG
+                    // se = head.getFirst();
+                    // for( int i = 0 ; i < row.itemOnTop ; i++ )
+                    //     se = head.getNext();
+
+                    // NEW
+                    se = rowHandler.getItemOnTopRow();
 
                     for( int row = 0 ; row < lcd->maxRows ; row++ ) {
                         if ( se == nullptr ) {
@@ -612,43 +821,121 @@ class SettingsEditor {
                         // se = se->next;
                     }
 
-                    se = getEntry( row.current );
-                    if ( se->isSelectable() ) {
-                        int r = row.onScreen();
-                        lcd->printAt( captionWidth, r, '[' );
-                        lcd->printAt( lcd->maxColumns-1, r, ']' );
+                    // NEW
+                    if ( rowHandler.hasFocusedEntry() ) {
+                        se = rowHandler.getFocusedEntry();
+                        if ( se->isSelectable() ) {
+                            int r = rowHandler.focusedOnScreenRow();
+                            lcd->printAt( captionWidth, r, '[' );
+                            lcd->printAt( lcd->maxColumns-1, r, ']' );
+                        }
                     }
+
+                    // ORIG
+                    // se = getEntry( row.current );
+                    // if ( se->isSelectable() ) {
+                    //     int r = row.onScreen();
+                    //     lcd->printAt( captionWidth, r, '[' );
+                    //     lcd->printAt( lcd->maxColumns-1, r, ']' );
+                    // }
+
                     lcd->displayAll();
                 }
 
                 uint8_t key = ui::getRepeatingKey();
                 
+                // check actual key pressed
+                // cannot use continuous as it changes: left, none, left, none, ...
+                // if none is handled, other situations won't work: left, release, left, release, ... timer won't reset
+                uint8_t actualKey = ui::getContinuousKey();
+                if ( actualKey != prevActualKey ) {
+                    // previous left/right now something else
+                    if ( prevActualKey==ui::kLEFT || prevActualKey==ui::kRIGHT )
+                        sliderSpeedReset();
+                    // if ( actualKey != ui::kLEFT ) {
+                    //     // Serial.printf( "LEFT OFF = %d\n", key );
+                    //     leftPressed  = false;
+                    // }
+                    // if ( actualKey != ui::kRIGHT ) {
+                    //     // Serial.printf( "RIGHT OFF = %d\n", key );
+                    //     rightPressed = false;
+                    // }
+                    prevActualKey = actualKey;
+                }
+
                 if ( key == ui::kESCAPE ) {
                     return;
                 } else if ( key == ui::kUP ) {
-                    row.scrollUpDown( true, allowCrossover );
-                    updateScreen = true;
+
+                    // row.scrollUpDown( true, allowCrossover );
+                    // updateScreen = true;
+
+                    if ( rowHandler.scrollUpDown( true ) )
+                        updateScreen = true;
+
                 } else if ( key == ui::kDOWN ) {
-                    row.scrollUpDown( false, allowCrossover );
-                    updateScreen = true;
+
+                    // row.scrollUpDown( false, allowCrossover );
+                    // updateScreen = true;
+
+                    if ( rowHandler.scrollUpDown( false ) )
+                        updateScreen = true;
+
                 } else if ( key == ui::kLEFT ) {
-                    se = getEntry( row.current );
-                    if ( se->moveLeft() )
-                        updateScreen = true;
+
+                    se = actionableEntry( rowHandler );
+                    if ( se == nullptr ) continue;
+
+                    // sliderSpeedStart();
+                    auto delta = sliderValue(se);
+                    if (delta <= 1) {
+                        if ( se->moveLeft() )
+                            updateScreen = true;
+                    } else {
+                        if ( se->setIntegerDelta(-delta) )
+                            updateScreen = true;
+                    }
+
+                    // se = getEntry( row.current );
+
                 } else if ( key == ui::kRIGHT ) {
-                    se = getEntry( row.current );
-                    if ( se->moveRight() )
-                        updateScreen = true;
+
+                    se = actionableEntry( rowHandler );
+                    if ( se == nullptr ) continue;
+                    // se = getEntry( row.current );
+
+                    // sliderSpeedStart();
+                    auto delta = sliderValue(se);
+                    if (delta <= 1) {
+                        if ( se->moveRight() )
+                            updateScreen = true;
+                    } else {
+                        if ( se->setIntegerDelta(delta) )
+                            updateScreen = true;
+                    }
+
                 } else if ( key == ui::kENTER ) {
                     // edit value
-                    se = getEntry( row.current );
 
-                    StarterPack::editorSettings eSet;
-                    eSet.col = captionWidth+1;
-                    eSet.row = row.onScreen();
-                    eSet.windowSize = dataWidth;
+                    if ( readOnly ) return;
 
-                    if ( se->enterEditMode( eSet ) )
+                    se = actionableEntry( rowHandler );
+                    if ( se == nullptr ) continue;
+                    // se = getEntry( row.current );
+
+                    StarterPack::alphaEditorSettings aSet;
+                    // aSet.setPosition( captionWidth+1, row.onScreen(), dataWidth );
+                    aSet.setPosition( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
+
+                    StarterPack::numericEditorSettings nSet;
+                    // nSet.setPosition( captionWidth+1, row.onScreen(), dataWidth );
+                    nSet.setPosition( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
+
+                    // nSet.col = captionWidth+1;
+                    // nSet.row = row.onScreen();
+                    // nSet.windowSize = dataWidth;
+
+                    if ( se->enterEditMode( aSet, nSet ) )
                         updateScreen = true;
                 }
             }
@@ -656,13 +943,86 @@ class SettingsEditor {
 
         void acceptChanges() {
             seEntry *se = head.getFirst();
-            // seEntry *se = head;
             while( se != nullptr ) {
                 if ( !se->readonly )
                     se->acceptChange();
                 se = head.getNext();
-                // se = se->next;
             }
+        }
+
+    private:
+
+        seEntry *actionableEntry( rowHandler<StarterPack::seEntry> &rowHandler ) {
+            if ( readOnly ) return nullptr;
+            if ( !rowHandler.hasFocusedEntry() ) return nullptr;
+            auto se = rowHandler.getFocusedEntry();
+            if ( !se->isSelectable() || se->readonly ) return nullptr;
+            return se;
+        }
+
+    //
+    // SLIDER SPEED
+    //
+    public:
+        uint16_t sliderSpeedMediumSpeedTimeInMs = 2000;
+        uint16_t sliderSpeedFastSpeedTimeInMs = 4000;
+    protected:
+
+        // enum class sliderSpeedEnum { idle, slow, medium, fast };
+        // sliderSpeedEnum sliderSpeed = sliderSpeedEnum::idle;
+
+        bool sliderActivated = false;
+        unsigned long sliderStartTime;
+
+        void sliderSpeedReset() {
+            // sliderSpeed = sliderSpeedEnum::idle;
+            sliderActivated = true;
+        }
+        // void sliderSpeedStart() {            
+        //     if (sliderSpeed == sliderSpeedEnum::idle) {
+        //         sliderStartTime = millis();
+        //         sliderSpeed = sliderSpeedEnum::slow;
+        //         return;
+        //     }
+        //     auto elapsed = millis() - sliderStartTime;
+
+        //     if ( elapsed >= sliderSpeedFastSpeedTimeInMs ) {
+        //         sliderSpeed = sliderSpeedEnum::fast;
+        //     } else if ( elapsed >= sliderSpeedMediumSpeedTimeInMs )
+        //         sliderSpeed = sliderSpeedEnum::medium;
+        // }
+        int32_t sliderValue(seEntry *se) {
+            if (!se->canSpeedSlide()) return 0;
+
+            if (!sliderActivated) {
+                // start
+                sliderStartTime = millis();
+                sliderActivated = true;
+                return 1;
+            }
+
+            auto elapsed = millis() - sliderStartTime;
+
+            // slow speed
+            if (elapsed < sliderSpeedMediumSpeedTimeInMs)
+                return 1;
+
+            auto range = se->getIntegerRange();
+
+            if (elapsed < sliderSpeedFastSpeedTimeInMs) {
+                // medium speed
+                // move through the whole range in 100 calls
+                elapsed -= sliderSpeedMediumSpeedTimeInMs;
+                return range/100;
+            }
+
+            // fast speed
+            // move through the whole range in 30 calls
+            return range/30;
+
+            // if (sliderSpeed == sliderSpeedEnum::slow)
+            //     return 1;
+            // se->getIntegerRange();
         }
 
 };
@@ -680,8 +1040,8 @@ class SettingsEditor {
         se.text( "Editable Options" );
         bool t = true;
         bool f = false;
-        se.add( "bool 1", t );
-        se.add( "bool 2", f );
+        se.addBoolean( "bool 1", t );
+        se.addBoolean( "bool 2", f );
         int8_t  si08 = -100;
         uint8_t ui08 = 100;
         se.breaker( '-' );
@@ -740,13 +1100,13 @@ class SettingsEditor {
         se.text( "Text" );
         se.text( "Text" );
         se.text( "Text" );
-        se.add( "bool 1", t );
+        se.addBoolean( "bool 1", t );
         se.text( "Text" );
         se.text( "Text" );
         se.text( "Text" );
         se.text( "Text" );
         se.text( "Text" );
-        se.add( "bool 1", t );
+        se.addBoolean( "bool 1", t );
         se.text( "Text" );
         se.text( "Text" );
         se.text( "Text" );

@@ -30,76 +30,73 @@
 #include <Arduino.h>
 #include <inttypes.h>
 
+#include <DigitalIO/DigitalInputRaw.h>
+
+#include <Utility/spMacros.h>
+
 namespace StarterPack {
 
-class DigitalInput {
+// https://stackoverflow.com/questions/8357240/how-to-automatically-convert-strongly-typed-enum-into-int
+// template <class E>
+// constexpr std::common_type_t<int, std::underlying_type_t<E>>
+// enumToInteger(E e) {
+//     return static_cast<std::common_type_t<int, std::underlying_type_t<E>>>(e);
+// }
+
+class DigitalInput : public DigitalInputRaw {
 
     protected:
 
-        uint8_t PIN;                    // pin number to read
-        bool INACTIVE_STATE = false;    // read result to be considered not "active"
+        // digitalRead() to be considered not "active"
+        bool INACTIVE_STATE = LOW;
 
     public:
     
-        virtual ~DigitalInput() {}
-
-        enum class optionsEnum : uint8_t {
-            ACTIVE_HIGH   = 0,
-            ACTIVE_LOW    = 1,
-            NO_PULLUP     = 0,
-            WITH_PULLUP   = 2,
-            WITH_PULLDOWN = 4,
-            STANDARD             = ACTIVE_HIGH | NO_PULLUP,
-            ACTIVE_LOW_PULLUP    = ACTIVE_LOW  | WITH_PULLUP, // best for Arduino
-            ACTIVE_HIGH_PULLDOWN = ACTIVE_HIGH | WITH_PULLDOWN
+        enum Init : uint8_t {
+            PullNone   = static_cast<int>(DigitalInputRaw::Pull::None),
+            PullUp     = static_cast<int>(DigitalInputRaw::Pull::Up),
+            PullDown   = static_cast<int>(DigitalInputRaw::Pull::Down),
+            ActiveHigh = 0,
+            ActiveLow  = 4,
+            None               = ActiveHigh | PullNone,
+            ActiveLowPullUp    = ActiveLow  | PullUp, // best for Arduino
+            ActiveHighPullDown = ActiveHigh | PullDown
         };
-        
-        // inline friend optionsEnum operator|(optionsEnum lhs, optionsEnum rhs) {
-        //     return static_cast<optionsEnum>(
-        //         static_cast<std::underlying_type<optionsEnum>::type>(lhs) |
-        //         static_cast<std::underlying_type<optionsEnum>::type>(rhs)
-        //     );
-        // }
-        // inline friend optionsEnum operator&(optionsEnum lhs, optionsEnum rhs) {
-        //     return static_cast<optionsEnum>(
-        //         static_cast<std::underlying_type<optionsEnum>::type>(lhs) &
-        //         static_cast<std::underlying_type<optionsEnum>::type>(rhs)
-        //     );
-        // }
-        inline friend optionsEnum operator | ( optionsEnum a, optionsEnum b ) {
-            return static_cast<optionsEnum>( static_cast<uint8_t>(a) | static_cast<uint8_t>(b) );
-        }
-        inline friend optionsEnum operator & ( optionsEnum a, optionsEnum b ) {
-            return static_cast<optionsEnum>( static_cast<uint8_t>(a) & static_cast<uint8_t>(b) );
-        }
-        inline friend optionsEnum& operator |= ( optionsEnum& a, optionsEnum b ) {
-            a = a | b; return a;
-        }
 
-        DigitalInput( const uint8_t pin, optionsEnum options = optionsEnum::ACTIVE_LOW_PULLUP ) {
-            PIN = pin;
-            if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )
+        // redefine here, otherwise:
+        //    DigitalInput( pin, DigitalInput::Active::High, DigitalInputRaw::Pull::Up )
+        // instead of:
+        //    DigitalInput( pin, DigitalInput::Active::High, DigitalInput   ::Pull::Up )
+        enum class Pull : uint8_t {
+            None = static_cast<int>(DigitalInputRaw::Pull::None),
+            Up   = static_cast<int>(DigitalInputRaw::Pull::Up),
+            Down = static_cast<int>(DigitalInputRaw::Pull::Down)
+        };        
+
+        enum class Active : uint8_t {
+            High = 0,
+            Low  = 1
+        };
+
+        CLASS_ENUM_MANIPULATION(Active);
+        CLASS_ENUM_MANIPULATION(Init);
+
+        DigitalInput() {}
+
+        DigitalInput( const uint8_t pin, Init options = Init::None )
+        : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(options) ) {
+            if ( ( options & Init::ActiveLow ) == Init::ActiveLow )
                 INACTIVE_STATE = HIGH;
             else
                 INACTIVE_STATE = LOW;
-            if ( ( options & optionsEnum::WITH_PULLUP ) == optionsEnum::WITH_PULLUP )
-                pinMode( PIN, INPUT_PULLUP );
-            else if ( ( options & optionsEnum::WITH_PULLDOWN ) == optionsEnum::WITH_PULLDOWN )
-                #if defined( ESP32 )
-                    pinMode( PIN, INPUT_PULLDOWN );
-                // #elif defined( ESP8266 )
-                //     // only pin16 can have pulldown
-                //     // ... just ignore
-                //     if (pin == 16)
-                //         pinMode( PIN, INPUT_PULLDOWN_16 );
-                //     else
-                //         pinMode( PIN, INPUT );
-                #else
-                    // #error DIGITAL INPUT PULLDOWN NOT SUPPORTED
-                    pinMode( PIN, INPUT );
-                #endif
+        }
+
+        DigitalInput( const uint8_t pin, Active activeLogic, DigitalInput::Pull pullupOptions = DigitalInput::Pull::None )
+        : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(pullupOptions) ) {
+            if ( ( activeLogic & Active::Low ) == Active::Low )
+                INACTIVE_STATE = HIGH;
             else
-                pinMode( PIN, INPUT );
+                INACTIVE_STATE = LOW;
         }
 
     //
@@ -125,19 +122,16 @@ class DigitalInput {
         // }
 
     //
-    // READ
+    // READ WITH LOGIC
     //
     public:
 
-        inline uint8_t readRaw() {
-            return digitalRead( PIN );
-        }
-
         inline bool readLogicalRaw() {
-            return ( digitalRead( PIN ) != INACTIVE_STATE );
+            return ( readRaw() != INACTIVE_STATE );
         }
 
-        virtual bool read() {
+        // virtual 
+        bool read() {
             // to be overridden with extra functionality
             // eg. debounce, repeat, etc.
             return ( readRaw() != INACTIVE_STATE );

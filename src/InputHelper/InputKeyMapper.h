@@ -30,14 +30,26 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include <InputHelper/InputFilterInterface.h>
+
 namespace StarterPack {
 
-class InputMapper {
+template<typename DATA_TYPE, typename OUT_DATA_TYPE>
+class InputKeyMapper : public InputFilterInterface<OUT_DATA_TYPE> {
 
     private:
 
-        typedef uint8_t KEY;
-        static constexpr KEY INACTIVE_KEY = 0;
+        // typedef DATA_TYPE      SCANCODE;
+        // typedef OUT_DATA_TYPE  KEY;
+        static constexpr OUT_DATA_TYPE INACTIVE_KEY = 0;
+
+    //
+    // FILTER BASE
+    //
+    public:
+        inline DATA_TYPE actionApplyFilter( DATA_TYPE value ) override {
+            return actionMapKey(value);
+        }
 
     //
     // SETTINGS
@@ -57,7 +69,7 @@ class InputMapper {
     //
     public:
     
-        KEY actionMapKey( const uint8_t scanCode ) {
+        OUT_DATA_TYPE actionMapKey( const DATA_TYPE scanCode ) {
             // 1-based
             // eg. scanCode=1, will give keyMap[0]
             //    scanCode     : 123456789...
@@ -66,8 +78,18 @@ class InputMapper {
                 return INACTIVE_KEY;
             if ( keyMap == nullptr )
                 return scanCode;
-            if ( strlen( keyMap ) < scanCode )
-                return scanCode;
+
+            // keyMap might not be NULL terminated
+            //    so don't bother checking length
+            // eg. static constexpr char keymap[] = {
+            //        '1', '2', '3', 
+            //        '4', '5', '6',
+            //        '7', '8', '9',
+            //         ui::cESCAPE, '0', ui::cENTER, 0 }; <--- forgot NULL
+            //     keypad.assignKeymap(keymap);
+            // if ( strlen( keyMap ) < scanCode )
+            //     return scanCode;
+
             return keyMap[ scanCode-1 ];
         }
 
