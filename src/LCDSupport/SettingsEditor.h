@@ -190,15 +190,22 @@ namespace StarterPack {
             }
             auto orig = getIntegerData();
             auto min = getIntegerMin();
-            auto max = getIntegerMin();            
+            auto max = getIntegerMax();            
             auto value = orig + delta;
-            if (value < min) value = min;
-            if (value > max) value = max;
+            if (value < min) {
+                // Serial.println("UNDER");
+                value = min;
+            }
+            if (value > max) {
+                // Serial.println("OVER");
+                value = max;
+            }
             if (value != orig) {
+                // Serial.println("SET");
                 setIntegerData( value );
                 return true;
             }
-            return true;
+            return false;
         }
 
         bool moveLeft() {
@@ -278,7 +285,11 @@ namespace StarterPack {
     // EDIT
     //
 
-        bool enterEditMode( StarterPack::alphaEditorSettings &aSet, StarterPack::numericEditorSettings &nSet ) {
+        bool enterEditMode(
+        StarterPack::alphaEditorSettings   &textEditorSettings,
+        StarterPack::numericEditorSettings &numericEditorSettings,
+        StarterPack::alphaEditorSettings   &numericUpDownEditorSettings ) {
+
             namespace ui = StarterPack::UserInterface;
             if ( readonly ) return false;
 
@@ -295,11 +306,13 @@ namespace StarterPack {
                     PickSelected = 1;
                 return true;
             case dataType::_text: {
+
                     char buffer[max.length];
-                    aSet.bufferLength = max.length;
+                    textEditorSettings.bufferLength = max.length;
                     strncpy( buffer, data._text, max.length );
                     buffer[max.length-1] = 0;
-                    StarterPack::alphanumericEditor editor( buffer, aSet );
+
+                    StarterPack::alphanumericEditor editor( buffer, textEditorSettings );
                     while( true ) {
                         uint8_t r = editor.prompt();
                         if ( r == ui::kESCAPE )
@@ -314,27 +327,75 @@ namespace StarterPack {
                 break;
             default: {
                     // integers, floats and doubles
-                    char buffer[maxLength()];
-                    nSet.bufferLength = maxLength();
-                    nSet.allowDecimal = isDecimalAllowed();
-                    nSet.allowNegative = isNegativeAllowed();
-                    ToString( buffer, maxLength() );
-                    StarterPack::numericEditor editor( buffer, nSet );
-                    uint8_t origWindowSize = nSet.windowSize;
-                    while( true ) {
-                        uint8_t r = editor.prompt();
-                        if ( r == ui::kESCAPE )
-                            break;
-                        if ( r == ui::kENTER ) {
-                            if ( isValid( buffer ) ) {
+
+                    if ( ui::hasNumericKeypad ) {
+                        
+                        char buffer[maxLength()];
+                        numericEditorSettings.bufferLength = maxLength();
+                        numericEditorSettings.allowDecimal = isDecimalAllowed();
+                        numericEditorSettings.allowNegative = isNegativeAllowed();
+                        ToString( buffer, maxLength() );
+
+                        StarterPack::numericEditor editor( buffer, numericEditorSettings );
+                        uint8_t origWindowSize = numericEditorSettings.windowSize;
+                        while( true ) {
+                            uint8_t r = editor.prompt();
+                            if ( r == ui::kESCAPE )
                                 break;
-                            } else {
-                                // not valid, show warning and edit again
-                                nSet.windowSize = origWindowSize-1;
-                                ui::LCD->writeAt( nSet.col+origWindowSize-2, nSet.row, ']' );
-                                ui::LCD->write( 0b11101111 ); // pikachu face
+                            if ( r == ui::kENTER ) {
+                                if ( isValid( buffer ) ) {
+                                    break;
+                                } else {
+                                    // not valid, show warning and edit again
+                                    numericEditorSettings.windowSize = origWindowSize-1;
+                                    ui::LCD->writeAt( numericEditorSettings.col+origWindowSize-2, numericEditorSettings.row, ']' );
+                                    ui::LCD->write( 0b11101111 ); // pikachu face
+                                }
                             }
                         }
+
+                    } else {
+
+                        char buffer[maxLength()];
+                        numericUpDownEditorSettings.bufferLength = maxLength();
+
+                        if (isNegativeAllowed())
+                            numericUpDownEditorSettings.prefixList = "-";
+                        else
+                            numericUpDownEditorSettings.prefixList = nullptr;
+                        char symbols[3]; int index=0;
+                        if (isDecimalAllowed())
+                            symbols[index++] = '.';
+                        if (ui::kBACKSPACE == ui::kNONE && ui::kDELETE == ui::kNONE) {
+                            // user cannot delete, just overwrite with space
+                            symbols[index++] = ' ';
+                        }
+                        symbols[index] = 0;
+                        if (index == 0)
+                            numericUpDownEditorSettings.symbolList = nullptr;
+                        else
+                            numericUpDownEditorSettings.symbolList = symbols;
+
+                        ToString( buffer, maxLength() );
+
+                        StarterPack::alphanumericEditor editor( buffer, numericUpDownEditorSettings );
+                        uint8_t origWindowSize = numericEditorSettings.windowSize;
+                        while( true ) {
+                            uint8_t r = editor.prompt();
+                            if ( r == ui::kESCAPE )
+                                break;
+                            if ( r == ui::kENTER ) {
+                                if ( isValid( buffer ) ) {
+                                    break;
+                                } else {
+                                    // not valid, show warning and edit again
+                                    numericEditorSettings.windowSize = origWindowSize-1;
+                                    ui::LCD->writeAt( numericEditorSettings.col+origWindowSize-2, numericUpDownEditorSettings.row, ']' );
+                                    ui::LCD->write( 0b11101111 ); // pikachu face
+                                }
+                            }
+                        }
+                        numericUpDownEditorSettings.symbolList = nullptr;
                     }
                     return true;
                 }
@@ -390,12 +451,6 @@ namespace StarterPack {
                     strncpy( buffer, PickOptions[PickSelected-1], len );
                     buffer[len-1] = 0; // in case option is too long
                 }
-                // if ( max._pick.selected < 1 || max._pick.selected > max._pick.optionCount ) {
-                //     buffer[0] = 0;
-                // } else {
-                //     strncpy( buffer, data.pickOptions[max._pick.selected-1], len );
-                //     buffer[len-1] = 0; // in case option is too long
-                // }
                 break;
             case dataType::_text:
                 strncpy( buffer, data._text, len );
@@ -641,11 +696,34 @@ class SettingsEditor {
             return ptr;
         }
 
+    //
+    // SETTINGS
+    //
     public:
 
         bool readOnly = false;
 
-/*
+        // save memory by instantiating only what's needed
+        // eg. which numeric editor
+        // but confusing for users:
+        // - seg fault
+        // - how to force switching
+        // - so never mind
+        // StarterPack::alphaEditorSettings   *textEditorSettings;
+        // StarterPack::numericEditorSettings *numericEditorSettings;
+        // StarterPack::alphaEditorSettings   *numericUpDownEditorSettings;
+
+        StarterPack::alphaEditorSettings   textEditorSettings;
+        StarterPack::numericEditorSettings numericEditorSettings;
+        StarterPack::alphaEditorSettings   numericUpDownEditorSettings;
+
+        SettingsEditor() {
+            namespace ui = StarterPack::UserInterface;
+            numericUpDownEditorSettings.characterSets = CharCycle::CharSet::Numbers; 
+            numericUpDownEditorSettings.allowChangeCase = false;
+        }
+
+    /*
         struct rowData {
 
             // OLD <PropertyEditor.h>'s is better
@@ -748,11 +826,16 @@ class SettingsEditor {
         };
 */
 
+    //
+    // PROMPT
+    //
+    public:
+
         void prompt( uint8_t captionWidth ) {
             namespace ui = StarterPack::UserInterface;
 
-            if ( StarterPack::UserInterface::LCD == nullptr ) return;
-            LCDInterface *lcd = StarterPack::UserInterface::LCD;
+            if ( !ui::hasScreen() ) return;
+            LCDInterface *lcd = ui::LCD;
 
             rowHandler<StarterPack::seEntry> rowHandler( &head, lcd->maxRows, allowCrossover );
 
@@ -767,13 +850,9 @@ class SettingsEditor {
                 captionWidth = lcd->maxColumns;
             uint8_t dataWidth = lcd->maxColumns - captionWidth - 2;
             
-            // StarterPack::editorSettings editorSettings;
-            // editorSettings.col = captionWidth+1;
-
             bool updateScreen = true;
 
-            // bool leftPressed = false;
-            // bool rightPressed = false;
+            // track actual key pressed, before debounce, repeat, etc.
             uint8_t prevActualKey = -1;
 
             ui::waitUntilNothingIsPressed();
@@ -783,14 +862,10 @@ class SettingsEditor {
                 if ( updateScreen ) {
                     updateScreen = false;
 
-                    // ORIG
-                    // se = head.getFirst();
-                    // for( int i = 0 ; i < row.itemOnTop ; i++ )
-                    //     se = head.getNext();
+                    lcd->cursorOff();
+                    lcd->cursorBlinkOff();
 
-                    // NEW
                     se = rowHandler.getItemOnTopRow();
-
                     for( int row = 0 ; row < lcd->maxRows ; row++ ) {
                         if ( se == nullptr ) {
                             lcd->clearRow( row );
@@ -818,10 +893,8 @@ class SettingsEditor {
                                 lcd->writeAt( lcd->maxColumns-2, row, 0x7E );                        
                         }
                         se = head.getNext();
-                        // se = se->next;
                     }
 
-                    // NEW
                     if ( rowHandler.hasFocusedEntry() ) {
                         se = rowHandler.getFocusedEntry();
                         if ( se->isSelectable() ) {
@@ -830,15 +903,6 @@ class SettingsEditor {
                             lcd->printAt( lcd->maxColumns-1, r, ']' );
                         }
                     }
-
-                    // ORIG
-                    // se = getEntry( row.current );
-                    // if ( se->isSelectable() ) {
-                    //     int r = row.onScreen();
-                    //     lcd->printAt( captionWidth, r, '[' );
-                    //     lcd->printAt( lcd->maxColumns-1, r, ']' );
-                    // }
-
                     lcd->displayAll();
                 }
 
@@ -849,17 +913,9 @@ class SettingsEditor {
                 // if none is handled, other situations won't work: left, release, left, release, ... timer won't reset
                 uint8_t actualKey = ui::getContinuousKey();
                 if ( actualKey != prevActualKey ) {
-                    // previous left/right now something else
+                    // previously left or right key, but now something else
                     if ( prevActualKey==ui::kLEFT || prevActualKey==ui::kRIGHT )
                         sliderSpeedReset();
-                    // if ( actualKey != ui::kLEFT ) {
-                    //     // Serial.printf( "LEFT OFF = %d\n", key );
-                    //     leftPressed  = false;
-                    // }
-                    // if ( actualKey != ui::kRIGHT ) {
-                    //     // Serial.printf( "RIGHT OFF = %d\n", key );
-                    //     rightPressed = false;
-                    // }
                     prevActualKey = actualKey;
                 }
 
@@ -915,28 +971,19 @@ class SettingsEditor {
                     }
 
                 } else if ( key == ui::kENTER ) {
-                    // edit value
 
+                    // viewing only, exit
                     if ( readOnly ) return;
 
                     se = actionableEntry( rowHandler );
                     if ( se == nullptr ) continue;
-                    // se = getEntry( row.current );
 
-                    StarterPack::alphaEditorSettings aSet;
-                    // aSet.setPosition( captionWidth+1, row.onScreen(), dataWidth );
-                    aSet.setPosition( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
+                    textEditorSettings         .setWindow( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
+                    numericEditorSettings      .setWindow( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
+                    numericUpDownEditorSettings.setWindow( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
 
-                    StarterPack::numericEditorSettings nSet;
-                    // nSet.setPosition( captionWidth+1, row.onScreen(), dataWidth );
-                    nSet.setPosition( captionWidth+1, rowHandler.focusedOnScreenRow(), dataWidth );
-
-                    // nSet.col = captionWidth+1;
-                    // nSet.row = row.onScreen();
-                    // nSet.windowSize = dataWidth;
-
-                    if ( se->enterEditMode( aSet, nSet ) )
-                        updateScreen = true;
+                    se->enterEditMode( textEditorSettings, numericEditorSettings, numericUpDownEditorSettings );
+                    updateScreen = true;
                 }
             }
         }
@@ -964,33 +1011,29 @@ class SettingsEditor {
     // SLIDER SPEED
     //
     public:
-        uint16_t sliderSpeedMediumSpeedTimeInMs = 2000;
-        uint16_t sliderSpeedFastSpeedTimeInMs = 4000;
+        
+        uint16_t sliderSpeedUpDelayInMs = 1500; // delay before speed up
+        uint16_t sliderSpeedUpRateInMs = 800;   // time before next step
+
+        uint8_t sliderSpeedUpInitialDivisor = 80; // initial divisor
+        uint8_t sliderSpeedUpFinalDivisor = 4;    // final divisor
+
+        uint8_t sliderSpeedDivisorSteps = 8; // number of steps from initial to final divisor
+
+        // use divisor from initialDiv to finalDiv linearly
+        //    ticks = timeElapsed / speedUpRate
+        //    divisorAdj = ( initial - final ) / steps
+        //    divisor = initial - divisorAdj * ticks
+
     protected:
-
-        // enum class sliderSpeedEnum { idle, slow, medium, fast };
-        // sliderSpeedEnum sliderSpeed = sliderSpeedEnum::idle;
-
         bool sliderActivated = false;
         unsigned long sliderStartTime;
 
         void sliderSpeedReset() {
-            // sliderSpeed = sliderSpeedEnum::idle;
-            sliderActivated = true;
+            sliderActivated = false;
+            // Serial.println("STOP");
         }
-        // void sliderSpeedStart() {            
-        //     if (sliderSpeed == sliderSpeedEnum::idle) {
-        //         sliderStartTime = millis();
-        //         sliderSpeed = sliderSpeedEnum::slow;
-        //         return;
-        //     }
-        //     auto elapsed = millis() - sliderStartTime;
 
-        //     if ( elapsed >= sliderSpeedFastSpeedTimeInMs ) {
-        //         sliderSpeed = sliderSpeedEnum::fast;
-        //     } else if ( elapsed >= sliderSpeedMediumSpeedTimeInMs )
-        //         sliderSpeed = sliderSpeedEnum::medium;
-        // }
         int32_t sliderValue(seEntry *se) {
             if (!se->canSpeedSlide()) return 0;
 
@@ -998,31 +1041,64 @@ class SettingsEditor {
                 // start
                 sliderStartTime = millis();
                 sliderActivated = true;
+                // Serial.println("SLIDE");
                 return 1;
             }
 
             auto elapsed = millis() - sliderStartTime;
 
-            // slow speed
-            if (elapsed < sliderSpeedMediumSpeedTimeInMs)
+            if (elapsed < sliderSpeedUpDelayInMs)
                 return 1;
 
             auto range = se->getIntegerRange();
 
-            if (elapsed < sliderSpeedFastSpeedTimeInMs) {
-                // medium speed
-                // move through the whole range in 100 calls
-                elapsed -= sliderSpeedMediumSpeedTimeInMs;
-                return range/100;
+            float ticks = ((float) (elapsed - sliderSpeedUpDelayInMs)) / sliderSpeedUpRateInMs;
+
+            float divisor;
+            if (ticks > sliderSpeedDivisorSteps)
+                divisor = sliderSpeedUpFinalDivisor;
+            else {
+                divisor = sliderSpeedUpInitialDivisor 
+                    - (sliderSpeedUpInitialDivisor-sliderSpeedUpFinalDivisor) * ticks / sliderSpeedDivisorSteps;
+                if ( divisor < 1 ) divisor = 1;
+                // Serial.print(ticks);
+                // Serial.print(" / ");
+                // Serial.print(divisor);
+                // Serial.print(" / ");
             }
+            // Serial.print(range / divisor);
+            // Serial.println();
+            return range / divisor;
 
-            // fast speed
-            // move through the whole range in 30 calls
-            return range/30;
-
-            // if (sliderSpeed == sliderSpeedEnum::slow)
-            //     return 1;
-            // se->getIntegerRange();
+            // ticks / divisor / delta
+            // 0.19 / 78.22 / 3.26
+            // 0.50 / 75.25 / 3.39
+            // 0.81 / 72.28 / 3.53
+            // 1.12 / 69.31 / 3.68
+            // 1.44 / 66.34 / 3.84
+            // 1.75 / 63.38 / 4.02
+            // 2.06 / 60.41 / 4.22
+            // 2.38 / 57.44 / 4.44
+            // 2.69 / 54.47 / 4.68
+            // 3.00 / 51.50 / 4.95
+            // 3.31 / 48.53 / 5.25
+            // 3.63 / 45.56 / 5.60
+            // 3.94 / 42.59 / 5.99
+            // 4.25 / 39.63 / 6.44
+            // 4.56 / 36.66 / 6.96
+            // 4.88 / 33.69 / 7.57
+            // 5.19 / 30.72 / 8.30
+            // 5.50 / 27.75 / 9.19
+            // 5.81 / 24.78 / 10.29
+            // 6.13 / 21.81 / 11.69
+            // 6.44 / 18.84 / 13.53
+            // 6.75 / 15.88 / 16.06
+            // 7.06 / 12.91 / 19.76
+            // 7.38 / 9.94 / 25.66
+            // 7.69 / 6.97 / 36.59
+            // 8.00 / 4.00 / 63.75
+            // 63.75
+            // ...
         }
 
 };

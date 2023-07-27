@@ -22,11 +22,11 @@ namespace StarterPack {
             bool useUpperCase = true;
             alphaEditorSettings *s = nullptr;
             char *buffer = nullptr;
+            WindowedText *wText = nullptr; // give access
 
         public:
 
             bool modified = false;
-            WindowedText *wText = nullptr; // give access
 
             alphanumericEditor( char *buffer, alphaEditorSettings &s ) {
                 this->buffer = buffer;
@@ -59,8 +59,9 @@ namespace StarterPack {
                 lcd->cursorBlinkOn();
                 // lcd->cursorOn();
 
-                CharCycle cAlpha(s->allowedCharacters);
+                CharCycle cAlpha(s->characterSets);
                 cAlpha.addSymbols(s->symbolList);
+                cAlpha.addPrefixes(s->prefixList);
                 // CharCycle cAlpha(CharCycle::CharSet::UpperCase | CharCycle::CharSet::Space);
                 CharCycle cNumber(CharCycle::CharSet::Numbers | CharCycle::CharSet::Space);
                 CharCycle cSymbol(CharCycle::CharSet::Space);
@@ -125,7 +126,7 @@ namespace StarterPack {
 
                             // enable if last character
                             bool enableJump;
-                            enableJump = ( wText->evalPosition() == WindowedText::cPos::rightAfterLast );
+                            enableJump = ( wText->getCursorPosition() == WindowedText::cursorPositionEnum::rightAfterLast );
                             if ( enableJump )
                                 cAlpha.resetJump();
                             else
@@ -140,7 +141,7 @@ namespace StarterPack {
                             updateDisplay = true;
 
                             // enable if last character
-                            bool enableJump = ( wText->evalPosition() == WindowedText::cPos::rightAfterLast );
+                            bool enableJump = ( wText->getCursorPosition() == WindowedText::cursorPositionEnum::rightAfterLast );
                             if ( enableJump )
                                 cAlpha.resetJump();
                             else
@@ -151,8 +152,7 @@ namespace StarterPack {
 
                         DEBUG_TRACE( SerialPrintfln( "UP-1 = %d", cAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
-                        // if ( wText->canModifyCharAtCursor() ) {
-                            cAlpha.jumpUp( wText->charPtrAtCursor() );
+                            cAlpha.jumpUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             if (s->allowChangeCase)
                                 changeCase( useUpperCase, wText->charPtrAtCursor() );
                             modified = true;
@@ -167,7 +167,7 @@ namespace StarterPack {
                         // if ( wText->canModifyCharAtCursor() ) {
                             // Serial.println("JDOWN");
                             // Serial.println(wText->charAtCursor());
-                            cAlpha.jumpDown( wText->charPtrAtCursor() );
+                            cAlpha.jumpDown( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             // Serial.println(wText->charAtCursor());
                             if (s->allowChangeCase)
                                 changeCase( useUpperCase, wText->charPtrAtCursor() );
@@ -204,7 +204,7 @@ namespace StarterPack {
 
                         // toggle case
                         if (s->allowChangeCase) {
-                            bool afterLast = ( wText->evalPosition() == WindowedText::cPos::rightAfterLast );
+                            bool afterLast = ( wText->getCursorPosition() == WindowedText::cursorPositionEnum::rightAfterLast );
                             if ( !afterLast ) {
                                 char *p = wText->charPtrAtCursor();
                                 if ( *p >= 'A' && *p <= 'Z' ) {
@@ -229,7 +229,7 @@ namespace StarterPack {
 
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                         // if ( wText->canModifyCharAtCursor() ) {
-                            cSymbol.cycleOneUp( wText->charPtrAtCursor() );
+                            cSymbol.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             modified = true;
                             updateDisplay = true;
                         }
@@ -238,7 +238,7 @@ namespace StarterPack {
 
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                         // if ( wText->canModifyCharAtCursor() ) {
-                            cNumber.cycleOneUp( wText->charPtrAtCursor() );
+                            cNumber.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             modified = true;
                             updateDisplay = true;
                         }
@@ -292,10 +292,10 @@ namespace StarterPack {
         namespace ui = StarterPack::UserInterface;
         
         alphaEditorSettings s;
-        s.setPosition( 1, 0, 10 );
+        s.setWindow( 1, 0, 10 );
         // s.setUnit( 11, 1 );
         s.bufferLength = 15;
-        s.allowedCharacters = CharCycle::CharSet::FullAlphabet | CharCycle::CharSet::Space;
+        s.characterSets = CharCycle::CharSet::FullAlphabet | CharCycle::CharSet::Space;
         // s.allowNegative = true;
         // s.allowDecimal = true;
 

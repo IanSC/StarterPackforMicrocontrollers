@@ -217,7 +217,7 @@ namespace StarterPack {
             editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
                 namespace ui = StarterPack::UserInterface;
                 StarterPack::numericEditorSettings nSet;
-                nSet.setPosition(wPos.col, wPos.row, wPos.windowSize);
+                nSet.setWindow(wPos.col, wPos.row, wPos.windowSize);
                 nSet.allowDecimal = false;
                 nSet.allowNegative = min<0;
                 nSet.bufferLength = bufferSize;
@@ -365,7 +365,7 @@ namespace StarterPack {
             editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
                 namespace ui = StarterPack::UserInterface;
                 StarterPack::numericEditorSettings nSet;
-                nSet.setPosition(wPos.col, wPos.row, wPos.windowSize);
+                nSet.setWindow(wPos.col, wPos.row, wPos.windowSize);
                 // eSet.col = wPos.col; eSet.row = wPos.row; eSet.windowSize = wPos.windowSize;
                 nSet.allowDecimal = true;
                 nSet.allowNegative = min<0;

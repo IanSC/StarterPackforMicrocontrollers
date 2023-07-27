@@ -3,10 +3,13 @@
 #include <string.h>
 
 #include <Utility/spMacros.h>
+#include <Utility/WindowedText.h>
 
 namespace StarterPack {
 
     class CharCycle {
+
+        using wt = StarterPack::WindowedText;
 
         //  set allowed characters in [allowedCharacters]
         //  set punctuations using addSymbols()
@@ -22,12 +25,17 @@ namespace StarterPack {
                 LowerCase = 2,
                 Numbers = 4,
                 Symbols = 8,
-                Space = 16,
+                Prefix = 16,
+                Space = 32,
                 FullAlphabet = UpperCase | LowerCase
             };
             CLASS_ENUM_MANIPULATION(CharSet);
 
         private:
+
+            // can appear only at the start
+            // eg. negative for numbers
+            const char *prefixList = nullptr;
 
             const char *symbolList = nullptr;
 
@@ -41,6 +49,14 @@ namespace StarterPack {
 
             // displayable on LCD screen: !"#$%&'()*+,-./   :;<=>?@   [\\]^_`   {|}
             static constexpr char const *AllSymbols = "!\"#$%&'()*+,-./"  ":;<=>?@"  "[\\]^_`"  "{|}";
+
+            void addPrefixes(const char *prefix) {
+                prefixList = prefix;
+                if (prefixList == nullptr)
+                    allowedCharacters = allowedCharacters & ~CharSet::Prefix;
+                else
+                    allowedCharacters = allowedCharacters | CharSet::Prefix;
+            }
 
             void addSymbols(const char *symbols) {
                 symbolList = symbols;
@@ -65,12 +81,12 @@ namespace StarterPack {
         //
         public:
 
-            bool cycleOneUp(char *ch) {
-                return cycleUpCore(ch, false);
+            bool cycleOneUp(char *ch, wt::cursorPositionEnum cursorPosition = wt::cursorPositionEnum::unspecified) {
+                return cycleUpCore(ch, cursorPosition, false);
             }
 
-            bool cycleOneDown(char *ch) {
-                return cycleDownCore(ch, false);
+            bool cycleOneDown(char *ch, wt::cursorPositionEnum cursorPosition = wt::cursorPositionEnum::unspecified) {
+                return cycleDownCore(ch, cursorPosition, false);
             }
 
         //
@@ -78,10 +94,15 @@ namespace StarterPack {
         //
         protected:
 
-            bool cycleUpCore(char *ch, bool jump) {
+            bool cycleUpCore(char *ch, wt::cursorPositionEnum cursorPosition, bool jump) {
                 if ( allowedCharacters == CharSet::None )
                     return false;
                 for(int i=0 ; i<2 ; i++) {
+                    if (cursorPosition == wt::cursorPositionEnum::first) {
+                        if ( (allowedCharacters & CharSet::Prefix) == CharSet::Prefix ) {
+                            if (cycleUpString(ch,prefixList)) return true;
+                        }
+                    }
                     if ( (allowedCharacters & CharSet::UpperCase) == CharSet::UpperCase ) {
                         if (jump) {
                             if (cycleUpString(ch,alphaJUMP)) return true;
@@ -109,7 +130,7 @@ namespace StarterPack {
                 return false;
             }
 
-            bool cycleDownCore(char *ch, bool jump) {
+            bool cycleDownCore(char *ch, wt::cursorPositionEnum cursorPosition, bool jump) {
                 if ( allowedCharacters == CharSet::None )
                     return false;
                 for(int i=0 ; i<2 ; i++) {
@@ -133,6 +154,11 @@ namespace StarterPack {
                             if (cycleDownString(ch,alphaJump)) return true;
                         } else
                             if (cycleDownRange(ch,'z','a')) return true;
+                    }
+                    if (cursorPosition == wt::cursorPositionEnum::first) {
+                        if ( (allowedCharacters & CharSet::Prefix) == CharSet::Prefix ) {
+                            if (cycleUpString(ch,prefixList)) return true;
+                        }
                     }
                     // full cycle, do another loop
                     *ch = 0;
@@ -343,33 +369,33 @@ namespace StarterPack {
                 jMode = jumpMode::cycle1;
             }
 
-            void jumpUp(char *ch) {
+            void jumpUp(char *ch, wt::cursorPositionEnum cursorPosition = wt::cursorPositionEnum::unspecified) {
                 switch( jMode ) {
                 case jumpMode::idle:
                 case jumpMode::upBig:
-                    cycleUpCore( ch, true );
+                    cycleUpCore( ch, cursorPosition, true );
                     // jumpCharacters( true, ch );
                     jMode = jumpMode::upBig;
                     break;
                 case jumpMode::downBig:
                 default:
-                    cycleUpCore( ch, false );
+                    cycleUpCore( ch, cursorPosition, false );
                     jMode = jumpMode::cycle1;
                     break;
                 }
             }
             
-            void jumpDown(char *ch) {
+            void jumpDown(char *ch, wt::cursorPositionEnum cursorPosition = wt::cursorPositionEnum::unspecified) {
                 switch( jMode ) {
                 case jumpMode::idle:
                 case jumpMode::downBig:
-                    cycleDownCore( ch, true );
+                    cycleDownCore( ch, cursorPosition, true );
                     // jumpCharacters( false, ch );
                     jMode = jumpMode::downBig;
                     break;
                 case jumpMode::upBig:
                 default:
-                    cycleDownCore( ch, false );
+                    cycleDownCore( ch, cursorPosition, false );
                     jMode = jumpMode::cycle1;
                 }
             }

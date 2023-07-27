@@ -316,7 +316,7 @@ namespace StarterPack {
             bufferedLCD = (LCDBuffered*) ui::LCD;
 
         numericEditorSettings s;
-        s.setPosition( col, row, windowSize );
+        s.setWindow( col, row, windowSize );
         s.allowDecimal = false;
         s.allowNegative = NEG;
         s.bufferLength = BUFFERSIZE;
@@ -403,7 +403,7 @@ namespace StarterPack {
         namespace ui = StarterPack::UserInterface;
 
         numericEditorSettings s;
-        s.setPosition( 1, 1, 10 );
+        s.setWindow( 1, 1, 10 );
         // s.setUnit( 11, 1 );
         s.bufferLength = 5;
         s.allowNegative = true;

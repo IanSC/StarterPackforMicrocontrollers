@@ -12,10 +12,15 @@ namespace StarterPack {
         uint8_t row = 0;
         uint8_t windowSize = 10;
 
-        void setPosition( uint8_t col, uint8_t row, uint8_t windowSize ) {
+        void setWindow( uint8_t col, uint8_t row, uint8_t windowSize ) {
             this->col = col;
             this->row = row;
             this->windowSize = windowSize;
+        }
+        void setWindow( windowPosition &wPos ) {
+            this->col = wPos.col;
+            this->row = wPos.row;
+            this->windowSize = wPos.windowSize;
         }
     };
 
@@ -33,8 +38,9 @@ namespace StarterPack {
 
     struct alphaEditorSettings : windowPosition {
 
-        CharCycle::CharSet allowedCharacters = CharCycle::CharSet::UpperCase | CharCycle::CharSet::Space;
+        CharCycle::CharSet characterSets = CharCycle::CharSet::UpperCase | CharCycle::CharSet::Space;
         const char *symbolList = nullptr;
+        const char *prefixList = nullptr;
         bool allowChangeCase = true;
 
         WindowedText::cursorRangeOptions cursorRangeOptions = WindowedText::cursorRangeOptions::WithinBufferPlusOne;
@@ -42,23 +48,5 @@ namespace StarterPack {
         // length including NULL terminator
         uint8_t bufferLength = 0;
     };
-
-    // struct editorSettings : windowPosition {
-
-    //     uint8_t decimalPoint = '.';
-    //     bool allowDecimal = false;
-    //     bool allowNegative = false;
-
-    //     // uint8_t col = 0;
-    //     // uint8_t row = 0;
-    //     // uint8_t windowSize = 10;
-    //     uint8_t bufferLength = 0;
-
-    //     // void setPosition( uint8_t col, uint8_t row, uint8_t windowSize ) {
-    //     //     this->col = col;
-    //     //     this->row = row;
-    //     //     this->windowSize = windowSize;
-    //     // }
-    // };
 
 }

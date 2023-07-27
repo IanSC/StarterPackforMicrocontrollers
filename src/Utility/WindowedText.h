@@ -457,7 +457,8 @@ class WindowedText {
     //
     public:
 
-        enum cPos {
+        enum class cursorPositionEnum {
+            unspecified,
             first,          // first charcter
             last,           // last character
             beforeFirst,    // before 1st character
@@ -466,7 +467,7 @@ class WindowedText {
             middle          // somewhere between 1st/last character
         };
 
-        cPos evalPosition() {
+        cursorPositionEnum getCursorPosition() {
             //             first .. middle .. last
             //             |                  |
             //             v                  v
@@ -475,13 +476,13 @@ class WindowedText {
             //            ^                    ^
             //         .. |                    |
             //  beforeFirst       rightAfterLast ... wayAfterLast
-            if ( cursorPos < 0 ) return beforeFirst;
-            if ( cursorPos == 0 ) return first;
+            if ( cursorPos < 0 ) return cursorPositionEnum::beforeFirst;
+            if ( cursorPos == 0 ) return cursorPositionEnum::first;
             // auto bLength = strlen( buffer );
-            if ( cursorPos == currentLength ) return rightAfterLast;
-            if ( cursorPos > currentLength ) return wayAfterLast;
-            if ( cursorPos == currentLength-1 ) return last;
-            return middle;
+            if ( cursorPos == currentLength ) return cursorPositionEnum::rightAfterLast;
+            if ( cursorPos > currentLength ) return cursorPositionEnum::wayAfterLast;
+            if ( cursorPos == currentLength-1 ) return cursorPositionEnum::last;
+            return cursorPositionEnum::middle;
         }
 
         bool canAddChar() {
