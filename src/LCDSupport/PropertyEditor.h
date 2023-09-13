@@ -341,7 +341,6 @@ namespace StarterPack {
         // CLS( uint32_t, _ui32, 10+1, false )  //  4294967295
         // #undef CLS
 
-
         // RAM:   [========= ]  86.3% (used 1768 bytes from 2048 bytes)
         // Flash: [==========]  102.4% (used 31448 bytes from 30720 bytes)
         //
@@ -353,12 +352,14 @@ namespace StarterPack {
             double data;
             double min;
             double max;
+            uint8_t decimalPlaces;
             uint8_t bufferSize;
-            entryRangedDouble( const char *caption, void *data, double dataValue, double min, double max, 
+            entryRangedDouble( const char *caption, void *data, double dataValue, uint8_t decimalPlaces, double min, double max, 
             uint8_t bufferSize,
             bool readonly ) {
                 this->caption = caption; ptr = data; this->readonly = readonly;
-                this->data = dataValue; this->min = min; this->max = max;
+                this->data = dataValue; this->decimalPlaces = decimalPlaces;
+                this->min = min; this->max = max;
                 this->bufferSize = bufferSize;
             }
             uint8_t editBufferSize() override { return bufferSize; }
@@ -384,7 +385,7 @@ namespace StarterPack {
                 }
             }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
-                Num::mySnprintf( buffer, bufferSize, data );
+                Num::mySnprintf( buffer, bufferSize, data, decimalPlaces );
                 // snprintf( buffer, bufferSize, "%f", data );
                 if ( Str::findCharacter( '.', buffer ) ) {
                 // if ( isCharInString( '.', buffer ) ) {
@@ -403,6 +404,8 @@ namespace StarterPack {
             bool parseUserEntry( char *buffer ) override {
                 double F = atof( buffer );
                 if ( F < min || F > max ) return false;
+                double factor = pow( 10, decimalPlaces);
+                F = round( F * factor) / factor;
                 data = F;
                 return true;
             }
@@ -410,8 +413,8 @@ namespace StarterPack {
 
         #define CLS(dType,D,LEN,NEG) \
             class D : public entryRangedDouble { public: \
-                D( const char *caption, dType &data, dType min, dType max, bool readonly) \
-                    : entryRangedDouble(caption,&data,data,min,max,LEN,readonly) {} \
+                D( const char *caption, dType &data, uint8_t dp, dType min, dType max, bool readonly) \
+                    : entryRangedDouble(caption,&data,data,dp,min,max,LEN,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
         CLS( float,  _flot, 20, true )
@@ -1030,6 +1033,24 @@ namespace StarterPack {
             ADD( uint16_t, _ui16,         0, UINT16_MAX )
             ADD( int32_t,  _si32, INT32_MIN, INT32_MAX  )
             ADD( uint32_t, _ui32,         0, UINT32_MAX )
+            // ADD( float,    _flot, -__FLT_MAX__, __FLT_MAX__ );
+            // ADD( double,   _doob, -__DBL_MAX__, __DBL_MAX__ );
+            #undef ADD
+
+            //
+            // FLOAT/DOUBLE
+            //
+            #define ADD(dType,D,MIN,MAX) \
+                PropertyEditorEntry::D *addFloating( const char *caption, dType &data, uint8_t decimalPlaces, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D(caption,data,decimalPlaces,MIN,MAX,readonly); \
+                    insert( se ); \
+                    return se; \
+                } \
+                PropertyEditorEntry::D *addFloating( const char *caption, dType &data, uint8_t decimalPlaces, dType min, dType max, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D(caption,data,decimalPlaces,min,max,readonly); \
+                    insert( se ); \
+                    return se; \
+                }
             ADD( float,    _flot, -__FLT_MAX__, __FLT_MAX__ );
             ADD( double,   _doob, -__DBL_MAX__, __DBL_MAX__ );
             #undef ADD
@@ -1194,9 +1215,9 @@ namespace StarterPack {
 
             if ( !ui::hasScreen() ) return 0;
             LCDInterface *lcd = ui::LCD;
-            LCDBuffered *lcdBuffered = nullptr;
-            if ( lcd->isBuffered() )
-                lcdBuffered = (LCDBuffered*) lcd;
+            // LCDBuffered *lcdBuffered = nullptr;
+            // if ( lcd->isBuffered() )
+            //     lcdBuffered = (LCDBuffered*) lcd;
 
             PropertyEditorEntry::rowHandler rowHandler( &head, lcd->maxRows, allowCrossover );
 
@@ -1303,8 +1324,9 @@ namespace StarterPack {
                         }
                     }
                 }
-                if ( lcdBuffered != nullptr )
-                    lcdBuffered->update();
+                lcd->refreshPartial();
+                // if ( lcdBuffered != nullptr )
+                //     lcdBuffered->update();
 
                 //
                 // KEY
@@ -1553,10 +1575,10 @@ namespace StarterPack {
         double doob1 = -1234567890.123456789;
         double doob2 = -1234567890.123456789;
         se.breaker( '=' );
-        se.add( "flot1", flot1 );
-        se.add( "flot2", flot2 );
-        se.add( "doob1", doob1 );
-        se.add( "doob2", doob2 );
+        se.addFloating( "flot1", flot1, 2 );
+        se.addFloating( "flot2", flot2, 2 );
+        se.addFloating( "doob1", doob1, 2 );
+        se.addFloating( "doob2", doob2, 2 );
 
         uint8_t pick = 2;
         static const char *options[] = { "No", "Yes", "Cancel" };

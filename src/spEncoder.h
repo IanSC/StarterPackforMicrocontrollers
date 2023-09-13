@@ -29,7 +29,7 @@
 
 namespace StarterPack {
 
-    class Encoder {
+    class spEncoder {
 
         protected:
 
@@ -40,7 +40,7 @@ namespace StarterPack {
 
         public:
 
-            Encoder( uint8_t pinA, uint8_t pinB, uint8_t pinA_activeState = HIGH, uint8_t pinB_activeState = HIGH ) {
+            spEncoder( uint8_t pinA, uint8_t pinB, uint8_t pinA_activeState = HIGH, uint8_t pinB_activeState = HIGH ) {
                 this->pinA = pinA; this->pinB = pinB;
                 this->pinA_activeState = pinA_activeState; this->pinB_activeState = pinB_activeState;
 
@@ -53,7 +53,7 @@ namespace StarterPack {
             }
 
             void pinAB_openCollectorMode() {
-                setOpenCollector( pinA, pinB_activeState );
+                setOpenCollector( pinA, pinA_activeState );
                 setOpenCollector( pinB, pinB_activeState );
                 // // based on encoder output type (not sure if correct):
                 // // - voltage output, set a INPUT
@@ -476,7 +476,7 @@ namespace StarterPack {
         //
         protected:
 
-            friend void TEST_encoderTriggerSyncZ( Encoder &e );
+            friend void TEST_encoderTriggerSyncZ( spEncoder &e );
 
     };
 
@@ -534,12 +534,12 @@ namespace StarterPack {
     //     Serial.println( "--- END ---" );
     // }
 
-    void TEST_encoderTriggerSyncZ( Encoder &e ) {
+    void TEST_encoderTriggerSyncZ( spEncoder &e ) {
         e.syncZCore();
     }
 
     void TEST_encoderZSyncCore( int32_t currentPosition, int32_t ppr, int32_t zSync, int32_t expected ) {
-        Encoder e( 0, 0 );
+        spEncoder e( 0, 0 );
         e.setupZSync( 0, ppr, zSync );
         e.set( currentPosition );
         TEST_encoderTriggerSyncZ( e );

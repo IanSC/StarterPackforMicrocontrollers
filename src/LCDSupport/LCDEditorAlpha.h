@@ -59,13 +59,13 @@ namespace StarterPack {
                 lcd->cursorBlinkOn();
                 // lcd->cursorOn();
 
-                CharCycle cAlpha(s->characterSets);
-                cAlpha.addSymbols(s->symbolList);
-                cAlpha.addPrefixes(s->prefixList);
+                CharCycle cycleAlpha(s->characterSets);
+                cycleAlpha.addSymbols(s->symbolList);
+                cycleAlpha.addPrefixes(s->prefixList);
                 // CharCycle cAlpha(CharCycle::CharSet::UpperCase | CharCycle::CharSet::Space);
-                CharCycle cNumber(CharCycle::CharSet::Numbers | CharCycle::CharSet::Space);
-                CharCycle cSymbol(CharCycle::CharSet::Space);
-                cSymbol.addSymbols( CharCycle::AllSymbols );
+                CharCycle cycleNumber(CharCycle::CharSet::Numbers | CharCycle::CharSet::Space);
+                CharCycle cycleSymbol(CharCycle::CharSet::Space);
+                cycleSymbol.addSymbols( CharCycle::AllSymbols );
 
                 while( true ) {
 
@@ -95,8 +95,9 @@ namespace StarterPack {
                             lcd->setCursor( s->col + wText->cursorPositionOnWindow(), s->row );
                         lcd->cursorOn();
                     }
-                    if ( lcdBuffered != nullptr )
-                        lcdBuffered->update();
+                    // if ( lcdBuffered != nullptr )
+                    //     lcdBuffered->update();
+                    lcd->refreshPartial();
 
                     //
                     // KEY
@@ -128,9 +129,9 @@ namespace StarterPack {
                             bool enableJump;
                             enableJump = ( wText->getCursorPosition() == WindowedText::cursorPositionEnum::rightAfterLast );
                             if ( enableJump )
-                                cAlpha.resetJump();
+                                cycleAlpha.resetJump();
                             else
-                                cAlpha.disableJump();
+                                cycleAlpha.disableJump();
                         }
 
                     } else if ( key == ui::kRIGHT ) {
@@ -143,38 +144,38 @@ namespace StarterPack {
                             // enable if last character
                             bool enableJump = ( wText->getCursorPosition() == WindowedText::cursorPositionEnum::rightAfterLast );
                             if ( enableJump )
-                                cAlpha.resetJump();
+                                cycleAlpha.resetJump();
                             else
-                                cAlpha.disableJump();
+                                cycleAlpha.disableJump();
                         }
 
                     } else if ( key == ui::kUP ) {
 
-                        DEBUG_TRACE( SerialPrintfln( "UP-1 = %d", cAlpha.jMode ) )
+                        DEBUG_TRACE( SerialPrintfln( "UP-1 = %d", cycleAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
-                            cAlpha.jumpUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
+                            cycleAlpha.jumpUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             if (s->allowChangeCase)
                                 changeCase( useUpperCase, wText->charPtrAtCursor() );
                             modified = true;
                             updateDisplay = true;
                         }
-                        DEBUG_TRACE( SerialPrintfln( "UP-2 = %d", cAlpha.jMode ) )
+                        DEBUG_TRACE( SerialPrintfln( "UP-2 = %d", cycleAlpha.jMode ) )
 
                     } else if ( key == ui::kDOWN ) {
 
-                        DEBUG_TRACE( SerialPrintfln( "DN-1 = %d", cAlpha.jMode ) )
+                        DEBUG_TRACE( SerialPrintfln( "DN-1 = %d", cycleAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                         // if ( wText->canModifyCharAtCursor() ) {
                             // Serial.println("JDOWN");
                             // Serial.println(wText->charAtCursor());
-                            cAlpha.jumpDown( wText->charPtrAtCursor(), wText->getCursorPosition() );
+                            cycleAlpha.jumpDown( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             // Serial.println(wText->charAtCursor());
                             if (s->allowChangeCase)
                                 changeCase( useUpperCase, wText->charPtrAtCursor() );
                             modified = true;
                             updateDisplay = true;
                         }
-                        DEBUG_TRACE( SerialPrintfln( "DN-2 = %d", cAlpha.jMode ) )
+                        DEBUG_TRACE( SerialPrintfln( "DN-2 = %d", cycleAlpha.jMode ) )
 
                     } else if ( key == ui::kBACKSPACE ) {
 
@@ -229,7 +230,7 @@ namespace StarterPack {
 
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                         // if ( wText->canModifyCharAtCursor() ) {
-                            cSymbol.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
+                            cycleSymbol.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             modified = true;
                             updateDisplay = true;
                         }
@@ -238,7 +239,7 @@ namespace StarterPack {
 
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                         // if ( wText->canModifyCharAtCursor() ) {
-                            cNumber.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
+                            cycleNumber.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
                             modified = true;
                             updateDisplay = true;
                         }
@@ -250,18 +251,21 @@ namespace StarterPack {
                         lcd->printStrAtRow( 1, "^ v cycle letters" );
                         lcd->printStrAtRow( 2, "  . symbols" );
                         lcd->printStrAtRow( 3, "  0 numbers" );
-                        lcd->displayAll();
+                        lcd->refresh();
+                        // lcd->displayAll();
                         if ( ui::waitForAnyKeyPressed() == ui::kQUESTION ) {
                             lcd->printStrAtRow( 0, "[1] change case" );
                             lcd->printStrAtRow( 1, "[U] insert" );
                             lcd->printStrAtRow( 2, "BS  delete" );
                             lcd->clearRow( 3 );
-                            lcd->displayAll();
+                            lcd->refresh();
+                            // lcd->displayAll();
                             if ( ui::waitForAnyKeyPressed() == ui::kQUESTION ) {
                                 lcd->printStrAtRow( 0, "Ok accept" );
                                 lcd->printStrAtRow( 1, "X  go back" );
                                 lcd->clearRow( 2 );
-                                lcd->displayAll();
+                                lcd->refresh();
+                                // lcd->displayAll();
                                 ui::waitForAnyKeyPressed();
                             }
                         }

@@ -272,9 +272,9 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             auto origApproved = debounceLastApprovedKey;
             auto newApproved = actionDebounce(value);
             if ( newApproved != origApproved ) {
-            // Serial.print(origApproved);
-            // Serial.print('.');
-            // Serial.println(newApproved);
+                // Serial.print(origApproved);
+                // Serial.print('.');
+                // Serial.println(newApproved);
                 if ( newApproved != INACTIVE_KEY )
                     return newApproved;
             }

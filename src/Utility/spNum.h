@@ -247,6 +247,28 @@ class Num {
         inline static int mySnprintf(char *buffer, size_t bufferSize, double value) {
             return snprintf( buffer, bufferSize, "%f", value );
         }
+        static const void mySnprintf_FloatingPointFormat( char *fmt, uint8_t decimalPlaces ) {
+            // ex. %.2f --> 2 decimal places
+            strcpy( fmt, "%." );
+            sprintf( fmt+2, "%d", decimalPlaces );
+            strcat( fmt, "f" );
+            // Serial.print("fmt=");
+            // Serial.println(fmt);
+        } 
+        inline static int mySnprintf(char *buffer, size_t bufferSize, float value, uint8_t decimalPlaces) {
+            // %.??f --> max 5 characters only
+            if ( decimalPlaces > 99 ) decimalPlaces = 99;
+            char fmt[6];
+            mySnprintf_FloatingPointFormat( fmt, decimalPlaces );
+            return snprintf( buffer, bufferSize, fmt, (double) value );
+        }
+        inline static int mySnprintf(char *buffer, size_t bufferSize, double value, uint8_t decimalPlaces) {
+            // %.??f --> max 5 characters only
+            if ( decimalPlaces > 99 ) decimalPlaces = 99;
+            char fmt[6];
+            mySnprintf_FloatingPointFormat( fmt, decimalPlaces );
+            return snprintf( buffer, bufferSize, fmt, value );
+        }
 
     //
     // ATOLL - missing in Arduino
@@ -281,6 +303,13 @@ class Num {
             }
             inline static void StrToNum( const char *buffer, uint64_t &result ) {
                 result = strtoull( buffer, NULL, 10 );
+            }
+
+            inline static void StrToNum( const char *buffer, long &result ) {
+                result = atol( buffer );
+            }
+            inline static void StrToNum( const char *buffer, unsigned long &result ) {
+                result = strtoul( buffer, NULL, 10 );
             }
 
     #else

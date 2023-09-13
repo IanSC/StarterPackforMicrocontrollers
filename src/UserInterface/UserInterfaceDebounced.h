@@ -47,6 +47,8 @@ class UserInterfaceDebounced : public InputDebouncer<char>
 
         KEY getKeyDown() {
             auto key = getNonDebouncedKey();
+            // if (key != INACTIVE_KEY)
+            //     Serial.println(key);
             return InputDebouncer::actionGetKeyDown(key);
         }
 

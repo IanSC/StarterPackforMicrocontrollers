@@ -56,8 +56,8 @@
 // TO FIX
 #include <Throttle_OLD.h>
 #include <ChangeObserver.h>
-#include <Encoder.h>
-#include <Storage.h>
+#include <spEncoder.h>
+#include <spStorage.h>
 
 namespace StarterPack {
 }

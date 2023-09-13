@@ -151,7 +151,7 @@ class LCDBuffered : public LCDInterface {
         }
 
         inline bool isBuffered() override { return true; }
-        inline void displayAll() override { updateAllNow(); }
+        // inline void displayAll() override { updateAllNow(); }
 
         LCDBuffered() {}
 
@@ -311,7 +311,8 @@ class LCDBuffered : public LCDInterface {
         void reset() override {
             // if LCD is reset, will revert to blanks
             memset( screenData, ' ', bufferSize );
-            updateAllNow();
+            // updateAllNow();
+            refresh();
         }
 
     //
@@ -773,7 +774,8 @@ class LCDBuffered : public LCDInterface {
         //     NotInitialized  // update skipped, begin() not called or invalid, ex. begin(16,0)
         // };
 
-        LCDInterface::updateResult update() override {
+        // LCDInterface::updateResult update() override {
+        LCDInterface::updateResult refreshPartial() override {
             // send updates to LCD
             
             if ( bufferSize == 0 ) return NotInitialized;
@@ -810,7 +812,10 @@ class LCDBuffered : public LCDInterface {
             }
         }
 
-        updateResult updateAllNow() {
+    protected:
+
+        updateResult refreshCore() {
+        // updateResult updateAllNow() {
             // send updates to LCD without timeout
             if ( bufferSize == 0 ) return NotInitialized;
             if ( bufferMode == doubleBuffer ) {
@@ -827,6 +832,10 @@ class LCDBuffered : public LCDInterface {
             btsLastCompletedUpdate = millis();
             return Completed;
         }
+
+    public:
+
+        inline void refresh() override { refreshCore(); }
 
     private:
 
@@ -914,23 +923,28 @@ class LCDBuffered : public LCDInterface {
         lcd->printStrAtRow( 1, "0BBB-567890123456789" );
         lcd->printStrAtRow( 2, "0CCC-567890123456789" );
         lcd->printStrAtRow( 3, "0DDD-567890123456789" );
-        lcd->displayAll();
+        // lcd->displayAll();
+        lcd->refresh();
         delay(2000);
 
         lcd->scrollDisplayUp();
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(2000);
 
         lcd->scrollDisplayDown();
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(3000);
 
         lcd->scrollDisplayLeft();
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(2000);
 
         lcd->scrollDisplayRight();
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(2000);
     }
 
@@ -942,14 +956,16 @@ class LCDBuffered : public LCDInterface {
         lcd->printStrAtRow( 1, "01234hellohey3456789" );
         lcd->printStrAtRow( 2, "01234hellohey3456789" );
         lcd->printStrAtRow( 3, "01234567890123456789" );
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(1000);
 
         for( int i = 0 ; i < 5 ; i++ ) {
             lcd->scrollWindowLeft( 5, 1, 12, 2 );
             // lcd->scrollWindowRight( 2, 0, 20, 3 );
 
-            lcd->displayAll();
+            lcd->refresh();
+            // lcd->displayAll();
             delay(1000);
         }
 
@@ -960,13 +976,15 @@ class LCDBuffered : public LCDInterface {
         lcd->printStrAtRow( 1, "01234hellohey3456789" );
         lcd->printStrAtRow( 2, "01234hellohey3456789" );
         lcd->printStrAtRow( 3, "01234567890123456789" );
-        lcd->displayAll();
+        // lcd->displayAll();
+        lcd->refresh();
         delay(1000);
 
         for( int i = 0 ; i < 5 ; i++ ) {
             lcd->scrollWindowRight( 5, 1, 12, 2 );
             // lcd->scrollWindowRight( 2, 0, 20, 3 );
-            lcd->displayAll();
+            // lcd->displayAll();
+            lcd->refresh();
             delay(1000);
         }
 
@@ -977,16 +995,19 @@ class LCDBuffered : public LCDInterface {
         lcd->printStrAtRow( 1, "01234hellohey3456789" );
         lcd->printStrAtRow( 2, "01234hiheybye3456789" );
         lcd->printStrAtRow( 3, "01234heythere3456789" );
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(1000);
 
         for( int i = 0 ; i < 3 ; i++ ) {
             lcd->scrollWindowUp( 5, 1, 12, 3 );
-            lcd->displayAll();
+            lcd->refresh();
+            // lcd->displayAll();
             delay(1000);
         }
         lcd->scrollWindowUp( 5, 0, 12, 0 );
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(1000);
 
         //
@@ -996,16 +1017,19 @@ class LCDBuffered : public LCDInterface {
         lcd->printStrAtRow( 1, "01234hellohey3456789" );
         lcd->printStrAtRow( 2, "01234hiheybye3456789" );
         lcd->printStrAtRow( 3, "01234heythere3456789" );
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(1000);
 
         for( int i = 0 ; i < 3 ; i++ ) {
             lcd->scrollWindowDown( 5, 1, 12, 3 );
-            lcd->displayAll();
+            lcd->refresh();
+            // lcd->displayAll();
             delay(1000);
         }
         lcd->scrollWindowDown( 5, 0, 12, 0 );
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         delay(1000);
     }
 
@@ -1041,7 +1065,8 @@ class LCDBuffered : public LCDInterface {
         // pauseUpdate();
         lcd->clear();
         // resumeUpdate();
-        lcd->updateAllNow();
+        lcd->refresh();
+        // lcd->updateAllNow();
 
         lcd->cursorOn();
         lcd->cursorBlinkOn();
@@ -1054,9 +1079,11 @@ class LCDBuffered : public LCDInterface {
             lcd->print( n++ );
             lcd->print( '.' );
             // resumeUpdate();
-            lcd->update();
+            // lcd->update();
+            lcd->refreshPartial();
         }
-        lcd->updateAllNow();
+        lcd->refresh();
+        // lcd->updateAllNow();
         uint32_t elapsed = millis() - start;
 
         delay( 1000 );
@@ -1103,7 +1130,8 @@ class LCDBuffered : public LCDInterface {
         // time to send full screen data
         // make sure it's different
         lcd->clear();
-        lcd->displayAll();
+        lcd->refresh();
+        // lcd->displayAll();
         for( int i = 0 ; i < lcd->maxColumns ; i++ ) {
             lcd->setCursor( 0, i );
             lcd->printCharsN( 'A', lcd->maxColumns );
@@ -1112,7 +1140,8 @@ class LCDBuffered : public LCDInterface {
         // memset( screenData, ' ', bufferSize );
         lcd->updateDurationInMs = 5000;
         uint32_t start = millis();
-        lcd->updateAllNow();
+        // lcd->updateAllNow();
+        lcd->refresh();
         Serial.print( "Full Screen = " );
         Serial.println( millis() - start );
         // SerialPrintfln( "Full Screen = %lu", millis() - start ); // 22ms

@@ -903,7 +903,8 @@ class SettingsEditor {
                             lcd->printAt( lcd->maxColumns-1, r, ']' );
                         }
                     }
-                    lcd->displayAll();
+                    lcd->refresh();
+                    // lcd->displayAll();
                 }
 
                 uint8_t key = ui::getRepeatingKey();

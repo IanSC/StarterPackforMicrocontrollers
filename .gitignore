@@ -6,3 +6,10 @@
 **/.DS_Store
 _xxx/**
 _yyy/**
+src/_xxx/
+src/AnalogIO/_xxx/
+src/DigitalIO/_xxx/
+src/InputHelper/_xxx/
+src/LCDSupport/_xxx/
+src/MatrixKeypad/_xxx/
+src/Utility/_xxx/

@@ -7,7 +7,7 @@
 
 namespace StarterPack {
 
-namespace LCD {
+namespace spLCD {
 
 class menuSystem { 
 
@@ -175,7 +175,8 @@ class menuSystem {
     //
     protected:
 
-        LCD::optionChooser chooser;
+        StarterPack::spLCD::optionChooser chooser;
+        // LCD::optionChooser chooser;
 
         const char **items = nullptr;
         const char **desc = nullptr;
@@ -189,6 +190,12 @@ class menuSystem {
     //
     // DISPLAY
     //
+    public:
+
+        void displayMenu() {
+            displayMenu( currentMenu );
+        }
+
     protected:
 
         void prepareMenuForDisplay( menuBar *menu ) {
@@ -249,7 +256,8 @@ class menuSystem {
                 else
                     ui::LCD->clearRow( descriptionRow );
             }
-            ui::LCD->displayAll();
+            ui::LCD->refresh();
+            // ui::LCD->displayAll();
         }
 
     //

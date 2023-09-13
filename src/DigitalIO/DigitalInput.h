@@ -58,7 +58,7 @@ class DigitalInput : public DigitalInputRaw {
             PullDown   = static_cast<int>(DigitalInputRaw::Pull::Down),
             ActiveHigh = 0,
             ActiveLow  = 4,
-            None               = ActiveHigh | PullNone,
+            Default            = ActiveHigh | PullNone,
             ActiveLowPullUp    = ActiveLow  | PullUp, // best for Arduino
             ActiveHighPullDown = ActiveHigh | PullDown
         };
@@ -83,7 +83,7 @@ class DigitalInput : public DigitalInputRaw {
 
         DigitalInput() {}
 
-        DigitalInput( const uint8_t pin, Init options = Init::None )
+        DigitalInput( const uint8_t pin, Init options = Init::Default )
         : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(options) ) {
             if ( ( options & Init::ActiveLow ) == Init::ActiveLow )
                 INACTIVE_STATE = HIGH;

@@ -31,9 +31,9 @@ class InputRunningAvg : public InputFilterInterface<DATA_TYPE> {
 
     public:
 
-        InputRunningAvg() {
-            // call: setRunningAvgSlots()
-        }
+        // InputRunningAvg() {
+        //     // must call: setRunningAvgSlots()
+        // }
 
         InputRunningAvg(uint8_t storageSlots, DATA_TYPE fluctuationRange=0) {
             setRunningAvgSlots(storageSlots);
@@ -234,7 +234,8 @@ class InputRunningAvg : public InputFilterInterface<DATA_TYPE> {
 
     private:
 
-        // new value delta to average to apply fluctuation removal
+        // to apply fluctuation removal,
+        // [newValue] must be within certain range from average
         DATA_TYPE fluctuationRange = 0;
 
         static constexpr DATA_TYPE MIN = SP_NUMLIMITS_MIN_OF(DATA_TYPE);

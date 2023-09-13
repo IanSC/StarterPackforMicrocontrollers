@@ -130,7 +130,10 @@ class LCDInterface : public Print {
     public:
     
         inline virtual bool isBuffered() { return false; }
-        inline virtual void displayAll() {}
+        // inline virtual void displayAll() {}
+
+        // force all updates to screen
+        inline virtual void refresh() {}
 
         enum updateResult {
             Timeout,        // screen not yet fully updated
@@ -140,7 +143,11 @@ class LCDInterface : public Print {
             NotInitialized  // update skipped, begin() not called or invalid, ex. begin(16,0)
         };
 
-        inline virtual updateResult update() { return NotInitialized; }
+        // inline virtual updateResult update() { return NotInitialized; }
+
+        // force partial update to screen
+        // eg. call in a loop to minimize processing impact
+        inline virtual updateResult refreshPartial() { return NotInitialized; }
 
     //
     // USER COMMANDS

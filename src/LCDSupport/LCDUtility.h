@@ -16,7 +16,7 @@
 
 namespace StarterPack {
 
-namespace LCD {
+namespace spLCD {
 
 //
 // CHOOSER
@@ -63,8 +63,8 @@ namespace LCD {
             const char **options;         // pointer to array of string
             int8_t     optionCount;       // number of items
 
-            uint8_t    *itemLen;          // length of each option
-            uint8_t    *posInLayout;      // position of each option if arranged as one long string
+            uint8_t    *itemLen = nullptr;          // length of each option
+            uint8_t    *posInLayout = nullptr;      // position of each option if arranged as one long string
                                           // eg. [apple][banana][carrots]
                                           //     ^      ^       ^          starting positions
 
@@ -136,6 +136,7 @@ namespace LCD {
                 }
         #endif
 
+        /*
         //
         // THROTTLER
         //
@@ -146,6 +147,7 @@ namespace LCD {
                 this->throttler = throttler;
                 return this;
             }
+        */
 
         //
         // PAYLOAD
@@ -228,6 +230,7 @@ namespace LCD {
                 this->row = row;
                 this->options = options;
                 this->optionCount = optCount;
+                this->crossover = crossover;
 
                 freeMemory();
 
@@ -276,8 +279,8 @@ namespace LCD {
                             return ui::kNONE;
                         }
                     }
-                    if ( throttler != nullptr )
-                        throttler->trigger();
+                    // if ( throttler != nullptr )
+                    //     throttler->trigger();
                 }
             }
 
@@ -347,7 +350,8 @@ namespace LCD {
 
                 if ( showSelection )
                     this->showSelection();
-                lcd->displayAll();
+                // lcd->displayAll();
+                lcd->refresh();
             }
 
             void showSelection() { showMarkersCore( '[', ']' ); }
@@ -375,34 +379,69 @@ namespace LCD {
             }
 
             bool moveLeft() {
-                hideSelection();
-                auto origSelection = selectedItem;
-                if ( selectedItem == 0 ) {
+                auto newSelection = selectedItem;
+                if ( newSelection == 0 ) {
                     if ( crossover )
-                        selectedItem = optionCount - 1;
+                        newSelection = optionCount - 1;
                 } else
-                    selectedItem--;
-                if ( selectedItem != origSelection ) {
-                    computePositions();
-                    display( true );
-                    return true;
-                } else
+                    newSelection--;
+
+                if ( selectedItem == newSelection )
                     return false;
+
+                selectedItem = newSelection;
+                computePositions();
+                display( true );
+                return true;
+
+                // hideSelection();
+                // auto origSelection = selectedItem;
+                // if ( selectedItem == 0 ) {
+                //     if ( crossover )
+                //         selectedItem = optionCount - 1;
+                // } else
+                //     selectedItem--;
+                // if ( selectedItem != origSelection ) {
+                //     computePositions();
+                //     display( true );
+                //     return true;
+                // } else {
+                //     // showSelection();
+                //     return false;
+                // }
             }
 
             bool moveRight() {
-                hideSelection();
-                auto origSelection = selectedItem;
-                if ( selectedItem >= optionCount - 1 ) {
-                    if ( crossover ) selectedItem = 0;
+                auto newSelection = selectedItem;
+                if ( newSelection >= optionCount - 1 ) {
+                    if ( crossover )
+                        newSelection = 0;
                 } else
-                    selectedItem++;
-                if ( selectedItem != origSelection ) {
-                    computePositions();
-                    display( true );
-                    return true;
-                } else
+                    newSelection++;
+                
+                if ( selectedItem == newSelection )
                     return false;
+
+                selectedItem = newSelection;
+                computePositions();
+                display( true );
+                return true;
+
+                // hideSelection();
+                // auto origSelection = selectedItem;
+                // if ( selectedItem >= optionCount - 1 ) {
+                //     if ( crossover )
+                //         selectedItem = 0;
+                // } else
+                //     selectedItem++;
+                // if ( selectedItem != origSelection ) {
+                //     computePositions();
+                //     display( true );
+                //     return true;
+                // } else {
+                //     // showSelection();
+                //     return false;
+                // }
             }
 
         private:
@@ -422,7 +461,8 @@ namespace LCD {
                     lcd->printAt( E, row, right );
                 selectedLeftLocation  = S;
                 selectedRightLocation = E;
-                lcd->displayAll();
+                // lcd->displayAll();
+                lcd->refresh();
             }
 
             void computePositions() {
@@ -462,6 +502,15 @@ namespace LCD {
         //
         // STATIC HELPERS
         //
+        // protected:
+        //     #if defined(ESP8266) || defined(ESP32)
+        //         // return false to breakout of loop
+        //         typedef std::function<bool(void)> backgroundProcessDelegate;
+        //     #else
+        //         // return anything but ui::kNone to breakout of loop
+        //         typedef bool (*backgroundProcessDelegate)();
+        //     #endif
+
         public:
 
             // NO MESSAGE
@@ -469,7 +518,8 @@ namespace LCD {
             static uint8_t choose( const char* (&options)[optCount],
             uint8_t optionsRow = 0,
             uint8_t initialSelection = 0, bool crossover = false,
-            bool (*backgroundProcess)(void) = nullptr ) {
+            backgroundProcessDelegate backgroundProcess = nullptr ) {
+            // bool (*backgroundProcess)(void) = nullptr ) {
                 optionChooser chooser;
                 chooser.initN( options, optCount, optionsRow, initialSelection, crossover );
                 chooser.assignBackgroundProcess( backgroundProcess );
@@ -481,7 +531,8 @@ namespace LCD {
             static uint8_t choose( const char *caption, const char* (&options)[optCount],
             uint8_t captionRow = 0, uint8_t optionsRow = 1, 
             uint8_t initialSelection = 0, bool crossover = false,
-            bool (*backgroundProcess)(void) = nullptr ) {
+            backgroundProcessDelegate backgroundProcess = nullptr ) {
+            // bool (*backgroundProcess)(void) = nullptr ) {
                 namespace ui = StarterPack::UserInterface;
                 if ( !ui::hasScreen() ) return 0;
                 ui::LCD->printStrAtRow( captionRow, caption );
@@ -509,7 +560,8 @@ namespace LCD {
             static uint8_t choose2( const char* opt1, const char* opt2,
             uint8_t optionsRow = 0,
             uint8_t initialSelection = 0, bool crossover = false,
-            bool (*backgroundProcess)(void) = nullptr ) {
+            backgroundProcessDelegate backgroundProcess = nullptr ) {
+            // bool (*backgroundProcess)(void) = nullptr ) {
                 const char *options[] = { opt1, opt2 };
                 // optionChooser chooser( (const char**) options, 2, row, initialSelection, crossover );
                 optionChooser chooser;
@@ -521,9 +573,11 @@ namespace LCD {
             static uint8_t choose2( const char* caption, const char* opt1, const char* opt2,
             uint8_t captionRow = 0, uint8_t optionsRow = 1,
             uint8_t initialSelection = 0, bool crossover = false,
-            bool (*backgroundProcess)(void) = nullptr ) {
+            // bool (*backgroundProcess)(void) = nullptr ) {
+            backgroundProcessDelegate backgroundProcess = nullptr ) {
                 namespace ui = StarterPack::UserInterface;
-                if ( ui::LCD == nullptr ) return 0;
+                // if ( ui::LCD == nullptr ) return 0;
+                if ( !ui::hasScreen() ) return 0;
                 ui::LCD->printStrAtRow( captionRow, caption );
                 return choose2(opt1, opt2, optionsRow, initialSelection, crossover, backgroundProcess);
             }
@@ -531,7 +585,8 @@ namespace LCD {
             static uint8_t choose3( const char* opt1, const char* opt2, const char* opt3,
             uint8_t optionsRow = 0,
             uint8_t initialSelection = 0, bool crossover = false,
-            bool (*backgroundProcess)(void) = nullptr ) {
+            backgroundProcessDelegate backgroundProcess = nullptr ) {
+            // bool (*backgroundProcess)(void) = nullptr ) {
                 const char *options[] = { opt1, opt2, opt3 };
                 optionChooser chooser;
                 chooser.initN( options, 3, optionsRow, initialSelection, crossover );
@@ -543,9 +598,11 @@ namespace LCD {
             static uint8_t choose3( const char* caption, const char* opt1, const char* opt2, const char* opt3,
             uint8_t captionRow = 0, uint8_t optionsRow = 1,
             uint8_t initialSelection = 0, bool crossover = false,
-            bool (*backgroundProcess)(void) = nullptr ) {
+            backgroundProcessDelegate backgroundProcess = nullptr ) {
+            // bool (*backgroundProcess)(void) = nullptr ) {
                 namespace ui = StarterPack::UserInterface;
-                if ( ui::LCD == nullptr ) return 0;
+                if ( !ui::hasScreen() ) return 0;
+                // if ( ui::LCD == nullptr ) return 0;
                 ui::LCD->printStrAtRow( captionRow, caption );
                 return choose3(opt1, opt2, opt3, optionsRow, initialSelection, crossover, backgroundProcess);
             }
@@ -559,7 +616,8 @@ namespace LCD {
             static uint8_t chooseYesNoCore( uint8_t captionRow, const char *caption,
             uint8_t optionsRow,
             uint8_t initialSelection, bool crossover,
-            bool (*backgroundProcess)(void) ) {
+            backgroundProcessDelegate backgroundProcess ) {
+            // bool (*backgroundProcess)(void) ) {
                 return choose2( caption, "Yes", "No",
                     captionRow, optionsRow,
                     initialSelection, crossover, backgroundProcess );
@@ -569,7 +627,8 @@ namespace LCD {
             static uint8_t chooseYesNoCancelCore( uint8_t captionRow, const char *caption,
             uint8_t optionsRow,
             uint8_t initialSelection, bool crossover,
-            bool (*backgroundProcess)(void) ) {
+            backgroundProcessDelegate backgroundProcess ) {
+            // bool (*backgroundProcess)(void) ) {
                 return choose3( caption, "Yes", "No", "Cancel",
                     captionRow, optionsRow,
                     initialSelection, crossover, backgroundProcess );
@@ -579,7 +638,8 @@ namespace LCD {
             static uint8_t chooseNoYesCore( uint8_t captionRow, const char *caption,
             uint8_t optionsRow,
             uint8_t initialSelection, bool crossover,
-            bool (*backgroundProcess)(void) ) {
+            backgroundProcessDelegate backgroundProcess ) {
+            // bool (*backgroundProcess)(void) ) {
                 return choose2( caption, "No", "Yes",
                     captionRow, optionsRow,
                     initialSelection, crossover, backgroundProcess );
@@ -589,13 +649,44 @@ namespace LCD {
             static uint8_t chooseNoYesCancelCore( uint8_t captionRow, const char *caption,
             uint8_t optionsRow,
             uint8_t initialSelection, bool crossover,
-            bool (*backgroundProcess)(void) ) {
+            backgroundProcessDelegate backgroundProcess ) {
+            // bool (*backgroundProcess)(void) ) {
                 return choose3( caption, "No", "Yes", "Cancel",
                     captionRow, optionsRow,
                     initialSelection, crossover, backgroundProcess );
             }
 
         public:
+
+            // #define CHOOSER_VARIATIONS(fName,fNameCore) \
+            //     /* PLAIN */ \
+            //     static uint8_t fName( \
+            //     uint8_t optionsRow=0, \
+            //     bool crossover=false, uint8_t initialSelection=0 ) { \
+            //         return fNameCore( -1, nullptr, optionsRow, initialSelection, crossover, nullptr );  \
+            //     } \
+            //     /* PLAIN WITH MESSAGE */ \
+            //     static uint8_t fName( \
+            //     const char *caption, uint8_t captionRow=0, \
+            //     uint8_t optionsRow=1, \
+            //     bool crossover=false, uint8_t initialSelection=0 ) { \
+            //         return fNameCore( captionRow, caption, optionsRow, initialSelection, crossover, nullptr );  \
+            //     } \
+            //     /* WITH BACKGROUND PROCESS */ \
+            //     static uint8_t fName( \
+            //     bool (*backgroundProcess)(void), \
+            //     uint8_t optionsRow=0, \
+            //     bool crossover=false, uint8_t initialSelection=0 ) { \
+            //         return fNameCore( -1, nullptr, optionsRow, initialSelection, crossover, backgroundProcess ); \
+            //     } \
+            //     /* WITH MESSAGE / BACKGROUND PROCESS */ \
+            //     static uint8_t fName( \
+            //     bool (*backgroundProcess)(void), \
+            //     const char *caption, \
+            //     uint8_t captionRow=0, uint8_t optionsRow=1, \
+            //     bool crossover=false, uint8_t initialSelection=0 ) { \
+            //         return fNameCore( captionRow, caption, optionsRow, initialSelection, crossover, backgroundProcess ); \
+            //     }
 
             #define CHOOSER_VARIATIONS(fName,fNameCore) \
                 /* PLAIN */ \
@@ -613,20 +704,20 @@ namespace LCD {
                 } \
                 /* WITH BACKGROUND PROCESS */ \
                 static uint8_t fName( \
-                bool (*backgroundProcess)(void), \
+                backgroundProcessDelegate backgroundProcess, \
                 uint8_t optionsRow=0, \
                 bool crossover=false, uint8_t initialSelection=0 ) { \
                     return fNameCore( -1, nullptr, optionsRow, initialSelection, crossover, backgroundProcess ); \
                 } \
                 /* WITH MESSAGE / BACKGROUND PROCESS */ \
                 static uint8_t fName( \
+                backgroundProcessDelegate backgroundProcess, \
                 const char *caption, \
-                bool (*backgroundProcess)(void), \
                 uint8_t captionRow=0, uint8_t optionsRow=1, \
                 bool crossover=false, uint8_t initialSelection=0 ) { \
                     return fNameCore( captionRow, caption, optionsRow, initialSelection, crossover, backgroundProcess ); \
                 }
-
+                
             CHOOSER_VARIATIONS( chooseYesNo,       chooseYesNoCore       )
             CHOOSER_VARIATIONS( chooseYesNoCancel, chooseYesNoCancelCore )
             CHOOSER_VARIATIONS( chooseNoYes,       chooseNoYesCore       )
@@ -684,7 +775,8 @@ namespace LCD {
                 }
                 update = false;
             }
-            ui::LCD->displayAll();
+            ui::LCD->refresh();
+            // ui::LCD->displayAll();
 
             uint8_t key = ui::getRepeatingKey();
             if ( key == ui::kENTER || key == ui::kESCAPE ) {
@@ -841,7 +933,8 @@ namespace LCD {
                         }
                     }
                 }
-                ui::LCD->displayAll();
+                ui::LCD->refresh();
+                // ui::LCD->displayAll();
             }
             auto key = ui::getRepeatingKey();
             auto paging = charsPerRow + 1;
@@ -861,7 +954,8 @@ namespace LCD {
             }
         }
         ui::LCD->clear();
-        ui::LCD->displayAll();
+        ui::LCD->refresh();
+        // ui::LCD->displayAll();
     }
 
 //

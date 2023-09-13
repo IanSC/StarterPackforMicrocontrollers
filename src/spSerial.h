@@ -46,4 +46,36 @@ namespace StarterPack {
         }
     }
 
+    void SerialPrintBinary(uint8_t value, char trueValue='1', char falseValue='0') {
+        auto bitCheck = B10000000;
+        for (int bit=0 ; bit<8 ; bit++) {
+            if ((value & bitCheck) == 0)
+                Serial.print(falseValue);
+            else
+                Serial.print(trueValue);
+            bitCheck = bitCheck >> 1;
+        }
+    }
+
+    void SerialPrintBinary(uint16_t value, char trueValue='1', char falseValue='0') {
+        auto bitCheck = B10000000;
+        for (int bit=0 ; bit<16 ; bit++) {
+            if ((value & bitCheck) == 0)
+                Serial.print(falseValue);
+            else
+                Serial.print(trueValue);
+            bitCheck = bitCheck >> 1;
+        }
+    }
+
+    void SerialPrintlnBinary(uint8_t value, char trueValue='1', char falseValue='0') {
+        SerialPrintBinary(value, trueValue, falseValue);
+        Serial.println();
+    }
+
+    void SerialPrintlnBinary(uint16_t value, char trueValue='1', char falseValue='0') {
+        SerialPrintBinary(value, trueValue, falseValue);
+        Serial.println();
+    }
+
 }

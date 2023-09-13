@@ -11,3 +11,5 @@
 
 // analog input used as multiple button with logic
 #include <AnalogIO/AnalogButtons.h>
+
+#include <AnalogIO/AnalogInputScaled.h>

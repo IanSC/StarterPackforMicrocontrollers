@@ -117,8 +117,9 @@ namespace StarterPack {
                             lcd->setCursor( s->col+wText->cursorPositionOnWindow(), s->row );
                         lcd->cursorOn();
                     }
-                    if ( lcdBuffered != nullptr )
-                        lcdBuffered->update();
+                    lcd->refresh();
+                    // if ( lcdBuffered != nullptr )
+                    //     lcdBuffered->update();
 
                     //
                     // KEYSTROKES
@@ -234,13 +235,15 @@ namespace StarterPack {
                         lcd->printStrAtRow( 1, "  cut position" );
                         lcd->printStrAtRow( 2, "Ok - edit" );
                         lcd->printStrAtRow( 3, "X  - go back" );
-                        lcd->displayAll();
+                        lcd->refresh();
+                        // lcd->displayAll();
                         if ( ui::waitForAnyKeyPressed() == ui::kQUESTION ) {
                             lcd->printStrAtRow( 0, ". or \x03 - insert" );
                             lcd->printStrAtRow( 1, "  cut on cursor" );
                             lcd->printStrAtRow( 2, "BS or \x04 - delete" );
                             lcd->printStrAtRow( 3, "  cut on cursor" );
-                            lcd->displayAll();
+                            lcd->refresh();
+                            // lcd->displayAll();
                             ui::waitForAnyKeyPressed();
                         }
                         lcd->clearRow( 2 );

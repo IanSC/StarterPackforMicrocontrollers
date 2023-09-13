@@ -1,21 +1,50 @@
 #pragma once
 #include <Preferences.h>
+#include <nvs_flash.h>
 
 #include <UserInterface.h>
 #include <LCDSupport/LCDUtility.h>
 
-class Storage {
+// nvs_open failed: NOT_INITIALIZED
+// https://github.com/espressif/arduino-esp32/issues/3421
+//
+// nvs_open failed: NOT_FOUND
+
+// Preferences p;
+
+namespace StarterPack {
+
+class spStorage {
 
         const char *PREF_FILE;    // = "DATA";
         uint8_t     VALID_FLAG;   // = 0x23;
         uint8_t     INVALID_FLAG; // = 0x34;
-
+        
     public:
 
-        Storage( const char *PREF_FILE = "DATA", uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
+        spStorage( const char *PREF_FILE = "DATA", uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
             this->PREF_FILE = PREF_FILE;
             this->VALID_FLAG = VALID_FLAG;
             this->INVALID_FLAG = INVALID_FLAG;
+            ESP_ERROR_CHECK( nvs_flash_init() );
+            // open as read/write to force creation
+            // if still missing and opened as read only
+            //    error: [Preferences.cpp:50] begin(): nvs_open failed: NOT_FOUND
+            // ex. spStorage a;
+            //     a.isValid("db") --> nvs_open failed: NOT_FOUND
+            //     if storage has not been created yet
+            //
+            // also check if key exists, when opening db as read only
+            // ex. Preferences p;
+            //     p.begin("db",true);
+            //     p.getUChar("key",10); ==> will hang, if "key" does not exist
+            //     so check first:
+            //        if ( p.isKey("key") ...
+            Preferences p;
+            if ( !p.begin( PREF_FILE, false ) ) {
+                // failed to create ???
+            }
+            p.end();
         }
 
     //
@@ -46,7 +75,8 @@ class Storage {
             namespace ui = StarterPack::UserInterface;
 
             ui::LCD->clear();
-            uint8_t input = StarterPack::LCDUtility::promptNoYes( "Erase Data?" )->prompt();
+            uint8_t input = StarterPack::spLCD::optionChooser::chooseNoYes( "Erase Data?" );
+            // uint8_t input = StarterPack::LCDUtility::promptNoYes( "Erase Data?" )->prompt();
 
             if ( input == 2 ) {
                 if ( wipeCore() ) {
@@ -58,7 +88,8 @@ class Storage {
                 }
             } else {
                 ui::LCD->printStrAtRow( 3, "CANCELLED" );
-                ui::LCD->displayAll();
+                // ui::LCD->displayAll();
+                ui::LCD->refresh();
                 ui::waitForAnyKeyPressed();
                 return wipeResult::wCancelled;
             }
@@ -81,6 +112,8 @@ class Storage {
             result r = result::error;
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) )
+                    break;
+                if ( !p.isKey( validityKey ) )
                     break;
                 if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
                     r = result::invalid;
@@ -135,6 +168,8 @@ class Storage {
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) )
                     break;
+                if ( !p.isKey( dataKey ) )
+                    break;                    
                 if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
                     break;
                 r = true;
@@ -151,10 +186,14 @@ class Storage {
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) )
                     break;
+                if ( !p.isKey( validityKey ) )
+                    break;
                 if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
                     r = result::invalid;
                     break;
                 }
+                if ( !p.isKey( dataKey ) )
+                    break;
                 if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
                     break;
                 r = result::okay;
@@ -216,6 +255,8 @@ class Storage {
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) )
                     break;
+                if ( !p.isKey( dataKey ) )
+                    break;                    
                 if ( p.getBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
                     break;
                 r = true;
@@ -232,10 +273,14 @@ class Storage {
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) )
                     break;
+                if ( !p.isKey( validityKey ) )
+                    break;
                 if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
                     r = result::invalid;
                     break;
                 }
+                if ( !p.isKey( dataKey ) )
+                    break;
                 if ( p.getBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
                     break;
                 r = result::okay;
@@ -282,6 +327,8 @@ class Storage {
         }
 
 };
+
+}
 
 // const char *Storage::PREF_FILE    = "DATA";
 // uint8_t     Storage::VALID_FLAG   = 0x23;

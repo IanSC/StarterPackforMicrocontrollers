@@ -22,21 +22,23 @@ namespace UserInterface {
         return LCD != nullptr;
     }
 
-    void updateBufferedLCD() {
-        // draw for buffered screens
-        if ( LCD == nullptr ) return;
-        LCD->update();
-        // if ( !LCD->isBuffered() ) return;
-        // ( (LCDBuffered*) LCD )->update();
-    }
+    // void updateBufferedLCD() {
+    //     // draw for buffered screens
+    //     if ( LCD == nullptr ) return;
+    //     LCD->refreshPartial();
+    //     // LCD->update();
+    //     // if ( !LCD->isBuffered() ) return;
+    //     // ( (LCDBuffered*) LCD )->update();
+    // }
 
-    void displayAllBufferedLCD() {
-        // draw for buffered screens
-        if ( LCD == nullptr ) return;
-        LCD->displayAll();
-        // if ( !LCD->isBuffered() ) return;
-        // ( (LCDBuffered*) LCD )->update();
-    }
+    // void displayAllBufferedLCD() {
+    //     // draw for buffered screens
+    //     if ( LCD == nullptr ) return;
+    //     LCD->refresh();
+    //     // LCD->displayAll();
+    //     // if ( !LCD->isBuffered() ) return;
+    //     // ( (LCDBuffered*) LCD )->update();
+    // }
 
 //
 // FULL SCREEN
@@ -73,7 +75,8 @@ namespace UserInterface {
     KEY showLinesAndWait( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
         if ( LCD == nullptr ) return 0;
         LCD->showLines( row1, row2, row3, row4 );
-        LCD->displayAll();
+        LCD->refresh();
+        // LCD->displayAll();
         return waitForAnyKeyPressed();
     }
 
@@ -130,7 +133,8 @@ namespace UserInterface {
         if ( msg1 != nullptr ) LCD->printStrAtRow( 1, msg1 );
         if ( msg2 != nullptr ) LCD->printStrAtRow( 2, msg2 );
         if ( msg3 != nullptr ) LCD->printStrAtRow( 3, msg3 );
-        LCD->displayAll();
+        LCD->refresh();
+        // LCD->displayAll();
         // return waitForAnyKey();
     }
 

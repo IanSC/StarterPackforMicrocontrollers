@@ -89,10 +89,10 @@ class InputSlotter : public InputFilterInterface<DATA_TYPE> {
     private:
     
         class slotRange { public:
-            DATA_TYPE  value;  // user specified value
-            DATA_TYPE  from;   // expanded range for slot
+            DATA_TYPE  value;   // user specified value
+            DATA_TYPE  from;    // expanded range for slot
             DATA_TYPE  to;
-            OUT_DATA_TYPE slot;   // value to return if within range
+            OUT_DATA_TYPE slot; // value to return if within range
         };
         slotRange *slotRangeList = nullptr;
         uint8_t slotCount;
@@ -141,7 +141,8 @@ class InputSlotter : public InputFilterInterface<DATA_TYPE> {
 
         void initSlotsN( bool useGuard, int argCount, ... ) {            
             // 2st arg is number of slots
-            // which should include value if nothing is pressed
+            // should include value if nothing is pressed
+            // 3rd arg is nothing is pressed value
 
             this->slotCount = argCount;
             if ( slotRangeList != nullptr )
