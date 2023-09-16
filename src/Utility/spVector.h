@@ -17,6 +17,7 @@ protected:
     struct data {
         T* payload;
         data* next = nullptr;
+        bool doNotDeletePayload = false;
     };
 
     data *head = nullptr;
@@ -38,7 +39,7 @@ public:
         data *parent = head;
         while( parent != nullptr ) {
             data *child = parent->next;
-            if (deletePayload)
+            if (deletePayload && !parent->doNotDeletePayload)
                 delete parent->payload;
             delete parent;
             parent = child;
@@ -54,8 +55,32 @@ public:
     unsigned int count = 0;
 
     void insert(T *payload) {
+        insertCore(payload, false);
+        // auto newEntry = new data;
+        // newEntry->payload = payload;
+
+        // if ( head == nullptr )
+        //     head = newEntry;
+        // else {
+        //     // add to end of list
+        //     data *p = head;
+        //     while ( p->next != nullptr )
+        //         p = p->next;
+        //     p->next = newEntry;
+        // }
+        // count++;
+    }
+
+    void insertNoDelete(T *payload) {
+        insertCore(payload, true);
+    }
+
+protected:
+
+    void insertCore(T *payload, bool doNotDeletePayload) {
         auto newEntry = new data;
         newEntry->payload = payload;
+        newEntry->doNotDeletePayload = doNotDeletePayload;
 
         if ( head == nullptr )
             head = newEntry;

@@ -364,7 +364,7 @@ class LCDInterface : public Print {
         if ( row2 != nullptr ) printStrAtRow( 1, row2 );
         if ( row3 != nullptr ) printStrAtRow( 2, row3 );
         if ( row4 != nullptr ) printStrAtRow( 3, row4 );
-        //lcd.displayAll();
+        // refresh();
     }
     
     inline void show_12345678901234567890( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {

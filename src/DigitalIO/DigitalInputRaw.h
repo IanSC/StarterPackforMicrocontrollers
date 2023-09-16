@@ -75,6 +75,7 @@ class DigitalInputRaw {
 
         DigitalInputRaw( const uint8_t pin, Pull pullupOptions = Pull::None ) {
             PIN = pin;
+            if ( PIN == -1 ) return;
             // if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )
             //     INACTIVE_STATE = HIGH;
             // else
@@ -127,14 +128,17 @@ class DigitalInputRaw {
     public:
 
         inline int readRaw() {
+            if ( PIN == -1 ) return LOW;
             return digitalRead( PIN );
         }
 
         inline bool isOnRaw() {
+            if ( PIN == -1 ) return false;
             return ( readRaw() == HIGH );
         }
 
         inline bool isOffRaw() {
+            if ( PIN == -1 ) return true;
             return ( readRaw() == LOW );
         }
 

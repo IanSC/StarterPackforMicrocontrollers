@@ -136,6 +136,9 @@ namespace StarterPack {
             bool isDirectionCWPositive() {
                 return cwIsPositive;
             }
+            void reverseDirectionCWPositive() {
+                setDirection( !cwIsPositive );
+            }
 
         //
         // INTERRUPT

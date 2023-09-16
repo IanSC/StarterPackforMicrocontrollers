@@ -22,6 +22,8 @@ namespace UserInterface {
         return LCD != nullptr;
     }
 
+    bool autoRefresh = true;
+
     // void updateBufferedLCD() {
     //     // draw for buffered screens
     //     if ( LCD == nullptr ) return;
@@ -50,6 +52,7 @@ namespace UserInterface {
     void showLines( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
         if ( LCD == nullptr ) return;
         LCD->showLines( row1, row2, row3, row4 );
+        if ( autoRefresh ) LCD->refresh();
     }
 
     inline void show_12345678901234567890( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
@@ -75,8 +78,7 @@ namespace UserInterface {
     KEY showLinesAndWait( const char *row1, const char *row2 = nullptr, const char *row3 = nullptr, const char *row4 = nullptr ) {
         if ( LCD == nullptr ) return 0;
         LCD->showLines( row1, row2, row3, row4 );
-        LCD->refresh();
-        // LCD->displayAll();
+        if ( autoRefresh ) LCD->refresh();
         return waitForAnyKeyPressed();
     }
 
@@ -133,7 +135,7 @@ namespace UserInterface {
         if ( msg1 != nullptr ) LCD->printStrAtRow( 1, msg1 );
         if ( msg2 != nullptr ) LCD->printStrAtRow( 2, msg2 );
         if ( msg3 != nullptr ) LCD->printStrAtRow( 3, msg3 );
-        LCD->refresh();
+        if ( autoRefresh ) LCD->refresh();
         // LCD->displayAll();
         // return waitForAnyKey();
     }
@@ -181,7 +183,7 @@ namespace UserInterface {
 //
 
     // 3-liner error code dialog, display only
-    void showErrorDialog3( uint8_t errSource, uint8_t errCode,
+    void displayErrorDialog3( uint8_t errSource, uint8_t errCode,
     const char *errMsg1 = nullptr, const char *errMsg2 = nullptr, const char *errMsg3 = nullptr,
     const char *headerDecorator = "((()))" ) {
         if ( LCD == nullptr ) return;
@@ -196,15 +198,15 @@ namespace UserInterface {
     const char *errMsg1 = nullptr, const char *errMsg2 = nullptr, const char *errMsg3 = nullptr,
     const char *headerDecorator = "((()))" ) {
         if ( LCD == nullptr ) return INACTIVE_KEY;
-        showErrorDialog3( errSource, errCode, errMsg1, errMsg2, errMsg3, headerDecorator );
+        displayErrorDialog3( errSource, errCode, errMsg1, errMsg2, errMsg3, headerDecorator );
         return waitForAnyKeyPressed();
     }
 
     // 1-liner error code dialog, display only
-    inline void showErrorDialog1( uint8_t errSource, uint8_t errCode,
+    inline void displayErrorDialog1( uint8_t errSource, uint8_t errCode,
     const char *errMsg = nullptr,
     const char *headerDecorator = "((()))" ) {
-        showErrorDialog3( errSource, errCode, nullptr, errMsg, nullptr );
+        displayErrorDialog3( errSource, errCode, nullptr, errMsg, nullptr );
         // if ( LCD == nullptr ) return;
         // LCD->clear();
         // char header[11]; // "ERROR xxyy"
@@ -217,7 +219,7 @@ namespace UserInterface {
     const char *errMsg = nullptr,
     const char *headerDecorator = "((()))" ) {
         if ( LCD == nullptr ) return INACTIVE_KEY;
-        showErrorDialog3( errSource, errCode, nullptr, errMsg, nullptr );
+        displayErrorDialog3( errSource, errCode, nullptr, errMsg, nullptr );
         return waitForAnyKeyPressed();
         // if ( LCD == nullptr ) return 0;
         // displayOnlyErrorDialog1( errSource, errCode, errMsg, headerDecorator );

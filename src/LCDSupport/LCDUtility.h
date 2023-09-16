@@ -262,6 +262,10 @@ namespace spLCD {
                 setSelectedItem( initialSelection );
             }
 
+        private:
+
+            static constexpr uint8_t POLL_CANCELLED = -1;
+
         public:
 
             uint8_t prompt() {
@@ -270,13 +274,15 @@ namespace spLCD {
                 uint8_t input;
                 while( true ) {
                     input = poll();
+                    if ( input == POLL_CANCELLED )
+                        return 0;
                     if ( input != 0 )
                         return input;
                     if ( backgroundProcess != nullptr ) {
                         if ( !backgroundProcess() ) {
                             // terminated, no selection
                             // return 0, but retain currently selectedItem
-                            return ui::kNONE;
+                            return 0;
                         }
                     }
                     // if ( throttler != nullptr )
@@ -375,6 +381,8 @@ namespace spLCD {
                     moveLeft();
                 else if ( key == ui::kRIGHT || key == ui::kDOWN )
                     moveRight();
+                else if ( key == ui::kESCAPE )
+                    return POLL_CANCELLED;
                 return ui::kNONE;
             }
 

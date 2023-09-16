@@ -65,10 +65,10 @@ class spStorage {
             return r;
         }
 
-        enum wipeResult {
-            wOkay,
-            wError,
-            wCancelled
+        enum class wipeResult {
+            okay,
+            error,
+            cancelled
         };
 
         wipeResult wipeWithPrompt( uint8_t ERR_SOURCE, uint8_t ERR_STORAGE_WIPE ) {
@@ -81,17 +81,17 @@ class spStorage {
             if ( input == 2 ) {
                 if ( wipeCore() ) {
                     ui::promptDialog1( "RESET", "data erased" );
-                    return wipeResult::wOkay;
+                    return wipeResult::okay;
                 } else {
                     ui::promptErrorDialog1( ERR_SOURCE, ERR_STORAGE_WIPE, "error erasing data" );
-                    return wipeResult::wError;
+                    return wipeResult::error;
                 }
             } else {
                 ui::LCD->printStrAtRow( 3, "CANCELLED" );
                 // ui::LCD->displayAll();
                 ui::LCD->refresh();
                 ui::waitForAnyKeyPressed();
-                return wipeResult::wCancelled;
+                return wipeResult::cancelled;
             }
         }
 

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
@@ -937,9 +938,19 @@ namespace StarterPack {
             //
             //
 
-            void add( PropertyEditorEntry::entryCore *property ) {
+            void addWithDelete( PropertyEditorEntry::entryCore *property ) {
                 // entry will be deleted
                 insert( property );
+            }
+
+            void addNoDelete( PropertyEditorEntry::entryCore &property ) {
+                // entry will not be deleted
+                head.insertNoDelete( &property );
+            }
+
+            void addNoDelete( PropertyEditorEntry::entryCore *property ) {
+                // entry will not be deleted
+                head.insertNoDelete( property );
             }
 
             // void add( PropertyEditorEntry::entryCore *property ) {

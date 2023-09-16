@@ -90,6 +90,12 @@ class menuSystem {
 
                     return submenu;
                 }
+                void addExitMenu() {
+                    if (parent == nullptr)
+                        addExitMenu( "\x7F""EXIT", "exit menu" );
+                    else
+                        addExitMenu( "\x7F""BACK", "back to top menu" );
+                }
                 void addExitMenu( const char *option, const char *description ) {
                     // add entry, when selected go back to parent menu
                     auto e = new menuOption();
