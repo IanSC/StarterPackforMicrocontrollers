@@ -40,21 +40,56 @@ namespace StarterPack {
 
         public:
 
-            spEncoder( uint8_t pinA, uint8_t pinB, uint8_t pinA_activeState = HIGH, uint8_t pinB_activeState = HIGH ) {
+            enum class openCollectorType : uint8_t {
+                // None,
+                NPN = 0,  // ACTIVE = positive
+                PNP = 1  // ACTIVE = negative
+            };
+
+            spEncoder( uint8_t pinA, uint8_t pinB ) {
                 this->pinA = pinA; this->pinB = pinB;
-                this->pinA_activeState = pinA_activeState; this->pinB_activeState = pinB_activeState;
-
-                pinMode( pinA, INPUT );
-                pinMode( pinB, INPUT );
+                setPinAB_activeStates( HIGH, HIGH );
             }
 
-            void setPinAB_activeStates( uint8_t pinA_activeState = HIGH, uint8_t pinB_activeState = HIGH ) {
-                this->pinA_activeState = pinA_activeState; this->pinB_activeState = pinB_activeState;
+            spEncoder( uint8_t pinA, uint8_t pinB, openCollectorType openCollector ) {
+                this->pinA = pinA; this->pinB = pinB;
+
+                setOpenCollectorInput( pinA, openCollector );
+                setOpenCollectorInput( pinB, openCollector );
+                this->pinA_activeState = getOpenCollectorActiveState( openCollector );
+                this->pinB_activeState = getOpenCollectorActiveState( openCollector );
             }
 
+            // spEncoder( uint8_t pinA, uint8_t pinB, uint8_t pinA_activeState = HIGH, uint8_t pinB_activeState = HIGH ) {
+            //     this->pinA = pinA; this->pinB = pinB;
+            //     this->pinA_activeState = pinA_activeState; this->pinB_activeState = pinB_activeState;
+
+            //     pinMode( pinA, INPUT );
+            //     pinMode( pinB, INPUT );
+            //     setOpenCollectorInput( pinA, pinA_activeState );
+            //     setOpenCollectorInput( pinB, pinB_activeState );
+            // }
+
+            void setPinAB_OpenCollectorType( openCollectorType openCollector ) {
+                setOpenCollectorInput( pinA, openCollector );
+                setOpenCollectorInput( pinB, openCollector );
+                this->pinA_activeState = getOpenCollectorActiveState( openCollector );
+                this->pinB_activeState = getOpenCollectorActiveState( openCollector );
+            }
+
+            void setPinAB_activeStates( uint8_t pinA_activeState, uint8_t pinB_activeState ) {
+                auto pinA_OC = pinA_activeState == HIGH ? openCollectorType::NPN : openCollectorType::PNP;
+                auto pinB_OC = pinB_activeState == HIGH ? openCollectorType::NPN : openCollectorType::PNP;
+                setOpenCollectorInput( pinA, pinA_OC );
+                setOpenCollectorInput( pinB, pinB_OC );
+                this->pinA_activeState = getOpenCollectorActiveState( pinA_OC );
+                this->pinB_activeState = getOpenCollectorActiveState( pinB_OC );
+            }
+
+/*
             void pinAB_openCollectorMode() {
-                setOpenCollector( pinA, pinA_activeState );
-                setOpenCollector( pinB, pinB_activeState );
+                setOpenCollectorInput( pinA, pinA_activeState );
+                setOpenCollectorInput( pinB, pinB_activeState );
                 // // based on encoder output type (not sure if correct):
                 // // - voltage output, set a INPUT
                 // // - NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
@@ -81,19 +116,65 @@ namespace StarterPack {
                 //     #endif
                 // }
             }
+*/
 
+        protected:
+
+            static uint8_t getOpenCollectorActiveState( openCollectorType openCollector ) {
+                // based on encoder output type (not sure if correct):
+                // - voltage output, set a INPUT
+                // - NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
+                // - PNP open collector, negative ACTIVE, set as INPUT_PULLDOWN (or external resitor, no pull down on Arduino)
+
+                switch( openCollector ) {
+                // case openCollectorType::None: break;
+                case openCollectorType::NPN: return HIGH;
+                case openCollectorType::PNP: return LOW;
+                default: return HIGH;
+                }
+            }
+
+            static void setOpenCollectorInput( uint8_t pin, openCollectorType openCollector ) {
+                // based on encoder output type (not sure if correct):
+                // - voltage output, set a INPUT
+                // - NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
+                // - PNP open collector, negative ACTIVE, set as INPUT_PULLDOWN (or external resitor, no pull down on Arduino)
+
+                switch( openCollector ) {
+                case openCollectorType::NPN:
+                    // NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
+                    #if defined(ESP32)
+                        pinMode( pin, INPUT_PULLDOWN );
+                    #else
+                        // pinMode( pin, INPUT );
+                    #endif
+                    break;
+                case openCollectorType::PNP:
+                    // PNP open collector, negative ACTIVE, set as INPU_PULLDOWN (or external resitor, no pull down on Arduino)
+                    pinMode( pin, INPUT_PULLUP );
+                    break;
+                // case openCollectorType::None:
+                default:
+                    pinMode( pin, INPUT );
+                    break;
+                }
+            }
+
+/*
             static void setOpenCollector( uint8_t pin, uint8_t activeState ) {
                 // based on encoder output type (not sure if correct):
                 // - voltage output, set a INPUT
                 // - NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
-                // - PNP open collector, negative ACTIVE, set as INPU_PULLDOWN (or external resitor, no pull down on Arduino)
+                // - PNP open collector, negative ACTIVE, set as INPUT_PULLDOWN (or external resitor, no pull down on Arduino)
                 //
                 // if active HIGH, pullup HIGH
                 // if active LOW,  pullup LOW
 
-                if ( activeState == LOW )
+                if ( activeState == LOW ) {
+                    // PNP open collector, negative ACTIVE, set as INPU_PULLDOWN (or external resitor, no pull down on Arduino)
                     pinMode( pin, INPUT_PULLUP );
-                else {
+                } else {
+                    // NPN open collector, positive ACTIVE, set as INPUT_PULLUP  (or external resistor)
                     #if defined(ESP32)
                         pinMode( pin, INPUT_PULLDOWN );
                     #else
@@ -111,6 +192,7 @@ namespace StarterPack {
                 //     #endif
                 // }
             }
+*/
 
         //
         // DIRECTION
@@ -350,6 +432,54 @@ namespace StarterPack {
         //
         public:
 
+            void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue ) {
+                setupZSync( zPin, encoderPPR, syncValue, HIGH );
+            }
+
+            void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, openCollectorType openCollector ) {
+                // when Z in hit, encoder count must be syncValue +/- multiple of encoder PPR
+                //
+                //      sVal-2*PPR    sVal-1*PPR    sVal          sVal+1*PPR    sVal+2*PPR
+                //   ---|-------------|-------------|-------------|-------------|-------------|---
+                //      Z             Z             Z             Z             Z             Z
+                //
+                this->zPin = zPin;
+                this->encoderPPR = encoderPPR;
+                this->syncValue = syncValue;
+                setPinZ_OpenCollectorType( openCollector );
+                // setOpenCollectorInput( zPin, openCollector );
+                // this->zPin_activeState = getOpenCollectorActiveState( openCollector );
+            }
+
+            void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, bool activeState ) {
+                // when Z in hit, encoder count must be syncValue +/- multiple of encoder PPR
+                //
+                //      sVal-2*PPR    sVal-1*PPR    sVal          sVal+1*PPR    sVal+2*PPR
+                //   ---|-------------|-------------|-------------|-------------|-------------|---
+                //      Z             Z             Z             Z             Z             Z
+                //
+                this->zPin = zPin;
+                this->encoderPPR = encoderPPR;
+                this->syncValue = syncValue;
+                setPinZ_activeState( activeState );
+            }
+
+            void setPPR( uint16_t encoderPPR ) {
+                this->encoderPPR = encoderPPR;
+            }
+
+            void setPinZ_OpenCollectorType( openCollectorType openCollector ) {
+                setOpenCollectorInput( zPin, openCollector );
+                this->zPin_activeState = getOpenCollectorActiveState( openCollector );
+            }
+
+            void setPinZ_activeState( uint8_t zPin_activeState ) {
+                auto pinZ_OC = pinA_activeState == HIGH ? openCollectorType::NPN : openCollectorType::PNP;
+                setOpenCollectorInput( zPin, pinZ_OC );
+                this->zPin_activeState = getOpenCollectorActiveState( pinZ_OC );
+            }
+
+/*
             void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, uint8_t zPin_activeState = HIGH ) {
                 // when Z in hit, encoder count must be syncValue +/- multiple of encoder PPR
                 //
@@ -390,6 +520,7 @@ namespace StarterPack {
                 //     #endif
                 // }
             }
+*/
 
             void enableZSync() {
                 if ( syncOnZ ) return;
@@ -542,8 +673,8 @@ namespace StarterPack {
     }
 
     void TEST_encoderZSyncCore( int32_t currentPosition, int32_t ppr, int32_t zSync, int32_t expected ) {
-        spEncoder e( 0, 0 );
-        e.setupZSync( 0, ppr, zSync );
+        spEncoder e( 0, 0, spEncoder::openCollectorType::NPN );
+        e.setupZSync( 0, ppr, zSync, spEncoder::openCollectorType::NPN );
         e.set( currentPosition );
         TEST_encoderTriggerSyncZ( e );
 

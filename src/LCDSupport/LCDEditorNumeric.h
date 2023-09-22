@@ -149,12 +149,12 @@ namespace StarterPack {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kLEFT ) {
+                    } else if ( key == ui::kLEFT && s->useLeftRightArrowKeys ) {
                         if ( wText->cursorBackward() ) {
                             // modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kRIGHT ) {
+                    } else if ( key == ui::kRIGHT && s->useLeftRightArrowKeys ) {
                         if ( wText->cursorForward() ) {
                             modified = true;
                             updateDisplay = true;
@@ -229,6 +229,11 @@ namespace StarterPack {
                         // Flash: [====      ]  40.6% (used 12482 bytes from 30720 bytes)
 
                     } else if ( key == ui::kQUESTION ) {
+
+                        // pass back to user for now
+                        return key;
+
+                        /*
                         // specific to cutter app
                         lcd->cursorOff();
                         lcd->printStrAtRow( 0, "use \x7F \x7E to highlight" );
@@ -250,6 +255,8 @@ namespace StarterPack {
                         lcd->clearRow( 3 );
                         ui::waitUntilNothingIsPressed();
                         updateDisplay = true;
+                        */
+
                     } else {
                         // unknown key, pass back for caller to handle
                         // possibly includes kDECIMAL, kMINUS if not allowed

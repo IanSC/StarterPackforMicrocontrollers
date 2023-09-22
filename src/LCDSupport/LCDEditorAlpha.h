@@ -120,7 +120,7 @@ namespace StarterPack {
 
                         // ...
 
-                    } else if ( key == ui::kLEFT ) {
+                    } else if ( key == ui::kLEFT && s->useLeftRightArrowKeys ) {
 
                         if ( wText->cursorBackward() ) {
                             updateDisplay = true;
@@ -134,7 +134,7 @@ namespace StarterPack {
                                 cycleAlpha.disableJump();
                         }
 
-                    } else if ( key == ui::kRIGHT ) {
+                    } else if ( key == ui::kRIGHT && s->useLeftRightArrowKeys ) {
 
                         // might add spaces at end,
                         // but don't consider as modified
@@ -245,6 +245,11 @@ namespace StarterPack {
                         }
 
                     } else if ( key == ui::kQUESTION ) {
+
+                        // pass back to user for now
+                        return key;
+
+                        /*
                         // specific to cutter app
                         lcd->cursorOff();
                         lcd->printStrAtRow( 0, "\x7F \x7E to move cursor" );
@@ -271,6 +276,8 @@ namespace StarterPack {
                         }
                         lcd->cursorOn();
                         updateDisplay = true;
+                        */
+                        
                     } else {
                         // unknown key, pass back for caller to handle
                         return key;
