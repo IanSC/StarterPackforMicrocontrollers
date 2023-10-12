@@ -24,9 +24,12 @@
 #pragma once
 
 #include <Arduino.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <InputHelper/InputFilterInterface.h>
+
+// #define DEBUG_TRACE(x)   x;
+#define DEBUG_TRACE(x)   ;
 
 namespace StarterPack {
 
@@ -136,9 +139,6 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
 
     public:
 
-        // #define DEBUG_TRACE(x)   x;
-        #define DEBUG_TRACE(x)   ;
-
         DATA_TYPE actionDebounce(DATA_TYPE key) {
             switch( debounceMode ) {
 
@@ -245,8 +245,6 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             return debounceLastApprovedKey;
         }
 
-        #undef DEBUG_TRACE
-
         void skipDebounceDelay() {
             // proceed to stability check
             // why skip? just don't set it ???
@@ -301,3 +299,5 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
 // struct InputDebouncer<T>::Settings InputDebouncer<T>::globalDebouncerSettings;
 
 }
+
+#undef DEBUG_TRACE

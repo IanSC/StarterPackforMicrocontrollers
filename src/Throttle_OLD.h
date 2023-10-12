@@ -326,12 +326,14 @@
 
 //     uint16_t throttleInMs = 100;
 
-//     #define CONS( out, in ) \
-//         Throttle_OLD( out ## in ## _F f, uint16_t throttleInMs = 100 ) : Throttle_OLD( throttleInMs ) { \
-//             this->ptr = (void*) f; \
-//             inputType = paramType::in; \
-//             outputType = paramType::out; \
-//         }
+/*
+    #define CONS( out, in ) \
+        Throttle_OLD( out ## in ## _F f, uint16_t throttleInMs = 100 ) : Throttle_OLD( throttleInMs ) { \
+            this->ptr = (void*) f; \
+            inputType = paramType::in; \
+            outputType = paramType::out; \
+        }
+*/
 
 //     CONS( _void, _void ) CONS( _bool, _void )
 //     CONS( _void, _bool ) CONS( _bool, _bool )
@@ -414,19 +416,21 @@
 //         //     outputType = paramType::_void;
 //         // }
 
-//         // https://cplusplus.com/forum/general/63552/
-//         #define CONS( out, in ) \
-//             Throttle_OLD( out ## in ## _FF f, uint16_t throttleInMs = 100 ) : Throttle_OLD( throttleInMs ) { \
-//                 this->ptrF = f.target<void*>(); \
-//                 inputType = paramType::in; \
-//                 outputType = paramType::out; \
-//             }
-//         // #define CONS( out, in ) \
-//         //     Throttle_OLD( out ## in ## _FF f, uint16_t throttleInMs = 100 ) : Throttle_OLD( throttleInMs ) { \
-//         //         this->ptrF = (voidFF) &f; \
-//         //         inputType = paramType::in; \
-//         //         outputType = paramType::out; \
-//         //     }
+/*
+        // https://cplusplus.com/forum/general/63552/
+        #define CONS( out, in ) \
+            Throttle_OLD( out ## in ## _FF f, uint16_t throttleInMs = 100 ) : Throttle_OLD( throttleInMs ) { \
+                this->ptrF = f.target<void*>(); \
+                inputType = paramType::in; \
+                outputType = paramType::out; \
+            }
+        // #define CONS( out, in ) \
+        //     Throttle_OLD( out ## in ## _FF f, uint16_t throttleInMs = 100 ) : Throttle_OLD( throttleInMs ) { \
+        //         this->ptrF = (voidFF) &f; \
+        //         inputType = paramType::in; \
+        //         outputType = paramType::out; \
+        //     }
+*/
 
 //         CONS( _void, _void ) CONS( _bool, _void )
 //         CONS( _void, _bool ) CONS( _bool, _bool )
@@ -534,6 +538,7 @@
 //     // INPUT --> VOID / IGNORE
 //     //
 
+/*
 //     // #define M( in, dType ) \
 //     //     void trigger( dType input ) { \
 //     //         uint32_t now = millis(); \
@@ -586,6 +591,7 @@
 //                 } \
 //             } \
 //         }
+*/
 //     M( _bool, bool     )
 //     M( _si08, int8_t   )
 //     M( _ui08, uint8_t  )
@@ -601,6 +607,7 @@
 //     // VOID --> OUTPUT
 //     //
 
+/*
 //     #define M( out, dType ) \
 //         bool triggerCheck( dType &output ) { \
 //             uint32_t now = millis(); \
@@ -616,6 +623,7 @@
 //             } \
 //             return false; \
 //         }
+*/
 //     M( _bool, bool     )
 //     M( _si08, int8_t   )
 //     M( _ui08, uint8_t  )
@@ -631,6 +639,7 @@
 //     // INPUT --> OUTPUT
 //     //
 
+/*
 //     #define M( out, odType, in, idType ) \
 //         bool triggerCheck( odType &output, idType input ) { \
 //             uint32_t now = millis(); \
@@ -646,7 +655,7 @@
 //             } \
 //             return false; \
 //         }
-
+*/
 //     M( _bool, bool, _bool, bool     )
 //     M( _bool, bool, _si08, int8_t   )
 //     M( _bool, bool, _ui08, uint8_t  )

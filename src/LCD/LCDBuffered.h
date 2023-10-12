@@ -110,7 +110,7 @@
 #if defined(ESP32)
     #include <Arduino.h>
 #endif
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <LCD/LCDInterface.h>
 #include <Utility/spSemaphore.h>

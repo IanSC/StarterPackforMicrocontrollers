@@ -17,7 +17,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <Utility/spMacros.h>
 
@@ -129,7 +129,9 @@ class DigitalInputRaw {
 
         inline int readRaw() {
             if ( PIN == -1 ) return LOW;
-            return digitalRead( PIN );
+            auto r = digitalRead( PIN );
+// Serial.print( "P" ); Serial.print( PIN ); Serial.print( " = " ); Serial.println( r );
+            return r;
         }
 
         inline bool isOnRaw() {

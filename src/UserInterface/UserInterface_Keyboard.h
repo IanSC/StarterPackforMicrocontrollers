@@ -111,7 +111,11 @@ namespace UserInterface {
     UserInterfaceAllKeys *KeyHandler = nullptr;
 
     void assignKeyHandler( UserInterfaceAllKeys &handler ) {
-        KeyHandler  = &handler;
+        KeyHandler = &handler;
+    }
+
+    void assignKeyHandler( UserInterfaceAllKeys *handler ) {
+        KeyHandler = handler;
     }
 
     void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 10, uint16_t minimum = 50 ) {
@@ -203,12 +207,21 @@ namespace UserInterface {
     }
 
     KEY waitForAnyKeyPressed() {
-        if ( KeyHandler == nullptr ) while( true ); // hang it ???
+        if ( KeyHandler == nullptr ) {
+            // hang it ???
+            // Serial.println( "waitForAnyKeyPressed(): hang" );
+            while( true ) {}
+        }
         return KeyHandler->waitForAnyKeyPressed();
     }
 
     KEY waitForAnyKeyReleased() {
-        if ( KeyHandler == nullptr ) while( true ); // hang it ???
+        if ( KeyHandler == nullptr ) {
+            // hang it ???
+            // Serial.println( "waitForAnyKeyReleased(): hang" );
+            while( true ) {}
+        }
+        // if ( KeyHandler == nullptr ) while( true ); // hang it ???
         return KeyHandler->waitForAnyKeyReleased();
     }
 

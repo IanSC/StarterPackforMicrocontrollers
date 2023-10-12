@@ -36,6 +36,11 @@ public:
     }
 
     void clear() {
+
+// Serial.println( "spVector::clear()" );
+// head = nullptr;
+// return;
+
         data *parent = head;
         while( parent != nullptr ) {
             data *child = parent->next;
@@ -44,7 +49,7 @@ public:
             delete parent;
             parent = child;
         }
-        parent = nullptr;
+        head = nullptr;
     }
 
 //

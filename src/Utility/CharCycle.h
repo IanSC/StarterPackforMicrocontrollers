@@ -1,5 +1,5 @@
 #pragma once
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <Utility/spMacros.h>

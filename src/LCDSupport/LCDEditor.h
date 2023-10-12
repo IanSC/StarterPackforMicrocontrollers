@@ -1,5 +1,6 @@
 #pragma once
-#include <inttypes.h>
+
+#include <stdint.h>
 
 #include <Utility/CharCycle.h>
 #include <Utility/WindowedText.h>
@@ -29,6 +30,7 @@ namespace StarterPack {
         uint8_t decimalPoint = '.';
         bool allowDecimal = false;
         bool allowNegative = false;
+        bool cycleUpDown = true;
         bool useLeftRightArrowKeys = true;
 
         WindowedText::cursorRangeOptions cursorRangeOptions = WindowedText::cursorRangeOptions::WithinBufferPlusOne;
@@ -43,6 +45,7 @@ namespace StarterPack {
         const char *symbolList = nullptr;
         const char *prefixList = nullptr;
         bool allowChangeCase = true;
+        bool cycleUpDown = true;
         bool useLeftRightArrowKeys = true;
 
         WindowedText::cursorRangeOptions cursorRangeOptions = WindowedText::cursorRangeOptions::WithinBufferPlusOne;

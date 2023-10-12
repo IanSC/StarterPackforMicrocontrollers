@@ -22,7 +22,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <stdarg.h>
 
 namespace StarterPack {

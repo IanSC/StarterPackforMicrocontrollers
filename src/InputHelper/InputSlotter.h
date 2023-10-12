@@ -57,7 +57,7 @@
 #pragma once
 
 #include <limits.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <stdarg.h>
 
 #include <Utility/spMacros.h>

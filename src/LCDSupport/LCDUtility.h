@@ -666,36 +666,6 @@ namespace spLCD {
 
         public:
 
-            // #define CHOOSER_VARIATIONS(fName,fNameCore) \
-            //     /* PLAIN */ \
-            //     static uint8_t fName( \
-            //     uint8_t optionsRow=0, \
-            //     bool crossover=false, uint8_t initialSelection=0 ) { \
-            //         return fNameCore( -1, nullptr, optionsRow, initialSelection, crossover, nullptr );  \
-            //     } \
-            //     /* PLAIN WITH MESSAGE */ \
-            //     static uint8_t fName( \
-            //     const char *caption, uint8_t captionRow=0, \
-            //     uint8_t optionsRow=1, \
-            //     bool crossover=false, uint8_t initialSelection=0 ) { \
-            //         return fNameCore( captionRow, caption, optionsRow, initialSelection, crossover, nullptr );  \
-            //     } \
-            //     /* WITH BACKGROUND PROCESS */ \
-            //     static uint8_t fName( \
-            //     bool (*backgroundProcess)(void), \
-            //     uint8_t optionsRow=0, \
-            //     bool crossover=false, uint8_t initialSelection=0 ) { \
-            //         return fNameCore( -1, nullptr, optionsRow, initialSelection, crossover, backgroundProcess ); \
-            //     } \
-            //     /* WITH MESSAGE / BACKGROUND PROCESS */ \
-            //     static uint8_t fName( \
-            //     bool (*backgroundProcess)(void), \
-            //     const char *caption, \
-            //     uint8_t captionRow=0, uint8_t optionsRow=1, \
-            //     bool crossover=false, uint8_t initialSelection=0 ) { \
-            //         return fNameCore( captionRow, caption, optionsRow, initialSelection, crossover, backgroundProcess ); \
-            //     }
-
             #define CHOOSER_VARIATIONS(fName,fNameCore) \
                 /* PLAIN */ \
                 static uint8_t fName( \

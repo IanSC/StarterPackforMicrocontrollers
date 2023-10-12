@@ -1,5 +1,6 @@
 #pragma once
-#include <inttypes.h>
+
+#include <stdint.h>
 
 #include <Utility/spVector.h>
 #include <LCDSupport/LCDUtility.h>

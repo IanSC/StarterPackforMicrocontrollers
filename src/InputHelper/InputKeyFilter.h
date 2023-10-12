@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <Utility/spStr.h>
 #include <InputHelper/InputFilterInterface.h>

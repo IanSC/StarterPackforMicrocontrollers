@@ -122,8 +122,11 @@ class InputGroupedBase : public InputCombiner<char> {
                 if ( dInput->dIO->readLogicalRaw() ) {
                     keysPressed[index] = dInput->key;
                     index++;
-                    if ( index >= MAX_SIMULTANEOUS_KEYS )
-                        break;
+                    if ( index >= MAX_SIMULTANEOUS_KEYS ) {
+                        keysPressed[index] = 0;
+                        return keysPressed;
+                        // break;
+                    }
                 }
                 dInput = digitalInputMapList.getNext();
             }
@@ -137,8 +140,11 @@ class InputGroupedBase : public InputCombiner<char> {
                 if (key != AnalogButtonsMapped::INACTIVE_KEY) {
                     keysPressed[index] = key;
                     index++;
-                    if ( index >= MAX_SIMULTANEOUS_KEYS )
-                        break;
+                    if ( index >= MAX_SIMULTANEOUS_KEYS ) {
+                        keysPressed[index] = 0;
+                        return keysPressed;
+                        // break;
+                    }
                 }
                 aInput = analogInputList.getNext();
             }
@@ -172,7 +178,7 @@ class InputGroupedBase : public InputCombiner<char> {
                 return keysPressed[0];
             default:
                 // combine keys into single key
-                // ex. "UL" --> '1'
+                // ex. "UL" --> '1', if pressed Up and Left keys, return '1' instead
                 return InputCombiner::actionCombineKeys(keysPressed);
             }
         }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <UserInterface/UserInterfaceMultiClick.h>
 #include <InputHelper/InputRepeater.h>

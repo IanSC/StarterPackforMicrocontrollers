@@ -157,9 +157,9 @@ class InputRunningAvg : public InputFilterInterface<DATA_TYPE> {
                 // reached end, reset to 0
                 currentSlot = 0;
                 #if defined( DEBUG_DIAGNOSE )
-                    if ( rAvgFillingMode ) {
+                    if ( fillingMode ) {
                         Serial.println( "STORAGE FILLED" );
-                        delay( 1000 );
+                        // delay( 1000 );
                     }
                 #endif
                 // rollover, fully filled

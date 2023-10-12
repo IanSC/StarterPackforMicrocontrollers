@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <InputHelper/InputFilterInterface.h>

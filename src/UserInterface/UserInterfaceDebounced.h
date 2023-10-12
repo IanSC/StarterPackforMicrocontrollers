@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <InputHelper/InputDebouncer.h>
 
@@ -47,8 +47,6 @@ class UserInterfaceDebounced : public InputDebouncer<char>
 
         KEY getKeyDown() {
             auto key = getNonDebouncedKey();
-            // if (key != INACTIVE_KEY)
-            //     Serial.println(key);
             return InputDebouncer::actionGetKeyDown(key);
         }
 
@@ -71,6 +69,7 @@ class UserInterfaceDebounced : public InputDebouncer<char>
             while ( true ) {
                 if ( getDebouncedKey() == INACTIVE_KEY )
                     return;
+                delay(10);
                 // if ( getNonDebouncedKey() == INACTIVE_KEY )
                 //     return;
             }
@@ -79,9 +78,15 @@ class UserInterfaceDebounced : public InputDebouncer<char>
         KEY waitForAnyKeyPressed() {
             // wait for key, don't check if released already
             waitUntilNothingIsPressed();
+            // auto t = millis();
             while ( true ) {
+                // if ( millis() - t > 1000 ) {
+                //     Serial.print('+');
+                //     t = millis();
+                // }
                 KEY key = getKeyDown();
                 if ( key != INACTIVE_KEY ) return key;
+                delay(10);
             }
         }
 
@@ -91,6 +96,7 @@ class UserInterfaceDebounced : public InputDebouncer<char>
             while ( true ) {
                 KEY key = getKeyUp();
                 if ( key != INACTIVE_KEY ) return key;
+                delay(10);
             }
         }
 

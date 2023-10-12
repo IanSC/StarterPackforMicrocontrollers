@@ -1,6 +1,6 @@
 #pragma once
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -1133,15 +1133,15 @@ namespace StarterPack {
     #else
         protected:
             // return anything but ui::kNone to breakout of loop
-            typedef bool (*backgroundProcessDelegate)();
+            typedef uint8_t (*backgroundProcessDelegate)();
             backgroundProcessDelegate backgroundProcess = nullptr;
     #endif
 
     public:
-        static uint8_t backgroundProcessNoAction() {
-            namespace ui = StarterPack::UserInterface;
-            return ui::kNONE;
-        }
+        // static uint8_t backgroundProcessNoAction() {
+        //     namespace ui = StarterPack::UserInterface;
+        //     return ui::kNONE;
+        // }
         void assignBackgroundProcess( backgroundProcessDelegate backgroundProcess ) {
             this->backgroundProcess = backgroundProcess;
         }

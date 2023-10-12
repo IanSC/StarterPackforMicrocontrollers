@@ -1,5 +1,6 @@
 #pragma once
-#include <inttypes.h>
+
+#include <stdint.h>
 #include <string.h>
 
 #include <Utility/spMacros.h>
@@ -32,7 +33,7 @@ class WindowedText {
         // eg. move anywhere
         //     stay only at the end, and need to backspace
 
-        enum cursorRangeOptions : uint8_t {
+        enum class cursorRangeOptions : uint8_t {
             //fromDataStart      = 1, // if no data, no cursor ???
 
             fromBufferStart    = 2,     // MIN: position 0
@@ -53,9 +54,9 @@ class WindowedText {
     // private:
 
         // allowed cursor position relative to buffer
-        cursorRangeOptions cursorRange = WithinBuffer;
+        cursorRangeOptions cursorRange = cursorRangeOptions::WithinBuffer;
 
-    // private:
+    private:
 
         char    *buffer;
         uint8_t maxBufferSize;      // maximum buffer size, including NULL terminator
@@ -66,6 +67,9 @@ class WindowedText {
         uint8_t windowIndex;        // offset in buffer to print on start position of window
         
     public:
+
+        uint8_t getWindowSize() { return windowSize; }
+        uint8_t getWindowIndex() { return windowIndex; }
 
         WindowedText( char *buffer, uint8_t bufferSize, uint8_t windowSize,
         cursorRangeOptions cursorRange = cursorRangeOptions::WithinBufferPlusOne,
@@ -81,15 +85,19 @@ class WindowedText {
             else
                 this->cursorPos = cursorPos;
             currentLength = strlen( buffer );
-            recompute();
+            // recompute();
+            // constrictCursor();
             constrictCursor();
+            recompute();
         }
 
         void reset() {
             cursorPos = strlen( buffer );
             currentLength = strlen( buffer );
-            recompute();
+            // recompute();
+            // constrictCursor();
             constrictCursor();
+            recompute();
         }
 
         //
@@ -144,17 +152,94 @@ class WindowedText {
             return modified;
         }
 
+        //
+        //
+        //
+
+        bool findCharacter( const char ch ) {
+            // return Str::findCharacter(ch,buffer);
+            if ( buffer == nullptr ) return false;
+            auto pos = strchr( buffer, ch );
+            if ( pos == nullptr ) return false;
+            return true;
+        }
+
+        bool findCharacterBeforeCursor( const char ch ) {
+            // return true if character exists before current cursor position
+            // eg. 12345
+            //       ^
+            //       cursor
+            //     find '1' --> true
+            //     find '2' --> true
+            //     find '3' --> false
+            //     find '4' --> false
+            if ( buffer == nullptr ) return false;
+            auto pos = strchr( buffer, ch );
+            if ( pos == nullptr ) return false;
+            if ( pos >= buffer + cursorPos )
+                return false;
+            return true;
+        }
+
+    // bool findCharacter( uint8_t key, const char *list ) {
+    // // bool isCharInString( uint8_t key, const char *list ) {
+    //     if ( list == nullptr ) return false;
+    //     return ( strchr( list, key ) != nullptr );
+    // }
+
     //
     // CURSOR MOVEMENT
     //    
     public:
 
         bool cursorForward() {
+            if ( cursorPos == 255 ) return false;
+            return setCursorPosition( cursorPos+1 );
+            // uint8_t orig = cursorPos;
+            // cursorPos++;
+            // constrictCursor();
+            // if ( cursorPos != orig ) {
+            //     // can move cursor
+
+            //     if ( cursorPos > currentLength ) {
+            //         // moved beyond end of data
+            //         // replace with ' ' mising data
+            //         buffer[cursorPos] = 0;
+            //         char *p = buffer+cursorPos-1;
+            //         while( *p == 0 ) {
+            //             *p = ' ';
+            //             p--;
+            //         }
+            //         currentLength = strlen( buffer );
+            //     }
+            //     recompute();
+            //     return true;
+            // }
+            // return false;
+        }
+
+        bool cursorBackward() {
+            if ( cursorPos == 0 ) return false;
+            return setCursorPosition( cursorPos-1 );
+            // uint8_t orig = cursorPos;
+            // if ( cursorPos > 0 ) {
+            //     cursorPos--;
+            //     constrictCursor();
+            //     if ( cursorPos != orig ) {
+            //         recompute();
+            //         return true;
+            //     }
+            // }
+            // return false;
+        }
+
+        uint8_t getCursorNumericPosition() { return cursorPos; }
+
+        bool setCursorPosition( uint8_t newPosition ) {
             uint8_t orig = cursorPos;
-            cursorPos++;
+            cursorPos = newPosition;
             constrictCursor();
             if ( cursorPos != orig ) {
-                // can move cursor
 
                 if ( cursorPos > currentLength ) {
                     // moved beyond end of data
@@ -173,19 +258,6 @@ class WindowedText {
             return false;
         }
 
-        bool cursorBackward() {
-            uint8_t orig = cursorPos;
-            if ( cursorPos > 0 ) {
-                cursorPos--;
-                constrictCursor();
-                if ( cursorPos != orig ) {
-                    recompute();
-                    return true;
-                }
-            }
-            return false;
-        }
-
     //
     // CURSOR LOGIC
     //
@@ -196,22 +268,26 @@ class WindowedText {
             // uint8_t bLength = strlen( buffer );
 
             uint8_t min = 0;
-            if ( ( cursorRange & fromBufferStart ) != 0 )
+            if ( ( cursorRange & cursorRangeOptions::fromBufferStart ) == cursorRangeOptions::fromBufferStart )
                 min = 0;
-            else if ( ( cursorRange & fromDataEnd ) != 0 )
+            else if ( ( cursorRange & cursorRangeOptions::fromDataEnd ) == cursorRangeOptions::fromDataEnd )
                 min = currentLength-1;
-            else if ( ( cursorRange & fromDataEndPlusOne ) != 0 )
+            else if ( ( cursorRange & cursorRangeOptions::fromDataEndPlusOne ) == cursorRangeOptions::fromDataEndPlusOne )
                 min = currentLength;
 
+            // bytes    123456789
+            // cursor   012345678
+            // string   abc
+            // buffer   ------0    <-- maxBufferSize includes NULL
             uint8_t max = 0;
-            if ( ( cursorRange & toDataEnd ) != 0 )
+            if ( ( cursorRange & cursorRangeOptions::toDataEnd ) == cursorRangeOptions::toDataEnd )
                 max = currentLength-1;
-            else if ( ( cursorRange & toDataEndPlusOne ) != 0 )
+            else if ( ( cursorRange & cursorRangeOptions::toDataEndPlusOne ) == cursorRangeOptions::toDataEndPlusOne )
                 max = currentLength;
-            else if ( ( cursorRange & toBufferEnd ) != 0 )
+            else if ( ( cursorRange & cursorRangeOptions::toBufferEnd ) == cursorRangeOptions::toBufferEnd )
+                max = maxBufferSize-2;
+            else if ( ( cursorRange & cursorRangeOptions::toBufferEndPlusOne ) == cursorRangeOptions::toBufferEndPlusOne )
                 max = maxBufferSize-1;
-            else if ( ( cursorRange & toBufferEndPlusOne ) != 0 )
-                max = maxBufferSize;
 
             if ( cursorPos < min ) {
                 cursorPos = min;
@@ -339,7 +415,7 @@ class WindowedText {
             // cursor happens to be on the hidden marker position
             // adjust it
             uint8_t userLength = strlen( buffer+windowIndex );
-            if ( userLength >= windowSize ) {
+            if ( userLength > windowSize ) {
                 // BEFORE:        0123456789
                 // data           abcdefghijk
                 // startPos  = 3     ^
@@ -568,44 +644,76 @@ class WindowedText {
     // TEST
     //
 
-        void TEST_WindowedText() {
+        static void TEST_WindowedText_Helper( WindowedText &w ) {
+            SerialPrintfln( "S (%2d) = '%s'", w.length(), w.string() );
+            Serial.print(   "          ");
+            for( int i=0 ; i<w.getWindowIndex() ; i++ ) Serial.print(' ');
+            for( int i=0 ; i<w.getWindowSize() ; i++ ) Serial.print('#'); Serial.println();
+            Serial.print(   "          ");
+            for( int i=0 ; i<w.getCursorNumericPosition() ; i++ ) 
+                Serial.print(' '); Serial.print('_');
+            Serial.println();
+            // SerialPrintfln( "wIndex = %d", w.getWindowIndex() );
+            // SerialPrintfln( "wSize = %d", w.getWindowSize() );
+            // SerialPrintfln( "cursorPos = %d", w.getCursorNumericPosition() );
+        }
+
+        static void TEST_WindowedText_1() {
             char buffer[20];
             buffer[0] = 0;
 
             WindowedText w( buffer, 20, 10 );
 
             Serial.println();
-            SerialPrintfln( "string = %s}}}", w.string() );
-            SerialPrintfln( "length = %d", w.length() );
-            SerialPrintfln( "cursorPos = %d", w.cursorPos );
+            TEST_WindowedText_Helper( w );
 
             Serial.println();
             SerialPrintfln( "inserted = %d", w.insertAtCursor( 'A' ) );
-            SerialPrintfln( "string = %s}}}", w.string() );
-            SerialPrintfln( "length = %d", w.length() );
-            SerialPrintfln( "cursorPos = %d", w.cursorPos );
+            TEST_WindowedText_Helper( w );
 
             Serial.println();
             SerialPrintfln( "inserted = %d", w.insertAtCursor( 'B' ) );
-            SerialPrintfln( "string = %s}}}", w.string() );
-            SerialPrintfln( "length = %d", w.length() );
-            SerialPrintfln( "cursorPos = %d", w.cursorPos );
+            TEST_WindowedText_Helper( w );
 
             Serial.println();
             SerialPrintfln( "inserted = %d", w.insertAt( 'C', 2 ) );
-            SerialPrintfln( "string = %s}}}", w.string() );
-            SerialPrintfln( "length = %d", w.length() );
-            SerialPrintfln( "cursorPos = %d", w.cursorPos );
+            TEST_WindowedText_Helper( w );
 
             Serial.println();
             SerialPrintfln( "c forward = %d", w.cursorForward() );
-            SerialPrintfln( "cursorPos = %d", w.cursorPos );
+            TEST_WindowedText_Helper( w );
 
             Serial.println();
             SerialPrintfln( "c forward = %d", w.cursorForward() );
-            SerialPrintfln( "cursorPos = %d", w.cursorPos );
-
+            TEST_WindowedText_Helper( w );
         }
+
+        static void TEST_WindowedText_2() {
+            char buffer[4] = "123";
+            //buffer[0] = 0;
+
+            WindowedText w( buffer, 4, 3, WindowedText::cursorRangeOptions::WithinBufferPlusOne );
+            w.setCursorPosition(0);
+
+            Serial.println();
+            TEST_WindowedText_Helper( w );
+
+            Serial.println();
+            SerialPrintfln( "c forward = %d", w.cursorForward() );
+            TEST_WindowedText_Helper( w );
+
+            Serial.println();
+            SerialPrintfln( "c forward = %d", w.cursorForward() );
+            TEST_WindowedText_Helper( w );
+
+            Serial.println();
+            SerialPrintfln( "c forward = %d", w.cursorForward() );
+            TEST_WindowedText_Helper( w );
+
+            Serial.println();
+            SerialPrintfln( "c forward = %d", w.cursorForward() );
+            TEST_WindowedText_Helper( w );
+        }        
 
 }
 

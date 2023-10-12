@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <string.h>
 
 #include <Utility/spStr.h>
@@ -73,6 +73,9 @@ class InputCombiner {
 
         void addKeyCombination( const char key1, const char key2, OUT result ) {
             auto keys = new char[3];
+            // char *keys = malloc(3);
+            // if ( keys == nullptr )
+            //     Serial.println("xx");
             keys[0] = key1;
             keys[1] = key2;
             keys[2] = 0;

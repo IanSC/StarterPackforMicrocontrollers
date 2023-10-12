@@ -81,13 +81,13 @@ namespace StarterPack {
                         lcd->cursorOff();
 
                         lcd->setCursor( s->col, s->row );
-                        lcd->printStrN( buffer+wText->windowIndex, s->windowSize, true );
+                        lcd->printStrN( buffer+wText->getWindowIndex(), s->windowSize, true );
                         // lcd->printCharsN( ' ', wText->spaceToClear() );
 
                         if ( wText->isLeftObscured() )
                             lcd->writeAt( s->col, s->row, 0x7F );
                         if ( wText->isRightObscured() )
-                            lcd->writeAt( s->col+s->windowSize-1, s->row, 0x7E );
+                            lcd->writeAt( s->col + s->windowSize-1, s->row, 0x7E );
 
                         if ( lcdBuffered != nullptr )
                             lcdBuffered->setVirtualCursor( s->col + wText->cursorPositionOnWindow(), s->row );
@@ -149,7 +149,7 @@ namespace StarterPack {
                                 cycleAlpha.disableJump();
                         }
 
-                    } else if ( key == ui::kUP ) {
+                    } else if ( key == ui::kUP && s->cycleUpDown ) {
 
                         DEBUG_TRACE( SerialPrintfln( "UP-1 = %d", cycleAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
@@ -161,7 +161,7 @@ namespace StarterPack {
                         }
                         DEBUG_TRACE( SerialPrintfln( "UP-2 = %d", cycleAlpha.jMode ) )
 
-                    } else if ( key == ui::kDOWN ) {
+                    } else if ( key == ui::kDOWN && s->cycleUpDown ) {
 
                         DEBUG_TRACE( SerialPrintfln( "DN-1 = %d", cycleAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {

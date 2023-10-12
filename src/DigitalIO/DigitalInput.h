@@ -28,7 +28,7 @@
 #pragma once
 
 #include <Arduino.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 #include <DigitalIO/DigitalInputRaw.h>
 
@@ -47,8 +47,11 @@ class DigitalInput : public DigitalInputRaw {
 
     protected:
 
-        // digitalRead() to be considered not "active"
-        bool INACTIVE_STATE = LOW;
+        // // digitalRead() to be considered not "active"
+        // bool MY_INACTIVE_STATE = LOW;
+
+        // digitalRead() to be considered "active"
+        bool ACTIVE_STATE = LOW;
 
     public:
     
@@ -63,6 +66,7 @@ class DigitalInput : public DigitalInputRaw {
             ActiveHighPullDown = ActiveHigh | PullDown
         };
 
+/*
         // redefine here, otherwise:
         //    DigitalInput( pin, DigitalInput::Active::High, DigitalInputRaw::Pull::Up )
         // instead of:
@@ -80,17 +84,21 @@ class DigitalInput : public DigitalInputRaw {
 
         CLASS_ENUM_MANIPULATION(Active);
         CLASS_ENUM_MANIPULATION(Init);
+*/
 
         DigitalInput() {}
 
         DigitalInput( const uint8_t pin, Init options = Init::Default )
         : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(options) ) {
             if ( ( options & Init::ActiveLow ) == Init::ActiveLow )
-                INACTIVE_STATE = HIGH;
+                // MY_INACTIVE_STATE = HIGH;
+                ACTIVE_STATE = LOW;
             else
-                INACTIVE_STATE = LOW;
+                // MY_INACTIVE_STATE = LOW;
+                ACTIVE_STATE = HIGH;
         }
 
+/*
         DigitalInput( const uint8_t pin, Active activeLogic, DigitalInput::Pull pullupOptions = DigitalInput::Pull::None )
         : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(pullupOptions) ) {
             if ( ( activeLogic & Active::Low ) == Active::Low )
@@ -98,6 +106,7 @@ class DigitalInput : public DigitalInputRaw {
             else
                 INACTIVE_STATE = LOW;
         }
+*/
 
     //
     // CALLBACK
@@ -127,14 +136,16 @@ class DigitalInput : public DigitalInputRaw {
     public:
 
         inline bool readLogicalRaw() {
-            return ( readRaw() != INACTIVE_STATE );
+            return ( readRaw() == ACTIVE_STATE );
+            // return ( readRaw() != MY_INACTIVE_STATE );
         }
 
         // virtual 
         bool read() {
             // to be overridden with extra functionality
             // eg. debounce, repeat, etc.
-            return ( readRaw() != INACTIVE_STATE );
+            // return ( readRaw() != MY_INACTIVE_STATE );
+            return ( readRaw() == ACTIVE_STATE );
         }
 
         inline bool isOn() {
