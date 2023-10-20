@@ -1139,6 +1139,8 @@ namespace StarterPack {
 
     public:
         // static uint8_t backgroundProcessNoAction() {
+        //     // call this and return if no action to take in backgroundProcess
+        //     // or just return ui::kNONE
         //     namespace ui = StarterPack::UserInterface;
         //     return ui::kNONE;
         // }

@@ -290,7 +290,7 @@ class MatrixKeypadBase {
 
         bool scanInputs( uint8_t sendFrom, uint8_t sendTo ) {
             DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-            DEBUG_TRACE( Serial.println( "scanning" ) );
+            DEBUG_TRACE( Serial.print( "scanning: " ); Serial.print( sendFrom ); Serial.print( "-" ); Serial.println( sendTo );  );
             if ( sendFrom == sendTo ) {
                 // single send slot being checked, record results
                 if ( sendViaRows ) {

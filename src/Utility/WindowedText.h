@@ -640,80 +640,80 @@ class WindowedText {
 
     };
 
-    //
-    // TEST
-    //
+//
+// TEST
+//
 
-        static void TEST_WindowedText_Helper( WindowedText &w ) {
-            SerialPrintfln( "S (%2d) = '%s'", w.length(), w.string() );
-            Serial.print(   "          ");
-            for( int i=0 ; i<w.getWindowIndex() ; i++ ) Serial.print(' ');
-            for( int i=0 ; i<w.getWindowSize() ; i++ ) Serial.print('#'); Serial.println();
-            Serial.print(   "          ");
-            for( int i=0 ; i<w.getCursorNumericPosition() ; i++ ) 
-                Serial.print(' '); Serial.print('_');
-            Serial.println();
-            // SerialPrintfln( "wIndex = %d", w.getWindowIndex() );
-            // SerialPrintfln( "wSize = %d", w.getWindowSize() );
-            // SerialPrintfln( "cursorPos = %d", w.getCursorNumericPosition() );
-        }
+    static void TEST_WindowedText_Helper( WindowedText &w ) {
+        SerialPrintfln( "S (%2d) = '%s'", w.length(), w.string() );
+        Serial.print(   "          ");
+        for( int i=0 ; i<w.getWindowIndex() ; i++ ) Serial.print(' ');
+        for( int i=0 ; i<w.getWindowSize() ; i++ ) Serial.print('#'); Serial.println();
+        Serial.print(   "          ");
+        for( int i=0 ; i<w.getCursorNumericPosition() ; i++ ) 
+            Serial.print(' '); Serial.print('_');
+        Serial.println();
+        // SerialPrintfln( "wIndex = %d", w.getWindowIndex() );
+        // SerialPrintfln( "wSize = %d", w.getWindowSize() );
+        // SerialPrintfln( "cursorPos = %d", w.getCursorNumericPosition() );
+    }
 
-        static void TEST_WindowedText_1() {
-            char buffer[20];
-            buffer[0] = 0;
+    static void TEST_WindowedText_1() {
+        char buffer[20];
+        buffer[0] = 0;
 
-            WindowedText w( buffer, 20, 10 );
+        WindowedText w( buffer, 20, 10 );
 
-            Serial.println();
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "inserted = %d", w.insertAtCursor( 'A' ) );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "inserted = %d", w.insertAtCursor( 'A' ) );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "inserted = %d", w.insertAtCursor( 'B' ) );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "inserted = %d", w.insertAtCursor( 'B' ) );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "inserted = %d", w.insertAt( 'C', 2 ) );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "inserted = %d", w.insertAt( 'C', 2 ) );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "c forward = %d", w.cursorForward() );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "c forward = %d", w.cursorForward() );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "c forward = %d", w.cursorForward() );
-            TEST_WindowedText_Helper( w );
-        }
+        Serial.println();
+        SerialPrintfln( "c forward = %d", w.cursorForward() );
+        TEST_WindowedText_Helper( w );
+    }
 
-        static void TEST_WindowedText_2() {
-            char buffer[4] = "123";
-            //buffer[0] = 0;
+    static void TEST_WindowedText_2() {
+        char buffer[4] = "123";
+        //buffer[0] = 0;
 
-            WindowedText w( buffer, 4, 3, WindowedText::cursorRangeOptions::WithinBufferPlusOne );
-            w.setCursorPosition(0);
+        WindowedText w( buffer, 4, 3, WindowedText::cursorRangeOptions::WithinBufferPlusOne );
+        w.setCursorPosition(0);
 
-            Serial.println();
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "c forward = %d", w.cursorForward() );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "c forward = %d", w.cursorForward() );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "c forward = %d", w.cursorForward() );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "c forward = %d", w.cursorForward() );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "c forward = %d", w.cursorForward() );
-            TEST_WindowedText_Helper( w );
+        Serial.println();
+        SerialPrintfln( "c forward = %d", w.cursorForward() );
+        TEST_WindowedText_Helper( w );
 
-            Serial.println();
-            SerialPrintfln( "c forward = %d", w.cursorForward() );
-            TEST_WindowedText_Helper( w );
-        }        
+        Serial.println();
+        SerialPrintfln( "c forward = %d", w.cursorForward() );
+        TEST_WindowedText_Helper( w );
+    }
 
 }
 
