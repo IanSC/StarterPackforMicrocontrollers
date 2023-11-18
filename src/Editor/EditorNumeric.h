@@ -193,7 +193,7 @@ namespace StarterPack {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kLEFT && s->useLeftRightArrowKeys ) {
+                    } else if ( key == ui::kLEFT && globalEditorSettings.useLeftRightArrowKeys ) {
                         if ( wText->cursorBackward() ) {
                             // modified = true;
                             updateDisplay = true;
@@ -204,7 +204,7 @@ namespace StarterPack {
                             // if ( !feedbackCB( FeedbackEnum::CursorBackwardBlocked ) )
                             //     return ui::kESCAPE;
                         }
-                    } else if ( key == ui::kRIGHT && s->useLeftRightArrowKeys ) {
+                    } else if ( key == ui::kRIGHT && globalEditorSettings.useLeftRightArrowKeys ) {
                         if ( wText->cursorForward() ) {
                             modified = true;
                             updateDisplay = true;
@@ -215,7 +215,7 @@ namespace StarterPack {
                             // if ( !feedbackCB( FeedbackEnum::CursorForwardBlocked ) )
                             //     return ui::kESCAPE;
                         }
-                    } else if ( key == ui::kUP && s->cycleUpDown ) {
+                    } else if ( key == ui::kUP && globalEditorSettings.cycleUpDown ) {
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                             auto cursorPos = wText->getCursorPosition();
                             if ( cursorPos == WindowedText::cursorPositionEnum::first )
@@ -227,7 +227,7 @@ namespace StarterPack {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kDOWN && s->cycleUpDown ) {
+                    } else if ( key == ui::kDOWN && globalEditorSettings.cycleUpDown ) {
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                             auto cursorPos = wText->getCursorPosition();
                             if ( cursorPos == WindowedText::cursorPositionEnum::first )

@@ -162,17 +162,17 @@ namespace StarterPack {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kLEFT && s->useLeftRightArrowKeys ) {
+                    } else if ( key == ui::kLEFT && globalEditorSettings.useLeftRightArrowKeys ) {
                         if ( wText->cursorBackward() ) {
                             // modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kRIGHT && s->useLeftRightArrowKeys ) {
+                    } else if ( key == ui::kRIGHT && globalEditorSettings.useLeftRightArrowKeys ) {
                         if ( wText->cursorForward() ) {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kUP && s->cycleUpDown ) {
+                    } else if ( key == ui::kUP && globalEditorSettings.cycleUpDown ) {
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                             if ( wText->getCursorNumericPosition() == 0 )
                                 cycleNegative.cycleOneUp( wText->charPtrAtCursor(), wText->getCursorPosition() );
@@ -183,7 +183,7 @@ namespace StarterPack {
                             modified = true;
                             updateDisplay = true;
                         }
-                    } else if ( key == ui::kDOWN && s->cycleUpDown ) {
+                    } else if ( key == ui::kDOWN && globalEditorSettings.cycleUpDown ) {
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
                             if ( wText->getCursorNumericPosition() == 0 )
                                 cycleNegative.cycleOneDown( wText->charPtrAtCursor(), wText->getCursorPosition() );

@@ -648,10 +648,9 @@ class WindowedText {
         SerialPrintfln( "S (%2d) = '%s'", w.length(), w.string() );
         Serial.print(   "          ");
         for( int i=0 ; i<w.getWindowIndex() ; i++ ) Serial.print(' ');
-        for( int i=0 ; i<w.getWindowSize() ; i++ ) Serial.print('#'); Serial.println();
+        for( int i=0 ; i<w.getWindowSize() ; i++ ) { Serial.print('#'); } Serial.println();
         Serial.print(   "          ");
-        for( int i=0 ; i<w.getCursorNumericPosition() ; i++ ) 
-            Serial.print(' '); Serial.print('_');
+        for( int i=0 ; i<w.getCursorNumericPosition() ; i++ ) { Serial.print(' '); } Serial.print('_');
         Serial.println();
         // SerialPrintfln( "wIndex = %d", w.getWindowIndex() );
         // SerialPrintfln( "wSize = %d", w.getWindowSize() );

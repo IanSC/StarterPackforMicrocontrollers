@@ -120,7 +120,7 @@ namespace StarterPack {
 
                         // ...
 
-                    } else if ( key == ui::kLEFT && s->useLeftRightArrowKeys ) {
+                    } else if ( key == ui::kLEFT && globalEditorSettings.useLeftRightArrowKeys ) {
 
                         if ( wText->cursorBackward() ) {
                             updateDisplay = true;
@@ -134,7 +134,7 @@ namespace StarterPack {
                                 cycleAlpha.disableJump();
                         }
 
-                    } else if ( key == ui::kRIGHT && s->useLeftRightArrowKeys ) {
+                    } else if ( key == ui::kRIGHT && globalEditorSettings.useLeftRightArrowKeys ) {
 
                         // might add spaces at end,
                         // but don't consider as modified
@@ -149,7 +149,7 @@ namespace StarterPack {
                                 cycleAlpha.disableJump();
                         }
 
-                    } else if ( key == ui::kUP && s->cycleUpDown ) {
+                    } else if ( key == ui::kUP && globalEditorSettings.cycleUpDown ) {
 
                         DEBUG_TRACE( SerialPrintfln( "UP-1 = %d", cycleAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {
@@ -161,7 +161,7 @@ namespace StarterPack {
                         }
                         DEBUG_TRACE( SerialPrintfln( "UP-2 = %d", cycleAlpha.jMode ) )
 
-                    } else if ( key == ui::kDOWN && s->cycleUpDown ) {
+                    } else if ( key == ui::kDOWN && globalEditorSettings.cycleUpDown ) {
 
                         DEBUG_TRACE( SerialPrintfln( "DN-1 = %d", cycleAlpha.jMode ) )
                         if ( wText->modifyCharAtCursor( ' ' ) ) {

@@ -30,8 +30,8 @@ namespace StarterPack {
         uint8_t decimalPoint = '.';
         bool allowDecimal = false;
         bool allowNegative = false;
-        bool cycleUpDown = true;
-        bool useLeftRightArrowKeys = true;
+        // bool cycleUpDown = true;
+        // bool useLeftRightArrowKeys = true;
 
         WindowedText::cursorRangeOptions cursorRangeOptions = WindowedText::cursorRangeOptions::WithinBufferPlusOne;
 
@@ -45,13 +45,20 @@ namespace StarterPack {
         const char *symbolList = nullptr;
         const char *prefixList = nullptr;
         bool allowChangeCase = true;
-        bool cycleUpDown = true;
-        bool useLeftRightArrowKeys = true;
+        // bool cycleUpDown = true;
+        // bool useLeftRightArrowKeys = true;
 
         WindowedText::cursorRangeOptions cursorRangeOptions = WindowedText::cursorRangeOptions::WithinBufferPlusOne;
 
         // length including NULL terminator
         uint8_t bufferLength = 0;
     };
+
+    struct commonEditorSettings {
+        bool cycleUpDown = true;
+        bool useLeftRightArrowKeys = true;
+    };
+
+    struct commonEditorSettings globalEditorSettings;
 
 }

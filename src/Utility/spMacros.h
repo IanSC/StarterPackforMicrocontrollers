@@ -31,7 +31,11 @@
         inline friend enumType& operator &= ( enumType& a, enumType b ) { \
             a = a & b; return a; } \
         inline friend enumType operator ~ ( enumType a ) { \
-            return static_cast<enumType>( ~static_cast<int>(a) ); }
+            return static_cast<enumType>( ~static_cast<int>(a) ); } \
+        inline friend bool operator == ( enumType a, int b ) { \
+            return ( static_cast<int>(a) == b ); } \
+        inline friend bool operator != ( enumType a, int b ) { \
+            return ( static_cast<int>(a) != b ); }
 
     // use this inside class, with benefits
     // class {
