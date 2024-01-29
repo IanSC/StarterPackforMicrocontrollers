@@ -115,7 +115,11 @@ class AnalogInputRaw_ESP32 {
             case  1: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_0; break;
             case  2: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_1; break;
             case  3: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_2; break;
-            case  4: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_3; break;
+
+            // https://esp32.com/viewtopic.php?t=27370
+            // but ADC2 cannot be used with WiFi
+            // case  4: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_3; break;
+
             case  5: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_4; break;
             case  6: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_5; break;
             case  7: adcPort = 1; adcChannel.ADC_CHANNEL1 = ADC1_CHANNEL_6; break;
@@ -156,7 +160,10 @@ class AnalogInputRaw_ESP32 {
             // } adc2_channel_t;            
             case  4: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_0; break;
             case  0: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_1; break;
-            case  2: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_2; break;
+
+            // conflicts with ADC1 ???
+            // case  2: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_2; break;
+
             case 15: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_3; break;
             case 13: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_4; break;
             case 12: adcPort = 2; adcChannel.ADC_CHANNEL2 = ADC2_CHANNEL_5; break;

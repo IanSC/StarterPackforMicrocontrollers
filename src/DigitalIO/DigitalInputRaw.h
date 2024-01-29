@@ -19,7 +19,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 
-#include <Utility/spMacros.h>
+#include <Utility/spEnum.h>
 
 namespace StarterPack {
 

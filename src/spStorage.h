@@ -161,8 +161,26 @@ class spStorage {
     //
     public:
 
+        // template <typename T>
+        // bool readData( const char *dataKey, T &data ) {
+        //     Preferences p;
+        //     bool r = false;
+        //     while( true ) {
+        //         if ( !p.begin( PREF_FILE, true ) )
+        //             break;
+        //         if ( !p.isKey( dataKey ) )
+        //             break;                    
+        //         if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
+        //             break;
+        //         r = true;
+        //         break;
+        //     }
+        //     p.end();
+        //     return r;
+        // }
+
         template <typename T>
-        bool readData( const char *dataKey, T &data ) {
+        bool readData( const char * dataKey, T * data ) {
             Preferences p;
             bool r = false;
             while( true ) {
@@ -170,7 +188,7 @@ class spStorage {
                     break;
                 if ( !p.isKey( dataKey ) )
                     break;                    
-                if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
+                if ( p.getBytes( dataKey, data, sizeof(T) ) != sizeof(T) )
                     break;
                 r = true;
                 break;
@@ -179,23 +197,56 @@ class spStorage {
             return r;
         }
 
+        // template <typename T>
+        // result readData( const char * validityKey, const char * dataKey, T & data ) {
+        //     Preferences p;
+        //     result r = result::error;
+        //     while( true ) {
+        //         if ( !p.begin( PREF_FILE, true ) )
+        //             break;
+        //         if ( !p.isKey( validityKey ) )
+        //             break;
+        //         if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
+        //             r = result::invalid;
+        //             break;
+        //         }
+        //         if ( !p.isKey( dataKey ) )
+        //             break;
+        //         if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
+        //             break;
+        //         r = result::okay;
+        //         break;
+        //     }
+        //     p.end();
+        //     return r;
+        // }
+
         template <typename T>
-        result readData( const char *validityKey, const char *dataKey, T &data ) {
+        result readData( const char * validityKey, const char * dataKey, T * data ) {
             Preferences p;
             result r = result::error;
             while( true ) {
-                if ( !p.begin( PREF_FILE, true ) )
+                if ( !p.begin( PREF_FILE, true ) ) {
+                    Serial.println( "begin error" );
                     break;
-                if ( !p.isKey( validityKey ) )
+                }
+                if ( !p.isKey( validityKey ) ) {
+                    Serial.println( "missing valid key" );
                     break;
+                }
                 if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
+                    Serial.println( "key invalid" );
                     r = result::invalid;
                     break;
                 }
-                if ( !p.isKey( dataKey ) )
+                if ( !p.isKey( dataKey ) ) {
+                    Serial.println( "missing data key" );
                     break;
-                if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
+                }
+                if ( p.getBytes( dataKey, data, sizeof(T) ) != sizeof(T) ) {
+                    Serial.println( "data invalid" );
                     break;
+                }
                 r = result::okay;
                 break;
             }
@@ -208,14 +259,30 @@ class spStorage {
     //
     public:
 
+        // template <typename T>
+        // bool saveData( const char *dataKey, T &data ) {
+        //     Preferences p;
+        //     bool r = false;
+        //     while( true ) {
+        //         if ( !p.begin( PREF_FILE, false ) )
+        //             break;
+        //         if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
+        //             break;
+        //         r = true;
+        //         break;
+        //     }
+        //     p.end();
+        //     return r;
+        // }
+
         template <typename T>
-        bool saveData( const char *dataKey, T &data ) {
+        bool saveData( const char * dataKey, T * data ) { //}, size_T size ) {
             Preferences p;
             bool r = false;
             while( true ) {
                 if ( !p.begin( PREF_FILE, false ) )
                     break;
-                if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
+                if ( p.putBytes( dataKey, data, sizeof(T) ) != sizeof(T) )
                     break;
                 r = true;
                 break;
@@ -224,25 +291,68 @@ class spStorage {
             return r;
         }
 
+        // template <typename T>
+        // bool saveData( const char * dataKey, T & data ) {
+        //     return saveData( dataKey, &data ); //, sizeof(data) );
+        // }
+
+        // template <typename T>
+        // bool saveData( const char *validityKey, const char *dataKey, T &data ) {
+        //     // https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
+        //     // https://github.com/espressif/arduino-esp32/issues/2497
+        //     Preferences p;
+        //     bool r = false;
+        //     while( true ) {
+        //         if ( !p.begin( PREF_FILE, false ) )
+        //             break;
+        //         if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
+        //             break;
+        //         if ( p.putUChar( validityKey, VALID_FLAG ) != 1 )
+        //             break;
+        //         r = true;
+        //         break;
+        //     }
+        //     p.end();
+        //     return r;
+        // }
+
         template <typename T>
-        bool saveData( const char *validityKey, const char *dataKey, T &data ) {
+        bool saveData( const char * validityKey, const char * dataKey, T * data ) { // }, size_t size ) {
             // https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
             // https://github.com/espressif/arduino-esp32/issues/2497
+
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, false ) )
+                if ( !p.begin( PREF_FILE, false ) ) {
+                    // Serial.println( "begin error" );
                     break;
-                if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
+                }
+                auto len = p.putBytes( dataKey, data, sizeof(T) );
+                // Serial.println( len );
+                if ( len != sizeof(T) ) {
+                    // Serial.println( "putBytes error" );
                     break;
-                if ( p.putUChar( validityKey, VALID_FLAG ) != 1 )
+                }
+                // if ( p.putBytes( dataKey, data, sizeof(T) ) != sizeof(T) ) {
+                //     Serial.println( "putBytes error" );
+                //     break;
+                // }
+                if ( p.putUChar( validityKey, VALID_FLAG ) != 1 ) {
+                    // Serial.println( "putUChar error" );
                     break;
+                }
                 r = true;
                 break;
             }
             p.end();
             return r;
-        }
+        }        
+
+        // template <typename T>
+        // inline bool saveData( const char * validityKey, const char * dataKey, T & data ) {
+        //     return saveData( validityKey, dataKey, &data );
+        // }
 
     //
     // ARRAY

@@ -18,6 +18,8 @@
 
 #include <LCDSupport/editorRowHandler.h>
 
+#include <LCDSupport/SettingsEditorEntry.h>
+
 namespace StarterPack {
 
 //
@@ -26,8 +28,9 @@ namespace StarterPack {
 
     class SettingsEditor;
 
-    struct seEntry {
+    struct seEntry : SettingsEditorEntry {
 
+/*
         enum class dataType {
             custom,
             _dash,
@@ -281,6 +284,7 @@ namespace StarterPack {
             }
             return false;
         }
+*/
 
     //
     // EDIT
@@ -405,6 +409,7 @@ namespace StarterPack {
             return false;
         }
 
+/*
     //
     // ROUTINES
     //
@@ -551,6 +556,7 @@ namespace StarterPack {
                 break;
             }
         }
+*/
 
     };
 
@@ -653,7 +659,8 @@ class SettingsEditor {
             se->data._pick.selected = defaultSelection;
             se->data._pick.optionCount = optCount;
             se->data._pick.rollover = rollover;
-            se->max.pickOptions = options;
+            // se->max.pickOptions = options;
+            se->setPickDiplays( options );
 
             // se->data.pickOptions = options;
             // se->max._pick.selected = defaultSelection;

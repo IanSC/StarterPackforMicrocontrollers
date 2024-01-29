@@ -427,15 +427,17 @@ namespace StarterPack {
         //
 
         class pick : public entryCore { public:
-            uint8_t      selected; // 1-based
-            const char **options; 
-            uint8_t      optionCount;
+            uint8_t         selected; // 1-based
+            const char **   displayOptions;
+            const uint8_t * valueOptions;
+            uint8_t         optionCount;
 
-            pick( const char *caption, uint8_t &selected, const char **options, uint8_t optionCount, bool readonly=false ) {
+            pick( const char *caption, uint8_t &selected, const char **displayOptions, const uint8_t * valueOptions, uint8_t optionCount, bool readonly=false ) {
                 this->caption = caption;
                 this->ptr = &selected;
                 this->selected = selected;
-                this->options = options;
+                this->displayOptions = displayOptions;
+                this->valueOptions = valueOptions;
                 this->optionCount = optionCount;
                 this->readonly = readonly;
             }
@@ -471,12 +473,17 @@ namespace StarterPack {
                     buffer[0] = 0;
                 } else {
                     // 1-based index
-                    strncpy( buffer, options[selected-1], bufferSize );
+                    strncpy( buffer, displayOptions[selected-1], bufferSize );
                     buffer[bufferSize-1] = 0; // in case option is too long
                 }
             }
             bool parseUserEntry( char *buffer ) override { return true; }
-            void acceptChange() override { *((uint8_t*)ptr) = selected; }
+            void acceptChange() override {
+                if ( valueOptions == nullptr )
+                    *((uint8_t*)ptr) = selected;
+                else
+                    *((uint8_t*)ptr) = valueOptions[selected-1];
+            }
         };
 
         //
@@ -1069,10 +1076,22 @@ namespace StarterPack {
             //
             // PICK
             //
-            template<size_t optCount>
-            PropertyEditorEntry::pick *addPicker( const char *caption, uint8_t &selected, const char* (&options)[optCount], bool readonly=false ) {
+            template<size_t optCount1,size_t optCount2>
+            PropertyEditorEntry::pick *addPicker( const char *caption, uint8_t &selected,
+            const char* (&options)[optCount1], const uint8_t (&values)[optCount2],
+            bool readonly=false ) {
+                static_assert( optCount1 == optCount2, "option count not the same" );
                 auto *se = new PropertyEditorEntry::pick(
-                    caption,selected,options,optCount,readonly);
+                    caption,selected,options,values,optCount1,readonly);
+                insert( se );
+                return se;
+            }
+            template<size_t optCount>
+            PropertyEditorEntry::pick *addPicker( const char *caption, uint8_t &selected,
+            const char* (&options)[optCount],
+            bool readonly=false ) {
+                auto *se = new PropertyEditorEntry::pick(
+                    caption,selected,options,nullptr,optCount,readonly);
                 insert( se );
                 return se;
             }
@@ -1593,9 +1612,13 @@ namespace StarterPack {
         se.addFloating( "doob1", doob1, 2 );
         se.addFloating( "doob2", doob2, 2 );
 
-        uint8_t pick = 2;
-        static const char *options[] = { "No", "Yes", "Cancel" };
-        se.addPicker( "pick", pick, options );
+        uint8_t pick1 = 2;
+        static const char * displayOptions[] = { "No", "Yes", "Cancel" };
+        static const uint8_t valueOptions[] = { 0, 1, 0xFF };
+        se.addPicker( "pick", pick1, displayOptions, valueOptions );
+
+        uint8_t pick2 = 2;
+        se.addPicker( "pick", pick2, displayOptions );
 
         char buffer[15];
         strcpy( buffer, "there" );
@@ -1675,8 +1698,8 @@ namespace StarterPack {
         se.addSlider( "ui32", ui32 );
 
         uint8_t pick = 2;
-        static const char *options[] = { "No", "Yes", "Cancel" };
-        se.addPicker( "pick", pick, options );
+        static const char *displayOptions[] = { "No", "Yes", "Cancel" };
+        se.addPicker( "pick", pick, displayOptions );
 
         char buffer[15];
         strcpy( buffer, "there" );

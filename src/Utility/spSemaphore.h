@@ -100,7 +100,7 @@ public:
     // SIMPLE LOCK
     //
 
-    bool locked = false;
+    volatile bool locked = false;
 
     bool takeLock( uint16_t timeoutInMs = 0 ) {
         if ( !locked ) {

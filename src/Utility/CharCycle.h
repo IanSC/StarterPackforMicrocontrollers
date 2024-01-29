@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <Utility/spMacros.h>
+#include <Utility/spEnum.h>
 #include <Utility/WindowedText.h>
 
 namespace StarterPack {
