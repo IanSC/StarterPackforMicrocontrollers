@@ -12,20 +12,23 @@
 
 // Preferences p;
 
+// #define DEBUG_DIAGNOSE
+#include <dbgDefines.h>
+
 namespace StarterPack {
 
 class spStorage {
 
         const char *PREF_FILE;    // = "DATA";
-        uint8_t     VALID_FLAG;   // = 0x23;
-        uint8_t     INVALID_FLAG; // = 0x34;
+        // uint8_t     VALID_FLAG;   // = 0x23;
+        // uint8_t     INVALID_FLAG; // = 0x34;
         
     public:
 
-        spStorage( const char *PREF_FILE = "DATA", uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
+        spStorage( const char *PREF_FILE = "DATA" ) { //}, uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
             this->PREF_FILE = PREF_FILE;
-            this->VALID_FLAG = VALID_FLAG;
-            this->INVALID_FLAG = INVALID_FLAG;
+            // this->VALID_FLAG = VALID_FLAG;
+            // this->INVALID_FLAG = INVALID_FLAG;
             ESP_ERROR_CHECK( nvs_flash_init() );
             // open as read/write to force creation
             // if still missing and opened as read only
@@ -71,7 +74,7 @@ class spStorage {
             cancelled
         };
 
-        wipeResult wipeWithPrompt( uint8_t ERR_SOURCE, uint8_t ERR_STORAGE_WIPE ) {
+        wipeResult wipeWithPrompt( uint8_t errSource, uint8_t errCode ) {
             namespace ui = StarterPack::UserInterface;
 
             ui::LCD->clear();
@@ -83,7 +86,7 @@ class spStorage {
                     ui::promptDialog1( "RESET", "data erased" );
                     return wipeResult::okay;
                 } else {
-                    ui::promptErrorDialog1( ERR_SOURCE, ERR_STORAGE_WIPE, "error erasing data" );
+                    ui::promptErrorDialog1( errSource, errCode, "error erasing data" );
                     return wipeResult::error;
                 }
             } else {
@@ -95,100 +98,49 @@ class spStorage {
             }
         }
 
-    //
-    // VALIDITY
-    //
-    public:
+    // //
+    // // VALIDITY
+    // //
+    // public:
 
-        enum result {
-            okay,
-            invalid,
-            //restored, // extra for callers
-            error
-        };
+    //     enum result {
+    //         okay,
+    //         invalid,
+    //         //restored, // extra for callers
+    //         error
+    //     };
 
-        result isValid( const char *validityKey ) {
-            Preferences p;
-            result r = result::error;
-            while( true ) {
-                if ( !p.begin( PREF_FILE, true ) )
-                    break;
-                if ( !p.isKey( validityKey ) )
-                    break;
-                if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
-                    r = result::invalid;
-                    break;
-                }
-                r = result::okay;
-                break;
-            }
-            p.end();
-            return r;
-        }
+    //     result isValid( const char *validityKey ) {
+    //         Preferences p;
+    //         result r = result::error;
+    //         while( true ) {
+    //             if ( !p.begin( PREF_FILE, true ) )
+    //                 break;
+    //             if ( !p.isKey( validityKey ) )
+    //                 break;
+    //             if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
+    //                 r = result::invalid;
+    //                 break;
+    //             }
+    //             r = result::okay;
+    //             break;
+    //         }
+    //         p.end();
+    //         return r;
+    //     }
 
-        bool setValid( const char *validityKey ) {
-            Preferences p;
-            bool r = false;
-            while( true ) {
-                if ( !p.begin( PREF_FILE, false ) )
-                    break;
-                if ( p.putUChar( validityKey, VALID_FLAG ) != 1 )
-                    break;
-                r = true;
-                break;
-            }
-            p.end();
-            return r;
-        }
+        static constexpr uint8_t VALID_FLAG   = B10101010;
+        static constexpr uint8_t INVALID_FLAG = B01010101;
 
-        bool setInvalid( const char *validityKey ) {
-            Preferences p;
-            bool r = false;
-            while( true ) {
-                if ( !p.begin( PREF_FILE, false ) )
-                    break;
-                if ( p.putUChar( validityKey, INVALID_FLAG ) != 1 )
-                    break;
-                r = true;
-                break;
-            }
-            p.end();
-            return r;
-        }
-
-    //
-    // READ
-    //
-    public:
-
-        // template <typename T>
-        // bool readData( const char *dataKey, T &data ) {
-        //     Preferences p;
-        //     bool r = false;
-        //     while( true ) {
-        //         if ( !p.begin( PREF_FILE, true ) )
-        //             break;
-        //         if ( !p.isKey( dataKey ) )
-        //             break;                    
-        //         if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
-        //             break;
-        //         r = true;
-        //         break;
-        //     }
-        //     p.end();
-        //     return r;
-        // }
-
-        template <typename T>
-        bool readData( const char * dataKey, T * data ) {
+        bool isValid( const char *key ) {
             Preferences p;
             bool r = false;
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) )
                     break;
-                if ( !p.isKey( dataKey ) )
-                    break;                    
-                if ( p.getBytes( dataKey, data, sizeof(T) ) != sizeof(T) )
+                if ( !p.isKey( key ) )
+                    break;
+                if ( p.getUChar( key, INVALID_FLAG ) != VALID_FLAG )
                     break;
                 r = true;
                 break;
@@ -197,57 +149,62 @@ class spStorage {
             return r;
         }
 
-        // template <typename T>
-        // result readData( const char * validityKey, const char * dataKey, T & data ) {
-        //     Preferences p;
-        //     result r = result::error;
-        //     while( true ) {
-        //         if ( !p.begin( PREF_FILE, true ) )
-        //             break;
-        //         if ( !p.isKey( validityKey ) )
-        //             break;
-        //         if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
-        //             r = result::invalid;
-        //             break;
-        //         }
-        //         if ( !p.isKey( dataKey ) )
-        //             break;
-        //         if ( p.getBytes( dataKey, &data, sizeof(T) ) != sizeof(T) )
-        //             break;
-        //         r = result::okay;
-        //         break;
-        //     }
-        //     p.end();
-        //     return r;
-        // }
-
-        template <typename T>
-        result readData( const char * validityKey, const char * dataKey, T * data ) {
+        bool setValid( const char *key ) {
             Preferences p;
-            result r = result::error;
+            bool r = false;
+            while( true ) {
+                if ( !p.begin( PREF_FILE, false ) )
+                    break;
+                if ( p.putUChar( key, VALID_FLAG ) != 1 )
+                    break;
+                r = true;
+                break;
+            }
+            p.end();
+            return r;
+        }
+
+        bool setInvalid( const char *key ) {
+            Preferences p;
+            bool r = false;
+            while( true ) {
+                if ( !p.begin( PREF_FILE, false ) )
+                    break;
+                if ( p.putUChar( key, INVALID_FLAG ) != 1 )
+                    break;
+                r = true;
+                break;
+            }
+            p.end();
+            return r;
+        }
+
+    //
+    // UTILITY
+    //
+    public:
+
+        bool keyExists( const char * key ) {
+            Preferences p;
+            bool r = false;
             while( true ) {
                 if ( !p.begin( PREF_FILE, true ) ) {
-                    Serial.println( "begin error" );
+                    DBG( "keyExists: begin error " ); DBG_( key );
                     break;
                 }
-                if ( !p.isKey( validityKey ) ) {
-                    Serial.println( "missing valid key" );
-                    break;
-                }
-                if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
-                    Serial.println( "key invalid" );
-                    r = result::invalid;
-                    break;
-                }
-                if ( !p.isKey( dataKey ) ) {
-                    Serial.println( "missing data key" );
-                    break;
-                }
-                if ( p.getBytes( dataKey, data, sizeof(T) ) != sizeof(T) ) {
-                    Serial.println( "data invalid" );
-                    break;
-                }
-                r = result::okay;
+                r = p.isKey( key );
+                break;
+            }
+            p.end();
+            return r;
+        }
+
+        bool removeKey( const char *key ) {
+            Preferences p;
+            bool r = false;
+            while( true ) {
+                if ( !p.begin( PREF_FILE, true ) ) break;
+                r = p.remove( key );
                 break;
             }
             p.end();
@@ -255,35 +212,27 @@ class spStorage {
         }
 
     //
-    // SAVE
+    // DATA
     //
     public:
 
-        // template <typename T>
-        // bool saveData( const char *dataKey, T &data ) {
-        //     Preferences p;
-        //     bool r = false;
-        //     while( true ) {
-        //         if ( !p.begin( PREF_FILE, false ) )
-        //             break;
-        //         if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
-        //             break;
-        //         r = true;
-        //         break;
-        //     }
-        //     p.end();
-        //     return r;
-        // }
-
         template <typename T>
-        bool saveData( const char * dataKey, T * data ) { //}, size_T size ) {
+        bool readData( const char * key, T * data ) {
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, false ) )
+                if ( !p.begin( PREF_FILE, true ) ) {
+                    DBG( "storageRead: begin error " ); DBG_( key );
                     break;
-                if ( p.putBytes( dataKey, data, sizeof(T) ) != sizeof(T) )
+                }
+                if ( !p.isKey( key ) ) {
+                    DBG( "storageRead: missing key " ); DBG_( key );
                     break;
+                }
+                if ( p.getBytes( key, data, sizeof(T) ) != sizeof(T) ) {
+                    DBG( "storageRead: read error" ); DBG_( key );
+                    break;
+                }
                 r = true;
                 break;
             }
@@ -291,33 +240,9 @@ class spStorage {
             return r;
         }
 
-        // template <typename T>
-        // bool saveData( const char * dataKey, T & data ) {
-        //     return saveData( dataKey, &data ); //, sizeof(data) );
-        // }
-
-        // template <typename T>
-        // bool saveData( const char *validityKey, const char *dataKey, T &data ) {
-        //     // https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
-        //     // https://github.com/espressif/arduino-esp32/issues/2497
-        //     Preferences p;
-        //     bool r = false;
-        //     while( true ) {
-        //         if ( !p.begin( PREF_FILE, false ) )
-        //             break;
-        //         if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
-        //             break;
-        //         if ( p.putUChar( validityKey, VALID_FLAG ) != 1 )
-        //             break;
-        //         r = true;
-        //         break;
-        //     }
-        //     p.end();
-        //     return r;
-        // }
-
         template <typename T>
-        bool saveData( const char * validityKey, const char * dataKey, T * data ) { // }, size_t size ) {
+        bool saveData( const char * key, T * data ) {
+
             // https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
             // https://github.com/espressif/arduino-esp32/issues/2497
 
@@ -325,21 +250,12 @@ class spStorage {
             bool r = false;
             while( true ) {
                 if ( !p.begin( PREF_FILE, false ) ) {
-                    // Serial.println( "begin error" );
+                    DBG_( "storageSave: begin error" );
                     break;
                 }
-                auto len = p.putBytes( dataKey, data, sizeof(T) );
-                // Serial.println( len );
-                if ( len != sizeof(T) ) {
-                    // Serial.println( "putBytes error" );
-                    break;
-                }
-                // if ( p.putBytes( dataKey, data, sizeof(T) ) != sizeof(T) ) {
-                //     Serial.println( "putBytes error" );
-                //     break;
-                // }
-                if ( p.putUChar( validityKey, VALID_FLAG ) != 1 ) {
-                    // Serial.println( "putUChar error" );
+                if ( p.putBytes( key, data, sizeof(T) ) != sizeof(T) ) {
+                    DBG_( "storageSave: save error" );
+                    p.remove( key );
                     break;
                 }
                 r = true;
@@ -347,92 +263,113 @@ class spStorage {
             }
             p.end();
             return r;
-        }        
-
-        // template <typename T>
-        // inline bool saveData( const char * validityKey, const char * dataKey, T & data ) {
-        //     return saveData( validityKey, dataKey, &data );
-        // }
+        }
 
     //
     // ARRAY
     //
+    public:
 
-        template <typename T, size_t S>
-        bool readArray( const char *dataKey, T (&data)[S] ) {
+        bool arrayExists( const char *key ) {
+
+            char *KEY = new char[ strlen(key)+3 ];
+            strcpy( KEY+2, key );
+            KEY[1] = '_';
+
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, true ) )
-                    break;
-                if ( !p.isKey( dataKey ) )
-                    break;                    
-                if ( p.getBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
-                    break;
+                if ( !p.begin( PREF_FILE, true ) ) break;
+                // === DATA ===
+                KEY[0]='D'; if ( !p.isKey( KEY ) ) break;
+                // === SIZE ===
+                KEY[0]='S'; if ( !p.isKey( KEY ) ) break;
                 r = true;
                 break;
             }
             p.end();
+            delete[] KEY;
             return r;
         }
 
-        template <typename T, size_t S>
-        result readArray( const char *validityKey, const char *dataKey, T (&data)[S] ) {
+        bool deleteArray( const char *key ) {
+            char * KEY = new char[ strlen(key)+3 ];
+            strcpy( KEY+2, key );
+            KEY[1] = '_';
+
             Preferences p;
-            result r = result::error;
+            bool r = true;
             while( true ) {
-                if ( !p.begin( PREF_FILE, true ) )
-                    break;
-                if ( !p.isKey( validityKey ) )
-                    break;
-                if ( p.getUChar( validityKey, INVALID_FLAG ) != VALID_FLAG ) {
-                    r = result::invalid;
+                if ( !p.begin( PREF_FILE, true ) ) {
+                    r = false;
                     break;
                 }
-                if ( !p.isKey( dataKey ) )
-                    break;
-                if ( p.getBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
-                    break;
-                r = result::okay;
+                // === DATA ===
+                KEY[0]='D'; if ( !p.remove( KEY ) ) r = false;
+                // === SIZE ===
+                KEY[0]='S'; if ( !p.remove( KEY ) ) r = false;
                 break;
             }
             p.end();
+            delete[] KEY;
             return r;
         }
 
-        template <typename T, size_t S>
-        bool saveArray( const char *dataKey, T (&data)[S] ) {
+        template <typename T, size_t S, typename TS>
+        bool readArray( const char *key, T (&data)[S], TS *usedSize ) {
+
+            char * KEY = new char[ strlen(key)+3 ];
+            strcpy( KEY+2, key );
+            KEY[1] = '_';
+
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, false ) )
-                    break;
-                if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
-                    break;
+                if ( !p.begin( PREF_FILE, true ) ) break;
+                // === DATA ===
+                KEY[0]='D';
+                if ( !p.isKey( KEY ) ) break;
+                if ( p.getBytes( KEY, &data, sizeof(data) ) != sizeof(data) ) break;
+                // === SIZE ===
+                KEY[0]='S';                
+                if ( !p.isKey( KEY ) ) break;
+                if ( p.getBytes( KEY, &usedSize, sizeof(TS)) != sizeof(TS) ) break;
                 r = true;
                 break;
             }
             p.end();
+            delete[] KEY;
             return r;
         }
 
-        template <typename T, size_t S>
-        bool saveArray( const char *validityKey, const char *dataKey, T (&data)[S] ) {
-            // https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
-            // https://github.com/espressif/arduino-esp32/issues/2497
+        template <typename T, size_t S, typename TS>
+        bool saveArray( const char *key, T (&data)[S], TS usedSize ) {            
+
+            char * KEY = new char[ strlen(key)+3 ];
+            strcpy( KEY+2, key );
+            KEY[1] = '_';
+
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, false ) )
+                if ( !p.begin( PREF_FILE, false ) ) break;
+                // === DATA ===
+                KEY[0]='D';
+                if ( p.putBytes( KEY, &data, sizeof(data) ) != sizeof(data) ) {
+                    p.remove( KEY );
                     break;
-                if ( p.putBytes( dataKey, &data, sizeof(data) ) != sizeof(data) )
+                }
+                // === SIZE ===
+                KEY[0]='S';
+                if ( p.putBytes( KEY, &usedSize, sizeof(TS) ) != sizeof(TS) ) {
+                    p.remove( KEY );
                     break;
-                if ( p.putUChar( validityKey, VALID_FLAG ) != 1 )
-                    break;
+                }
                 r = true;
                 break;
             }
             p.end();
+            delete[] KEY;
             return r;
         }
 
@@ -440,6 +377,4 @@ class spStorage {
 
 }
 
-// const char *Storage::PREF_FILE    = "DATA";
-// uint8_t     Storage::VALID_FLAG   = 0x23;
-// uint8_t     Storage::INVALID_FLAG = 0x34;
+#include <dbgDefinesOff.h>

@@ -261,11 +261,11 @@ namespace StarterPack {
                     : entryRangedInt(caption,&data,data,min,max,LEN,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
-        CLS( int8_t,   _si08, 4+1 , true  )  //        -127
-        CLS( uint8_t,  _ui08, 3+1 , false )  //         255
-        CLS( int16_t,  _si16, 6+1 , true  )  //      -32768
+        CLS(   int8_t, _si08, 4+1 , true  )  //        -127
+        CLS(  uint8_t, _ui08, 3+1 , false )  //         255
+        CLS(  int16_t, _si16, 6+1 , true  )  //      -32768
         CLS( uint16_t, _ui16, 5+1 , false )  //       65535
-        CLS( int32_t,  _si32, 11+1, true  )  // -2147483647
+        CLS(  int32_t, _si32, 11+1, true  )  // -2147483647
         CLS( uint32_t, _ui32, 10+1, false )  //  4294967295
         #undef CLS
 
@@ -418,7 +418,7 @@ namespace StarterPack {
                     : entryRangedDouble(caption,&data,data,dp,min,max,LEN,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
-        CLS( float,  _flot, 20, true )
+        CLS( float , _flot, 20, true )
         CLS( double, _doob, 20, true )
         #undef CLS
 
@@ -427,62 +427,96 @@ namespace StarterPack {
         //
 
         class pick : public entryCore { public:
-            uint8_t         selected; // 1-based
+            uint8_t         selectedIndex; // 1-based
             const char **   displayOptions;
             const uint8_t * valueOptions;
             uint8_t         optionCount;
 
-            pick( const char *caption, uint8_t &selected, const char **displayOptions, const uint8_t * valueOptions, uint8_t optionCount, bool readonly=false ) {
+            pick( const char *caption, uint8_t &value, const char **displayOptions, const uint8_t * valueOptions, uint8_t optionCount, bool readonly=false ) {
                 this->caption = caption;
-                this->ptr = &selected;
-                this->selected = selected;
+                this->ptr = &value;
+                // this->selected = selected;
                 this->displayOptions = displayOptions;
                 this->valueOptions = valueOptions;
                 this->optionCount = optionCount;
                 this->readonly = readonly;
+                if ( valueOptions == nullptr )
+                    selectedIndex = 1;
+                else {
+                    uint8_t target = *((uint8_t*)ptr);
+                    for( int i=0 ; i<optionCount ; i++ ) {
+                        if ( valueOptions[i] == target ) {
+                            selectedIndex = i + 1;
+                            break;
+                        }
+                    }
+                    Serial.println( caption );
+                    Serial.print("SEL = "); Serial.println( selectedIndex );
+                    Serial.print("VAL = "); Serial.println( valueOptions[selectedIndex-1] );
+                }
+            }
+            // bool isValidSelection() {
+            //     // between: 1 and N
+            //     return ( selectedIndex > 0 && selectedIndex <= optionCount );
+            // }
+            bool isInvalidSelection() {
+                // not between: 1 and N
+                return ( selectedIndex < 1 || selectedIndex > optionCount );
             }
             bool moveLeft() override {
-                if ( selected == 0 || selected > optionCount ) {
-                    selected = 1;
+                // if ( selected == 0 || selected > optionCount ) {
+                if ( isInvalidSelection() ) {
+                    selectedIndex = 1;
                     return true;
-                } else if ( selected > 1 ) {
-                    selected--;
+                } else if ( selectedIndex > 1 ) {
+                    selectedIndex--;
                     return true;
                 }
                 return false;
             }
             bool moveRight() override {
-                if ( selected == 0 || selected > optionCount ) {
-                    selected = 1;
+                // if ( selected == 0 || selected > optionCount ) {
+                if ( isInvalidSelection() ) {
+                    selectedIndex = 1;
                     return true;
-                } else if ( selected < optionCount ) {
-                    selected++;
+                } else if ( selectedIndex < optionCount ) {
+                    selectedIndex++;
                     return true;
                 }
                 return false;
             }
             editResult enterEditMode( char *editBuffer, StarterPack::windowPosition &wPos ) override {
                 // with rollover
-                selected++;
-                if ( selected < 1 || selected > optionCount )
-                    selected = 1;
+                selectedIndex++;
+                // if ( selected < 1 || selected > optionCount )
+                if ( isInvalidSelection() )
+                    selectedIndex = 1;
                 return accepted;
             }
             void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
-                if ( selected < 1 || selected > optionCount ) {
+                // if ( selected < 1 || selected > optionCount ) {
+                if ( isInvalidSelection() )
                     buffer[0] = 0;
-                } else {
+                else {
                     // 1-based index
-                    strncpy( buffer, displayOptions[selected-1], bufferSize );
+                    strncpy( buffer, displayOptions[selectedIndex-1], bufferSize );
                     buffer[bufferSize-1] = 0; // in case option is too long
                 }
             }
             bool parseUserEntry( char *buffer ) override { return true; }
             void acceptChange() override {
                 if ( valueOptions == nullptr )
-                    *((uint8_t*)ptr) = selected;
-                else
-                    *((uint8_t*)ptr) = valueOptions[selected-1];
+                    *((uint8_t*)ptr) = selectedIndex;
+                else {
+                    if ( !isInvalidSelection() ) {
+                        Serial.println( caption );
+                        Serial.print("0 = "); Serial.println( valueOptions[0] );
+                        Serial.print("1 = "); Serial.println( valueOptions[1] );
+                        Serial.print("SEL = "); Serial.println( selectedIndex );
+                        Serial.print("VAL = "); Serial.println( valueOptions[selectedIndex-1] );
+                        *((uint8_t*)ptr) = valueOptions[selectedIndex-1];
+                    }
+                }
             }
         };
 
@@ -620,14 +654,13 @@ namespace StarterPack {
                     : sliderInt(caption,&data,data,min,max,readonly) {} \
                 void acceptChange() override { *((dType*) ptr) = data; } \
             };
-        CLS( int8_t,   _si08_slider )
-        CLS( uint8_t,  _ui08_slider )
-        CLS( int16_t,  _si16_slider )
+        CLS(   int8_t, _si08_slider )
+        CLS(  uint8_t, _ui08_slider )
+        CLS(  int16_t, _si16_slider )
         CLS( uint16_t, _ui16_slider )
-        CLS( int32_t,  _si32_slider )
+        CLS(  int32_t, _si32_slider )
         CLS( uint32_t, _ui32_slider )
         #undef CLS
-
 
         // RAM:   98.0% (used 2008 bytes from 2048 bytes)
         // Flash: [==========]  110.4% (used 33910 bytes from 30720 bytes)
@@ -711,6 +744,67 @@ namespace StarterPack {
         // CLS( int32_t,  _si32_slider )
         // CLS( uint32_t, _ui32_slider )
         // #undef CLS
+
+        class sliderDouble : public entryCore { public:
+            double data;
+            double min;
+            double max;
+            sliderDouble( const char *caption, void *dataPtr, double dataValue, double min, double max,
+            bool readonly ) {
+                this->caption = caption; ptr = dataPtr; this->readonly = readonly;
+                this->data = dataValue; this->min = min; this->max = max;
+            }
+            bool moveLeft()  override { if ( data>min ) { data--; return true; } else return false; }
+            bool moveRight() override { if ( data<max ) { data++; return true; } else return false; }
+            void toString( char *buffer, uint8_t bufferSize, StarterPack::windowPosition &wPos ) override {
+                Num::mySnprintf( buffer, bufferSize, data );
+                // snprintf( buffer, bufferSize, "%d", data );
+            }
+            int64_t incLow  = 1;
+            int64_t incMed  = 10;
+            int64_t incHigh = 100;
+            bool decrement( incrementLevel level ) override {
+                int64_t delta;
+                switch( level ) {
+                case incrementLevel::small:  delta = incLow;  break;
+                case incrementLevel::medium: delta = incMed;  break;
+                case incrementLevel::large:  delta = incHigh; break;
+                }
+                if ( data > min + delta  ) {
+                    data -= delta;
+                    return true;
+                }  else if ( data > min ) {
+                    data = min;
+                    return true;
+                }
+                return false;
+            }
+            bool increment( incrementLevel level ) override {
+                int64_t delta;
+                switch( level ) {
+                case incrementLevel::small:  delta = incLow;  break;
+                case incrementLevel::medium: delta = incMed;  break;
+                case incrementLevel::large:  delta = incHigh; break;
+                }
+                if ( data + delta < max ) {
+                    data += delta;
+                    return true;
+                } else if ( data < max ) {
+                    data = max;
+                    return true;
+                }
+                return false;
+            }
+        };
+        #define CLS(dType,D) \
+            class D : public sliderDouble { public: \
+                D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
+                    : sliderDouble(caption,&data,data,min,max,readonly) {} \
+                void acceptChange() override { *((dType*) ptr) = data; } \
+            };
+        CLS( float , _flot_slider )
+        CLS( double, _doob_slider )
+        #undef CLS
 
         //
         // ROW HANDLER
@@ -1045,11 +1139,11 @@ namespace StarterPack {
                     insert( se ); \
                     return se; \
                 }
-            ADD( int8_t,   _si08,  INT8_MIN, INT8_MAX   )
-            ADD( uint8_t,  _ui08,         0, UINT8_MAX  )
-            ADD( int16_t,  _si16, INT16_MIN, INT16_MAX  )
+            ADD(   int8_t, _si08,  INT8_MIN, INT8_MAX   )
+            ADD(  uint8_t, _ui08,         0, UINT8_MAX  )
+            ADD(  int16_t, _si16, INT16_MIN, INT16_MAX  )
             ADD( uint16_t, _ui16,         0, UINT16_MAX )
-            ADD( int32_t,  _si32, INT32_MIN, INT32_MAX  )
+            ADD(  int32_t, _si32, INT32_MIN, INT32_MAX  )
             ADD( uint32_t, _ui32,         0, UINT32_MAX )
             // ADD( float,    _flot, -__FLT_MAX__, __FLT_MAX__ );
             // ADD( double,   _doob, -__DBL_MAX__, __DBL_MAX__ );
@@ -1069,8 +1163,8 @@ namespace StarterPack {
                     insert( se ); \
                     return se; \
                 }
-            ADD( float,    _flot, -__FLT_MAX__, __FLT_MAX__ );
-            ADD( double,   _doob, -__DBL_MAX__, __DBL_MAX__ );
+            ADD( float , _flot, -__FLT_MAX__, __FLT_MAX__ );
+            ADD( double, _doob, -__DBL_MAX__, __DBL_MAX__ );
             #undef ADD
 
             //
@@ -1103,7 +1197,7 @@ namespace StarterPack {
             }
 
             //
-            // SLIDERS
+            // SLIDERS INTEGER
             //
             #define ADD(dType,D,MIN,MAX) \
                 PropertyEditorEntry::D ## _slider *addSlider( const char *caption, dType &data, bool readonly=false ) { \
@@ -1116,12 +1210,30 @@ namespace StarterPack {
                     insert( se ); \
                     return se; \
                 }
-            ADD( int8_t,   _si08,  INT8_MIN, INT8_MAX   )
-            ADD( uint8_t,  _ui08,         0, UINT8_MAX  )
-            ADD( int16_t,  _si16, INT16_MIN, INT16_MAX  )
+            ADD(   int8_t, _si08,  INT8_MIN, INT8_MAX   )
+            ADD(  uint8_t, _ui08,         0, UINT8_MAX  )
+            ADD(  int16_t, _si16, INT16_MIN, INT16_MAX  )
             ADD( uint16_t, _ui16,         0, UINT16_MAX )
-            ADD( int32_t,  _si32, INT32_MIN, INT32_MAX  )
+            ADD(  int32_t, _si32, INT32_MIN, INT32_MAX  )
             ADD( uint32_t, _ui32,         0, UINT32_MAX )
+            #undef ADD
+
+            //
+            // SLIDERS FLOAT
+            //
+            #define ADD(dType,D,MIN,MAX) \
+                PropertyEditorEntry::D ## _slider *addSlider( const char *caption, dType &data, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D ## _slider(caption,data,MIN,MAX,readonly); \
+                    insert( se ); \
+                    return se; \
+                } \
+                PropertyEditorEntry::D ## _slider *addSlider( const char *caption, dType &data, dType min, dType max, bool readonly=false ) { \
+                    auto *se = new PropertyEditorEntry::D ## _slider(caption,data,min,max,readonly); \
+                    insert( se ); \
+                    return se; \
+                }
+            ADD( float , _flot, -__FLT_MAX__, __FLT_MAX__ );
+            ADD( double, _doob, -__DBL_MAX__, __DBL_MAX__ );
             #undef ADD
 
         //
