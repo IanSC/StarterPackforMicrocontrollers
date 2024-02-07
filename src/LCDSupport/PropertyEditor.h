@@ -267,6 +267,8 @@ namespace StarterPack {
         CLS( uint16_t, _ui16, 5+1 , false )  //       65535
         CLS(  int32_t, _si32, 11+1, true  )  // -2147483647
         CLS( uint32_t, _ui32, 10+1, false )  //  4294967295
+        // CLS(  int64_t, _si64, 20+1, true  )  // -9,223,372,036,854,775,807
+        // CLS( uint64_t, _ui64, 10+1, false )  //  4294967295
         #undef CLS
 
         // ====== ]  86.4% (used 1770 bytes from 2048 bytes)

@@ -203,8 +203,20 @@ class spStorage {
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, true ) ) break;
+                if ( !p.begin( PREF_FILE, false ) ) break;
                 r = p.remove( key );
+                break;
+            }
+            p.end();
+            return r;
+        }
+
+        size_t getFreeEntries() {
+            Preferences p;
+            bool r = false;
+            while( true ) {
+                if ( !p.begin( PREF_FILE, false ) ) break;
+                r = p.freeEntries();
                 break;
             }
             p.end();

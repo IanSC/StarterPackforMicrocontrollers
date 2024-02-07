@@ -28,8 +28,17 @@
 
 #include <InputHelper/InputFilterInterface.h>
 
-// #define DEBUG_TRACE(x)   x;
-#define DEBUG_TRACE(x)   ;
+#define DEBUG_TRACE(x)              ;
+#define DEBUG_KEY(msg,key)          ;
+#define DEBUG_KEY2(msg,key1,key2)   ;
+
+// #define DEBUG_TRACE(x)              x
+// #define DEBUG_KEY(msg,key)          Serial.print('['); Serial.print(msg); Serial.print(' '); \
+//                                     if (key<32) Serial.print((int)key); else Serial.print((char)key); Serial.print(']');
+// #define DEBUG_KEY2(msg,key1,key2)   Serial.print('['); Serial.print(msg); Serial.print(' '); \
+//                                     if (key1<32) Serial.print((int)key1); else Serial.print((char)key1); Serial.print("-->"); \
+//                                     if (key2<32) Serial.print((int)key2); else Serial.print((char)key2); Serial.print(']');
+
 
 namespace StarterPack {
 
@@ -149,25 +158,19 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
                 if (key == INACTIVE_KEY) {
                     if (debounceDelayReleasedInMs != 0) {
                         debounceMode = debounceModeEnum::TimeDelay;
-                        DEBUG_TRACE( Serial.print("[DELAY1 ") );
-                        DEBUG_TRACE( Serial.print(debounceCandidateKey) );
-                        DEBUG_TRACE( Serial.print("]") );
+                        DEBUG_KEY( "DELAY1", debounceCandidateKey );
                         // return debounceLastApprovedKey;
                         break;
                     }
                 } else {
                     if (debounceDelayPressedInMs != 0) {
                         debounceMode = debounceModeEnum::TimeDelay;
-                        DEBUG_TRACE( Serial.print("[DELAY2 ") );
-                        DEBUG_TRACE( Serial.print(debounceCandidateKey) );
-                        DEBUG_TRACE( Serial.print("]") );
+                        DEBUG_KEY( "DELAY2", debounceCandidateKey );
                         // return debounceLastApprovedKey;
                         break;
                     }
                 }
-                DEBUG_TRACE( Serial.print("[STABILITY1 ") );
-                DEBUG_TRACE( Serial.print(debounceCandidateKey) );
-                DEBUG_TRACE( Serial.print("]") );
+                DEBUG_KEY( "STABILITY1", debounceCandidateKey );
                 debounceMode = debounceModeEnum::CheckStability;
                 // return debounceLastApprovedKey;
                 break;
@@ -187,9 +190,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
                             break;
                         }
                     }
-                    DEBUG_TRACE( Serial.print("[STABILITY2 ") );
-                    DEBUG_TRACE( Serial.print(debounceCandidateKey) );
-                    DEBUG_TRACE( Serial.print("]") );
+                    DEBUG_KEY( "STABILITY2", debounceCandidateKey );
                     debounceMode = debounceModeEnum::CheckStability;
                     debounceTimerStart = now;
                 }
@@ -199,11 +200,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             case debounceModeEnum::CheckStability:
                 if (key != debounceCandidateKey) {
                     debounceMode = debounceModeEnum::Waiting;
-                    DEBUG_TRACE( Serial.print("[RESET ") );
-                    DEBUG_TRACE( Serial.print(debounceCandidateKey) );
-                    DEBUG_TRACE( Serial.print("-->") );
-                    DEBUG_TRACE( Serial.print(key) );
-                    DEBUG_TRACE( Serial.print("]") );
+                    DEBUG_KEY2( "RESET", debounceCandidateKey, key );
                     // return debounceLastApprovedKey;
                     break;
                 }
@@ -222,9 +219,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
                         }
                     }
                 }
-                DEBUG_TRACE( Serial.print("[STEADY ") );
-                DEBUG_TRACE( Serial.print(debounceCandidateKey) );
-                DEBUG_TRACE( Serial.print("]") );
+                DEBUG_KEY( "STEADY", debounceCandidateKey );
                 debounceMode = debounceModeEnum::SteadyState;
                 debounceLastApprovedKey = debounceCandidateKey;
                 // return debounceLastApprovedKey;
@@ -232,11 +227,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
 
             case debounceModeEnum::SteadyState:
                 if (key != debounceLastApprovedKey) {
-                    DEBUG_TRACE( Serial.print("[RELEASED ") );
-                    DEBUG_TRACE( Serial.print(debounceLastApprovedKey) );
-                    DEBUG_TRACE( Serial.print("-->") );
-                    DEBUG_TRACE( Serial.print(key) );
-                    DEBUG_TRACE( Serial.print("]") );
+                    DEBUG_KEY2( "RELEASED", debounceCandidateKey, key );
                     debounceMode = debounceModeEnum::Waiting;
                 }
                 // return debounceLastApprovedKey;
@@ -245,6 +236,18 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             return debounceLastApprovedKey;
         }
 
+        // NEW 2024 - OKAY
+        void clearDebouncedState() {
+            // key handled already
+            // do not report it as pressed any more via debounced
+            // note: if it is still pressed, will go thru debounce sequence
+            //       again, but will eventually be detected
+            DEBUG_KEY( "CLEAR", debounceLastApprovedKey );
+            debounceMode == debounceModeEnum::Waiting;
+            debounceLastApprovedKey = INACTIVE_KEY;
+        }
+
+        // ??? 2024 DON'T KNOW WHERE USED AND IT IT WORKS
         void skipDebounceDelay() {
             // proceed to stability check
             // why skip? just don't set it ???
@@ -254,6 +257,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             }
         }
 
+        // ??? 2024 DON'T KNOW WHERE USED AND IT IT WORKS
         void cancelDebounceDelay() {
             // for other cases, user can just release or press another key
             if (debounceMode == debounceModeEnum::TimeDelay)
