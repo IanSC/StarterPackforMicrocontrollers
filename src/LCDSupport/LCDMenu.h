@@ -55,13 +55,14 @@ class menuSystem {
                     this->title = title;
                 }
                 ~menuBar() {
-                    auto p = options.getFirst();
-                    while( p != nullptr ) {
-                        Serial.println("delete ");
-                        Serial.println(p->option);
-                        delete p;
-                        p = options.getNext();
-                    }
+                    // vector will auto delete
+                    // auto p = options.getFirst();
+                    // while( p != nullptr ) {
+                    //     Serial.println("delete ");
+                    //     Serial.println(p->option);
+                    //     delete p;
+                    //     p = options.getNext();
+                    // }
                 }
             //
             // ADD

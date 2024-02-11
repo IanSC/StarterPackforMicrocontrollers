@@ -232,29 +232,29 @@ namespace StarterPack {
         #define PickOptionsCount  data._pick.optionCount
         #define PickRollover      data._pick.rollover
         // #define PickOptions       max.pickOptions
-        #define PickDisplays      max.pickData
-        #define PickValues        min.pickData
+        #define PickDisplays      ((const char **) max.pickData)
+        #define PickValues        ((const uint8_t *) min.pickData)
 
     //
     // PICK
     //
 
         inline void setPickDiplays( const char ** options ) {
-            PickDisplays = (void*) options;
-            // max.pickOptions = (void*) options;
+            // PickDisplays = (void*) options;
+            max.pickData = (void*) options;
         }
 
         inline void setPickValues( const uint8_t * options ) {
-            PickValues = (void*) options;
-            // max.pickOptions = (void*) options;
+            // PickValues = (void*) options;
+            min.pickData = (void*) options;
         }
 
         inline const char ** getPickDisplay() {
-            return (const char **) PickDisplays;
+            return PickDisplays;
         }
 
         inline const uint8_t * getPickValues() {
-            return (const uint8_t *) PickValues;
+            return PickValues;
         }
 
     //
@@ -615,7 +615,7 @@ namespace StarterPack {
                 if ( PickSelected < 1 || PickSelected > PickOptionsCount ) {
                     buffer[0] = 0;
                 } else {
-                    strncpy( buffer, ((const char **)PickDisplays)[PickSelected-1], len );
+                    strncpy( buffer, PickDisplays[PickSelected-1], len );
                     buffer[len-1] = 0; // in case option is too long
                 }
                 break;
@@ -717,6 +717,7 @@ namespace StarterPack {
         }
 
         void acceptChange() {
+            if ( ptr == nullptr ) return;
             switch( type ) {
             // case _void:
             case dataType::_bool: *((bool*)     ptr) = data._bool.value; break;
@@ -728,7 +729,16 @@ namespace StarterPack {
             case dataType::_ui32: *((uint32_t*) ptr) = data._ui32; break;  
             case dataType::_flot: *((float*)    ptr) = data._flot; break;  
             case dataType::_doob: *((double*)   ptr) = data._doob; break;
-            case dataType::_pick: *((uint8_t*)  ptr) = data._pick.selected; break;
+            case dataType::_pick:
+            
+                if ( PickSelected < 1 || PickSelected > PickOptionsCount ) {
+                    // invalid selection
+                } else if ( PickValues == nullptr )
+                    *((uint8_t*) ptr) = data._pick.selected;
+                else
+                    *((uint8_t*) ptr) = PickValues[PickSelected-1];
+                break;
+
             case dataType::_text: strcpy( (char*) ptr, data._text );
             default:
                 break;
@@ -747,7 +757,22 @@ namespace StarterPack {
             case dataType::_ui32: data._ui32          = *((uint32_t*) ptr); break;  
             case dataType::_flot: data._flot          = *((float*)    ptr); break;  
             case dataType::_doob: data._doob          = *((double*)   ptr); break;
-            case dataType::_pick: data._pick.selected = *((uint8_t*)  ptr); break;
+            case dataType::_pick:
+
+                if ( PickValues == nullptr ) {
+                    // no value lookup, use index
+                    data._pick.selected = *((uint8_t*) ptr);
+                } else {
+                    // match current data to value options
+                    for( int i=0 ; i<PickOptionsCount ; i++ ) {
+                        if ( *((uint8_t*) ptr) == PickValues[i] ) {
+                            PickSelected = i + 1;
+                            break;
+                        }
+                    }
+                }
+                break;
+
             case dataType::_text: strcpy( data._text, (char*) ptr );
             default:
                 break;

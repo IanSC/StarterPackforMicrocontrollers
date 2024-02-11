@@ -74,10 +74,10 @@ class DigitalButton : public DigitalInput,
 
     public:
 
-        DigitalButton( const uint8_t pin, Init options = Init::Default ) : DigitalInput(pin,options) {}
+        DigitalButton( const uint8_t pin, Init options = Init::Default ) : DigitalInput( pin, options ) {}
 
         DigitalButton( const uint8_t pin, Init options, 
-        uint16_t stabilizationOnPressedMs, uint16_t stabilizationOnReleasedMs ) : DigitalInput(pin,options) {
+        uint16_t stabilizationOnPressedMs, uint16_t stabilizationOnReleasedMs ) : DigitalInput( pin, options ) {
             setStabilizationTimeInMs( stabilizationOnPressedMs, stabilizationOnReleasedMs );
         }
 

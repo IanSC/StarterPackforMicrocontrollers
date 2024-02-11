@@ -32,7 +32,8 @@
 
 #include <DigitalIO/DigitalInputRaw.h>
 
-#include <Utility/spMacros.h>
+// #include <Utility/spMacros.h>
+#include <Utility/spEnum.h>
 
 namespace StarterPack {
 
@@ -65,6 +66,7 @@ class DigitalInput : public DigitalInputRaw {
             ActiveLowPullUp    = ActiveLow  | PullUp, // best for Arduino
             ActiveHighPullDown = ActiveHigh | PullDown
         };
+        CLASS_ENUM_MANIPULATION( Init )
 
 /*
         // redefine here, otherwise:

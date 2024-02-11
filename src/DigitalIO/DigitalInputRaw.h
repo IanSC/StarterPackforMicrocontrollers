@@ -135,12 +135,12 @@ class DigitalInputRaw {
         }
 
         inline bool isOnRaw() {
-            if ( PIN == -1 ) return false;
+            // if ( PIN == -1 ) return false;
             return ( readRaw() == HIGH );
         }
 
         inline bool isOffRaw() {
-            if ( PIN == -1 ) return true;
+            // if ( PIN == -1 ) return true;
             return ( readRaw() == LOW );
         }
 

@@ -67,8 +67,10 @@ class UserInterfaceDebounced : public InputDebouncer<char>
 
         void waitUntilNothingIsPressed() {
             while ( true ) {
-                if ( getDebouncedKey() == INACTIVE_KEY )
+                if ( getNonDebouncedKey() == INACTIVE_KEY && getDebouncedKey() == INACTIVE_KEY )
                     return;
+                // if ( getDebouncedKey() == INACTIVE_KEY )
+                //     return;
                 delay(10);
                 // if ( getNonDebouncedKey() == INACTIVE_KEY )
                 //     return;

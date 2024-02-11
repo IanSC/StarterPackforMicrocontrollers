@@ -243,7 +243,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             // note: if it is still pressed, will go thru debounce sequence
             //       again, but will eventually be detected
             DEBUG_KEY( "CLEAR", debounceLastApprovedKey );
-            debounceMode == debounceModeEnum::Waiting;
+            debounceMode = debounceModeEnum::Waiting;
             debounceLastApprovedKey = INACTIVE_KEY;
         }
 

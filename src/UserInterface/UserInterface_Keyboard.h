@@ -235,6 +235,11 @@ namespace UserInterface {
         KeyHandler->cancelDebounceDelay();
     }
 
+    void clearDebouncedState() {
+        if ( KeyHandler == nullptr ) return;
+        KeyHandler->clearDebouncedState();
+    }
+
 //
 // FROM MULTI-CLICK: UserInterfaceMultiClick
 //
