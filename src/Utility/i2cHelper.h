@@ -33,7 +33,7 @@
 //      void     setFrequency( value )      sets i2c speed, default is based on Wire.h
 //      bool     verify()                   verify i2c connection, returns true/false
 //      ERROR_NO verifyWithError()          verify i2c connection, returns error number
-//      char*    errorMessage( ERROR_NO )   return error message string
+//      char *   errorMessage( ERROR_NO )   return error message string
 //      bool     recoverIfHasError()        resets i2c if error has been found, return true if recovery attempt was made
 //      uint16_t recoveryThrottleInMs       time between recovery attempts, default 2000 ms
 //      ERROR_NO lastError                  last error detected, will not reset even if next calls succeeds
@@ -42,7 +42,7 @@
 //
 //  Read 1 Byte
 //
-//      ERROR_NO readOneByte( dataAddr, &result )
+//      ERROR_NO readOneByte( dataAddr, & result )
 //      ex. byte result;
 //          ERROR_NO err = i2cHelper.readOneByte( dataAddress, result );
 //          if ( err != ERR_I2C_OK ) ... error found
@@ -53,7 +53,7 @@
 //
 //  Read 2 Bytes from Different Address
 //
-//      ERROR_NO readTwoBytes_DiffAddr( lowDataAddr, highDataAddr, &result )
+//      ERROR_NO readTwoBytes_DiffAddr( lowDataAddr, highDataAddr, & result )
 //      ex. uint16_t result;
 //          ERROR_NO err = i2cHelper.readTwoBytes_DiffAddr( addr1, addr2, result );
 //          if ( err != ERR_I2C_OK ) ... error found
@@ -64,8 +64,8 @@
 //
 //  Read 2 Bytes from Same Address (ex. AS5600 magnetic encoder)
 //
-//      ERROR_NO readTwoBytes_SameAddr_HiLo( dataAddr, &result )
-//      ERROR_NO readTwoBytes_SameAddr_LoHi( dataAddr, &result )
+//      ERROR_NO readTwoBytes_SameAddr_HiLo( dataAddr, & result )
+//      ERROR_NO readTwoBytes_SameAddr_LoHi( dataAddr, & result )
 //      ex. uint16_t result;
 //          ERROR_NO err = i2cHelper.readTwoBytes_SameAddr_HiLo( addr, result );
 //          if ( err != ERR_I2C_OK ) ... error found
@@ -177,7 +177,7 @@ class i2cHelper {
         static const ERROR_NO ERR_I2C_REQUEST  = 103;
         static const ERROR_NO ERR_I2C_TIMEOUT2 = 104;
 
-        static const char* errorMessage( ERROR_NO errorNo ) {
+        static const char * errorMessage( ERROR_NO errorNo ) {
             switch ( errorNo ) {
             case ERR_I2C_OK:        return "no error";                          // errors from Arduino Wire.h
             case ERR_I2C_BUFFER:    return "length too long for buffer";
@@ -195,8 +195,8 @@ class i2cHelper {
 
     private:
 
-        TwoWire *_wire;
-        uint8_t _defaultI2cAddress;
+        TwoWire * _wire;
+        uint8_t   _defaultI2cAddress;
 
     public:
 
@@ -204,24 +204,24 @@ class i2cHelper {
             // https://github.com/espressif/arduino-esp32/issues/6616
             // Confusing overload of Wire::begin
             // master/slave mode depends on variable type
-            inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+            inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl ) {
                 return wire.begin( (int) sda, (int) scl );
             }
-            inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
+            inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
                 return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
             }
-            inline static bool beginSlave( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+            inline static bool beginSlave( TwoWire & wire, uint8_t sda, uint8_t scl ) {
                 // slave has no clock
                 return wire.begin( sda, scl );
             }
         #elif defined(ARDUINO_ARCH_SAMD)
             // SEEDUINO XIAO SAMD21
             // https://community.platformio.org/t/using-preprocessor-directives-defined-in-platformio-ini/24169/2
-            inline static bool beginMaster( TwoWire &wire ) {
+            inline static bool beginMaster( TwoWire & wire ) {
                 wire.begin();
                 return true;
             }
-            inline static bool beginSlave( TwoWire &wire, uint8_t __defaultI2cAddress ) {
+            inline static bool beginSlave( TwoWire & wire, uint8_t __defaultI2cAddress ) {
                 wire.begin(__defaultI2cAddress);
                 return true;
             }
@@ -233,7 +233,7 @@ class i2cHelper {
         // // https://github.com/espressif/arduino-esp32/issues/6616
         // // Confusing overload of Wire::begin
         // // master/slave mode depends on variable type
-        // inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+        // inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl ) {
         //     #if defined(ARDUINO_ARCH_SAMD)
         //         #error UNSUPPORTED: i2cHelper.h
         //         // wire.begin();
@@ -242,7 +242,7 @@ class i2cHelper {
         //         return wire.begin( (int) sda, (int) scl );
         //     #endif
         // }
-        // inline static bool beginMaster( TwoWire &wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
+        // inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
         //     #if defined(ARDUINO_ARCH_SAMD)
         //         #error UNSUPPORTED: i2cHelper.h
         //         // wire.begin();
@@ -251,7 +251,7 @@ class i2cHelper {
         //         return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
         //     #endif
         // }
-        // inline static bool beginSlave( TwoWire &wire, uint8_t sda, uint8_t scl ) {
+        // inline static bool beginSlave( TwoWire & wire, uint8_t sda, uint8_t scl ) {
         //     #if defined(ARDUINO_ARCH_SAMD)
         //         #error UNSUPPORTED: i2cHelper.h
         //     #else
@@ -259,7 +259,7 @@ class i2cHelper {
         //         return wire.begin( sda, scl );
         //     #endif
         // }
-        // inline static bool beginSlave( TwoWire &wire, uint8_t __defaultI2cAddress ) {
+        // inline static bool beginSlave( TwoWire & wire, uint8_t __defaultI2cAddress ) {
         //     #if defined(ARDUINO_ARCH_SAMD)
         //         wire.begin(__defaultI2cAddress);
         //         return true;
@@ -278,7 +278,7 @@ class i2cHelper {
             setTimeoutInMs( 50 ); // let's just set it
         }
 
-        i2cHelper( TwoWire &wire, uint8_t defaultI2cAddress ) {
+        i2cHelper( TwoWire & wire, uint8_t defaultI2cAddress ) {
             _wire = &wire;
             _defaultI2cAddress = defaultI2cAddress;
             // up to user to set timeout on wire or through setTimeoutInMs() ???
@@ -553,7 +553,7 @@ class i2cHelper {
     //
     public:
 
-        ERROR_NO readOneByte_i2c( uint8_t _i2cAddress, uint8_t dataAddr, uint8_t &result ) {
+        ERROR_NO readOneByte_i2c( uint8_t _i2cAddress, uint8_t dataAddr, uint8_t & result ) {
             ERROR_NO r = readBytesCore( _i2cAddress, dataAddr, 1 );
             if ( r != ERR_I2C_OK ) { return r; }
             result = _wire->read();
@@ -567,7 +567,7 @@ class i2cHelper {
             return result;
         }
 
-        inline ERROR_NO readOneByte( uint8_t dataAddr, uint8_t &result ) {
+        inline ERROR_NO readOneByte( uint8_t dataAddr, uint8_t & result ) {
             return readOneByte_i2c( _defaultI2cAddress, dataAddr, result );
         }
 
@@ -580,7 +580,7 @@ class i2cHelper {
     //
     public:
         
-        ERROR_NO readTwoBytes_DiffAddr_i2c( uint8_t _i2cAddress, uint8_t lowDataAddr, uint8_t highDataAddr, uint16_t &result ) {
+        ERROR_NO readTwoBytes_DiffAddr_i2c( uint8_t _i2cAddress, uint8_t lowDataAddr, uint8_t highDataAddr, uint16_t & result ) {
             // read 2 bytes from different addresses, assemble to result
             //    lowDataAddr  is LSB (low byte)
             //    highDataAddr is MSB (high byte)
@@ -600,7 +600,7 @@ class i2cHelper {
             return ERR_I2C_OK;
         }
 
-        inline ERROR_NO readTwoBytes_DiffAddr( uint8_t lowDataAddr, uint8_t highDataAddr, uint16_t &result ) {
+        inline ERROR_NO readTwoBytes_DiffAddr( uint8_t lowDataAddr, uint8_t highDataAddr, uint16_t & result ) {
             return readTwoBytes_DiffAddr_i2c( _defaultI2cAddress, lowDataAddr, highDataAddr, result );
         }
 
@@ -613,7 +613,7 @@ class i2cHelper {
     //
     public:
 
-        ERROR_NO readTwoBytes_SameAddr_HiLo_i2c( uint8_t _i2cAddress, uint8_t dataAddr, uint16_t &result ) {
+        ERROR_NO readTwoBytes_SameAddr_HiLo_i2c( uint8_t _i2cAddress, uint8_t dataAddr, uint16_t & result ) {
             // read 2 bytes from same address
             //    1st byte to arrive is MSB (high byte)
             //    2nd byte to arrive is LSB (low byte)
@@ -651,11 +651,11 @@ class i2cHelper {
             return result;
         }
 
-        inline ERROR_NO readTwoBytes_SameAddr_HiLo( uint8_t dataAddr, uint16_t &result ) {
+        inline ERROR_NO readTwoBytes_SameAddr_HiLo( uint8_t dataAddr, uint16_t & result ) {
             return readTwoBytes_SameAddr_HiLo_i2c( _defaultI2cAddress, dataAddr, result );
         }
 
-        inline ERROR_NO readTwoBytes_SameAddr_LoHi( uint8_t dataAddr, uint16_t &result ) {
+        inline ERROR_NO readTwoBytes_SameAddr_LoHi( uint8_t dataAddr, uint16_t & result ) {
             return readTwoBytes_SameAddr_LoHi_i2c( _defaultI2cAddress, dataAddr, result );
         }
 

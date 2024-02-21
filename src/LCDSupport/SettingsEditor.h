@@ -11,6 +11,7 @@
 #include <Utility/spStr.h>
 #include <Utility/spVector.h>
 #include <Utility/spNum.h>
+#include <spWDT.h>
 
 #include <LCDSupport/LCDEditorAlpha.h>
 #include <LCDSupport/LCDEditorNumeric.h>
@@ -866,6 +867,9 @@ class SettingsEditor {
             ui::waitUntilNothingIsPressed();
 
             while( true ) {
+
+                feedTheDog();
+                delay( 10 );
 
                 if ( updateScreen ) {
                     updateScreen = false;

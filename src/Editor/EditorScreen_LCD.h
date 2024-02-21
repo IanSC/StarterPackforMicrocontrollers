@@ -4,6 +4,7 @@
 #include <LCD/LCDInterface.h>
 #include <LCD/LCDBuffered.h>
 #include <LCDSupport/LCDEditor.h>
+#include <spWDT.h>
 
 #include <Editor/EditorScreen.h>
 #include <Editor/EditorNumeric.h>
@@ -114,6 +115,10 @@ namespace StarterPack {
             origCursor = bufferedLCD->virtualCursorChar;
 
         while( true ) {
+
+            feedTheDog();
+            delay( 10 );
+
             uint8_t key = nEdit.prompt();
             if ( key == ui::kESCAPE ) {
                 // restore original cursor

@@ -4,6 +4,7 @@
 #include <LCD/LCDInterface.h>
 #include <LCD/LCDBuffered.h>
 #include <Utility/WindowedText.h>
+#include <spWDT.h>
 
 #include <Utility/CharCycle.h>
 #include <LCDSupport/LCDEditor.h>
@@ -68,6 +69,9 @@ namespace StarterPack {
                 cycleSymbol.addSymbols( CharCycle::AllSymbols );
 
                 while( true ) {
+
+                    feedTheDog();
+                    delay( 10 );
 
                     //
                     // DISPLAY

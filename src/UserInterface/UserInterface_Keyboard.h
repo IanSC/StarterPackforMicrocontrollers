@@ -2,6 +2,7 @@
 
 #include <UserInterface/UserInterfaceAllKeys.h>
 // #include <LCD/LCDInterface.h>
+#include <spWDT.h>
 
 namespace StarterPack {
     
@@ -210,7 +211,10 @@ namespace UserInterface {
         if ( KeyHandler == nullptr ) {
             // hang it ???
             // Serial.println( "waitForAnyKeyPressed(): hang" );
-            while( true ) {}
+            while( true ) {
+                feedTheDog();
+                delay( 10 );
+            }
         }
         return KeyHandler->waitForAnyKeyPressed();
     }
@@ -219,7 +223,10 @@ namespace UserInterface {
         if ( KeyHandler == nullptr ) {
             // hang it ???
             // Serial.println( "waitForAnyKeyReleased(): hang" );
-            while( true ) {}
+            while( true ) {
+                feedTheDog();
+                delay( 10 );
+            }
         }
         // if ( KeyHandler == nullptr ) while( true ); // hang it ???
         return KeyHandler->waitForAnyKeyReleased();

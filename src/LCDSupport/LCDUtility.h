@@ -10,6 +10,7 @@
 
 #include <UserInterface.h>
 #include <LCD/LCDInterface.h>
+#include <spWDT.h>
 
 #include <Throttle_OLD.h>
 // #include <spUtility.h>
@@ -235,8 +236,8 @@ namespace spLCD {
                 freeMemory();
 
                 // limit to 255 items or 255 characters total
-                if ( optionCount > UINT8_MAX )
-                    optionCount = UINT8_MAX;
+                // if ( optionCount > UINT8_MAX )
+                //     optionCount = UINT8_MAX;
                 itemLen = new uint8_t[optionCount];
                 posInLayout = new uint8_t[optionCount];
 
@@ -273,6 +274,10 @@ namespace spLCD {
                 display( true );
                 uint8_t input;
                 while( true ) {
+
+                    feedTheDog();
+                    delay( 10 );
+
                     input = poll();
                     if ( input == POLL_CANCELLED )
                         return 0;
@@ -463,9 +468,9 @@ namespace spLCD {
                 uint8_t E = S + itemLen[ selectedItem ] + 1;
                 S -= visibleStart;
                 E -= visibleStart;
-                if ( S >= 0 && S < lcd->maxColumns )
+                if ( /* S >= 0 && */ S < lcd->maxColumns )
                     lcd->printAt( S, row, left );
-                if ( E >= 0 && E < lcd->maxColumns )
+                if ( /* E >= 0 && */ E < lcd->maxColumns )
                     lcd->printAt( E, row, right );
                 selectedLeftLocation  = S;
                 selectedRightLocation = E;
@@ -486,8 +491,8 @@ namespace spLCD {
                     // item is beyond rightmost of screen
                     // Serial.println( "End Beyond" );
                     visibleStart = E - lcd->maxColumns;
-                    if ( visibleStart < 0 )
-                        visibleStart = 0;
+                    // if ( visibleStart < 0 )
+                    //     visibleStart = 0;
                 }
                 if ( E == visibleStart + lcd->maxColumns ) {
                     // exactly at end of screen
@@ -737,6 +742,9 @@ namespace spLCD {
 
         while ( true ) {
 
+            feedTheDog();
+            delay( 10 );
+
             // display text
             if (update) {
                 int tmp = lineNo;
@@ -889,6 +897,10 @@ namespace spLCD {
         bool reachedEnd = false;
 
         while( true ) {
+
+            feedTheDog();
+            delay( 10 );
+
             if ( lastDisplayed != startingChar ) {
                 // Serial.printf( "%02X\n", startingChar );
                 lastDisplayed = startingChar;

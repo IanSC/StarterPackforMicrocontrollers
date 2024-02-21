@@ -8,6 +8,7 @@
 #include <Utility/spVector.h>
 // #include <Utility/cSupport.h>
 #include <Utility/spNum.h>
+#include <spWDT.h>
 
 #include <UserInterface.h>
 #include <LCDSupport/LCDEditorAlpha.h>
@@ -224,6 +225,10 @@ namespace StarterPack {
                 nSet.bufferLength = bufferSize;
                 StarterPack::numericEditor editor( editBuffer, nSet );
                 while( true ) {
+
+                    feedTheDog();
+                    delay( 10 );
+
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
                         return cancelled;
@@ -330,7 +335,7 @@ namespace StarterPack {
         //     }
         // };
 
-        // #define CLS(dType,D,LEN,NEG) \
+        /* // #define CLS(dType,D,LEN,NEG) \
         //     class D : public entryRangedInt<dType,LEN,NEG> { public: \
         //         D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
         //             : entryRangedInt(caption,data,min,max,readonly) {} \
@@ -342,7 +347,7 @@ namespace StarterPack {
         // CLS( uint16_t, _ui16, 5+1 , false )  //       65535
         // CLS( int32_t,  _si32, 11+1, true  )  // -2147483647
         // CLS( uint32_t, _ui32, 10+1, false )  //  4294967295
-        // #undef CLS
+        // #undef CLS */
 
         // RAM:   [========= ]  86.3% (used 1768 bytes from 2048 bytes)
         // Flash: [==========]  102.4% (used 31448 bytes from 30720 bytes)
@@ -376,6 +381,10 @@ namespace StarterPack {
                 nSet.bufferLength = bufferSize;
                 StarterPack::numericEditor editor( editBuffer, nSet );
                 while( true ) {
+
+                    feedTheDog();
+                    delay( 10 );
+
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
                         return cancelled;
@@ -551,6 +560,10 @@ namespace StarterPack {
 
                 StarterPack::alphanumericEditor editor( editBuffer, eSet );
                 while( true ) {
+
+                    feedTheDog();
+                    delay( 10 );
+
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
                         return cancelled;
@@ -611,7 +624,7 @@ namespace StarterPack {
                 // case incrementLevel::medium: if ( data>min+incMed  ) { data-=incMed; Serial.println("m"); return true; } break;
                 // case incrementLevel::large:  if ( data>min+incHigh ) { data-=incHigh; Serial.println("h"); return true; } break;
                 // }
-                int64_t delta;
+                int64_t delta = 0;
                 switch( level ) {
                 case incrementLevel::small:  delta = incLow;  break;
                 case incrementLevel::medium: delta = incMed;  break;
@@ -633,7 +646,7 @@ namespace StarterPack {
                 // case incrementLevel::medium: if ( data+incMed <max ) { data+=incMed; Serial.println("M"); return true; } break;
                 // case incrementLevel::large:  if ( data+incHigh<max ) { data+=incHigh; Serial.println("H"); return true; } break;
                 // }
-                int64_t delta;
+                int64_t delta = 0;
                 switch( level ) {
                 case incrementLevel::small:  delta = incLow;  break;
                 case incrementLevel::medium: delta = incMed;  break;
@@ -733,12 +746,13 @@ namespace StarterPack {
         //         return false;
         //     }
         // };
+        /*
         // #define CLS(dType,D) \
         //     class D : public sliderInt<dType> { public: \
         //         D( const char *caption, dType &data, dType min, dType max, bool readonly ) \
         //             : sliderInt(caption,data,min,max,readonly) {} \
         //         void acceptChange() override { *((dType*) ptr) = data; } \
-        //     };
+        //     }; */
         // CLS( int8_t,   _si08_slider )
         // CLS( uint8_t,  _ui08_slider )
         // CLS( int16_t,  _si16_slider )
@@ -845,7 +859,7 @@ namespace StarterPack {
                 }
 
                 PropertyEditorEntry::entryCore *getEntry( uint8_t entryNo ) {
-                    if ( entryNo < 0 || entryNo >= count ) return nullptr;
+                    if ( /* entryNo < 0 || */ entryNo >= count ) return nullptr;
                     auto *ptr = head->getFirst();
                     // auto *ptr = head;
                     for( int i = 0 ; i < entryNo ; i++ ) {
@@ -1399,6 +1413,9 @@ namespace StarterPack {
 
             while( true ) {
 
+                feedTheDog();
+                delay( 10 );
+
                 //
                 // DISPLAY
                 //
@@ -1574,6 +1591,10 @@ namespace StarterPack {
                     }
 
                     while( true ) {
+
+                        feedTheDog();
+                        delay( 10 );
+
                         auto r = se->enterEditMode( editBuffer, dataWindow );
                         if ( r == PropertyEditorEntry::entryCore::editResult::accepted ) {
                             hasChanges = true;

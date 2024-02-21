@@ -534,8 +534,8 @@ class LCDBuffered : public LCDInterface {
             if ( col1 > col2 ) { auto t=col1; col1=col2; col2=t; }
             if ( row1 > col2 ) { auto t=row1; row1=col2; col2=t; }
             // CASE (1) - adjust to bounds
-            if ( col1 < 0 ) col1 = 0;
-            if ( row1 < 0 ) row1 = 0;
+            // if ( col1 < 0 ) col1 = 0;
+            // if ( row1 < 0 ) row1 = 0;
             if ( col2 >= maxColumns ) col2 = maxColumns - 1; // if maxColumns=0 crash
             if ( row2 >= maxRows ) row2 = maxRows - 1;       // if maxRows=0 crash
             // CASE (2) exit if out of bounds

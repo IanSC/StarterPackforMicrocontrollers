@@ -177,25 +177,27 @@ class Num {
     // int64_t   20+1  -9223372036854775808   9223372036854775807
     // uint64_t  20+1                     0  18446744073709551615
     public:
-        inline static int mySnprintf(char *buffer, size_t bufferSize, int8_t value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, int8_t value ) {
             return snprintf( buffer, bufferSize, "%d", value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, uint8_t value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, uint8_t value ) {
             return snprintf( buffer, bufferSize, "%u", value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, int16_t value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, int16_t value ) {
             return snprintf( buffer, bufferSize, "%d", value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, uint16_t value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, uint16_t value ) {
             return snprintf( buffer, bufferSize, "%u", value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, int32_t value) {
-            return snprintf( buffer, bufferSize, "%ld", value );
+        inline static int mySnprintf( char * buffer, size_t bufferSize, int32_t value ) {
+            return snprintf( buffer, bufferSize, "%d", value );
+            // return snprintf( buffer, bufferSize, "%ld", value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, uint32_t value) {
-            return snprintf( buffer, bufferSize, "%lu", value );
+        inline static int mySnprintf( char * buffer, size_t bufferSize, uint32_t value ) {
+            return snprintf( buffer, bufferSize, "%u", value );
+            // return snprintf( buffer, bufferSize, "%lu", value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, int64_t value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, int64_t value ) {
             // NOT WORKING: snprintf( buffer, bufferSize, "%lld", value );
             // int32  32-bit  -2,147,483,648              2,147,483,647
             // int64  64-bit  -9,223,372,036,854,775,808  9,223,372,036,854,775,807
@@ -205,7 +207,7 @@ class Num {
             }
             return mySnprintf(buffer,bufferSize,(uint64_t)value);
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, uint64_t value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, uint64_t value ) {
             // NOT WORKING: snprintf( buffer, bufferSize, "%llu", value );
             // UInt32   4294967295
             // UInt64   18446744073709551615
@@ -215,7 +217,8 @@ class Num {
             UInt32 = value / 10000000000;
             bool hasValue = false;
             if (UInt32 != 0) {
-                snprintf(buffer,bufferSize,"%lu",UInt32);
+                snprintf(buffer,bufferSize,"%u",UInt32);
+                // snprintf(buffer,bufferSize,"%lu",UInt32);
                 hasValue = true;
                 value = value % 10000000000;
             } // else not above 10000000000
@@ -224,10 +227,12 @@ class Num {
             if (hasValue) {
                 auto p = buffer + strlen(buffer);
                 auto ps = bufferSize - strlen(buffer);
-                snprintf(p,ps,"%05lu",UInt32);
+                snprintf(p,ps,"%05u",UInt32);
+                // snprintf(p,ps,"%05lu",UInt32);
             } else {
                 if (UInt32 != 0) {
-                    snprintf(buffer,bufferSize,"%lu",UInt32);
+                    snprintf(buffer,bufferSize,"%u",UInt32);
+                    // snprintf(buffer,bufferSize,"%lu",UInt32);
                     hasValue = true;
                 }
             }
@@ -236,18 +241,20 @@ class Num {
             if (hasValue) {
                 auto p = buffer + strlen(buffer);
                 auto ps = bufferSize - strlen(buffer);
-                return snprintf(p,ps,"%05lu",UInt32);
+                return snprintf(p,ps,"%05u",UInt32);
+                // return snprintf(p,ps,"%05lu",UInt32);
             } else {
-                return snprintf(buffer,bufferSize,"%lu",UInt32);
+                return snprintf(buffer,bufferSize,"%u",UInt32);
+                // return snprintf(buffer,bufferSize,"%lu",UInt32);
             }
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, float value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, float value ) {
             return snprintf( buffer, bufferSize, "%f", (double) value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, double value) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, double value ) {
             return snprintf( buffer, bufferSize, "%f", value );
         }
-        static const void mySnprintf_FloatingPointFormat( char *fmt, uint8_t decimalPlaces ) {
+        static void mySnprintf_FloatingPointFormat( char *fmt, uint8_t decimalPlaces ) {
             // ex. %.2f --> 2 decimal places
             strcpy( fmt, "%." );
             sprintf( fmt+2, "%d", decimalPlaces );
@@ -255,14 +262,14 @@ class Num {
             // Serial.print("fmt=");
             // Serial.println(fmt);
         } 
-        inline static int mySnprintf(char *buffer, size_t bufferSize, float value, uint8_t decimalPlaces) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, float value, uint8_t decimalPlaces ) {
             // %.??f --> max 5 characters only
             if ( decimalPlaces > 99 ) decimalPlaces = 99;
             char fmt[6];
             mySnprintf_FloatingPointFormat( fmt, decimalPlaces );
             return snprintf( buffer, bufferSize, fmt, (double) value );
         }
-        inline static int mySnprintf(char *buffer, size_t bufferSize, double value, uint8_t decimalPlaces) {
+        inline static int mySnprintf( char * buffer, size_t bufferSize, double value, uint8_t decimalPlaces ) {
             // %.??f --> max 5 characters only
             if ( decimalPlaces > 99 ) decimalPlaces = 99;
             char fmt[6];
@@ -273,55 +280,55 @@ class Num {
     //
     // ATOLL - missing in Arduino
     //
-    inline static void StrToNum( const char *buffer, int8_t &result ) {
+    inline static void StrToNum( const char * buffer, int8_t & result ) {
         result = atoi( buffer );
     }
-    inline static void StrToNum( const char *buffer, uint8_t &result ) {
+    inline static void StrToNum( const char * buffer, uint8_t & result ) {
         result = atoi( buffer );
     }
-    inline static void StrToNum( const char *buffer, int16_t &result ) {
+    inline static void StrToNum( const char * buffer, int16_t & result ) {
         result = atoi( buffer );
     }
-    inline static void StrToNum( const char *buffer, uint16_t &result ) {
+    inline static void StrToNum( const char * buffer, uint16_t & result ) {
         result = atoi( buffer );
     }
-    inline static void StrToNum( const char *buffer, int32_t &result ) {
+    inline static void StrToNum( const char * buffer, int32_t & result ) {
         result = atol( buffer );
     }
-    inline static void StrToNum( const char *buffer, uint32_t &result ) {
+    inline static void StrToNum( const char * buffer, uint32_t & result ) {
         result = atol( buffer );
     }
 
     #if defined(ESP8266) || defined(ESP32)    
 
         public:
-            // inline static int64_t myAtoll( const char *buffer ) {
+            // inline static int64_t myAtoll( const char * buffer ) {
             //     return atoll( buffer );
             // }
-            inline static void StrToNum( const char *buffer, int64_t &result ) {
+            inline static void StrToNum( const char * buffer, int64_t & result ) {
                 result = atoll( buffer );
             }
-            inline static void StrToNum( const char *buffer, uint64_t &result ) {
+            inline static void StrToNum( const char * buffer, uint64_t & result ) {
                 result = strtoull( buffer, NULL, 10 );
             }
 
-            inline static void StrToNum( const char *buffer, long &result ) {
+            inline static void StrToNum( const char * buffer, long & result ) {
                 result = atol( buffer );
             }
-            inline static void StrToNum( const char *buffer, unsigned long &result ) {
+            inline static void StrToNum( const char * buffer, unsigned long & result ) {
                 result = strtoul( buffer, NULL, 10 );
             }
 
     #else
 
         public:
-            // inline int64_t static myAtoll( const char *buffer ) {
+            // inline int64_t static myAtoll( const char * buffer ) {
             //     return strtoll( buffer, NULL, 10 );
             // }
-            inline static void StrToNum( const char *buffer, int64_t &result ) {
+            inline static void StrToNum( const char * buffer, int64_t & result ) {
                 result = strtoll( buffer, NULL, 10 );
             }
-            inline static void StrToNum( const char *buffer, uint64_t &result ) {
+            inline static void StrToNum( const char * buffer, uint64_t & result ) {
                 result = strtoull( buffer, NULL, 10 );
             }
 
@@ -345,12 +352,12 @@ class Num {
             #define LLONG_MIN (~LLONG_MAX) /* 0x8000000000000000 */
             #endif
 
-            static llong_type strtoll(const char *nptr, char **endptr, register int base) {
+            static llong_type strtoll( const char * nptr, char ** endptr, register int base ) {
 
                 // https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtoll.c
                 // Copyright (c) 2014 The Regents of the University of California.
 
-                register const char *s = nptr;
+                register const char * s = nptr;
                 register ullong_type acc;
                 register int c;
                 register ullong_type cutoff;
@@ -425,13 +432,12 @@ class Num {
                 return (acc);
             }
 
-            static ullong_type strtoull(const char *nptr, char **endptr, register int base)
-            {
+            static ullong_type strtoull( const char * nptr, char ** endptr, register int base ) {
 
                 // https://github.com/gcc-mirror/gcc/blob/master/libiberty/strtoull.c
                 // Copyright (c) 2014 Regents of the University of California.
 
-                register const char *s = nptr;
+                register const char * s = nptr;
                 register ullong_type acc;
                 register int c;
                 register ullong_type cutoff;

@@ -349,6 +349,7 @@ namespace StarterPack {
             case dataType::_bool:
                 BoolValue = !BoolValue;
                 return true;
+            default: break; // turn off warning
             }
             return false;            
         }
@@ -592,8 +593,10 @@ namespace StarterPack {
             case dataType::_ui08: snprintf( buffer, len, "%u",  data._ui08 ); break;
             case dataType::_si16: snprintf( buffer, len, "%d",  data._si16 ); break;
             case dataType::_ui16: snprintf( buffer, len, "%u",  data._ui16 ); break;
-            case dataType::_si32: snprintf( buffer, len, "%ld", data._si32 ); break;
-            case dataType::_ui32: snprintf( buffer, len, "%lu", data._ui32 ); break;
+            case dataType::_si32: snprintf( buffer, len, "%d",  data._si32 ); break;
+            case dataType::_ui32: snprintf( buffer, len, "%u",  data._ui32 ); break;
+            // case dataType::_si32: snprintf( buffer, len, "%ld", data._si32 ); break;
+            // case dataType::_ui32: snprintf( buffer, len, "%lu", data._ui32 ); break;
             case dataType::_flot:
             case dataType::_doob:
                 if ( type == dataType::_flot )

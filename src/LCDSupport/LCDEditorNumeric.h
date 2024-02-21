@@ -2,6 +2,7 @@
 
 // #include <Utility/cSupport.h>
 #include <Utility/spNum.h>
+#include <spWDT.h>
 
 #include <UserInterface.h>
 #include <LCD/LCDInterface.h>
@@ -110,6 +111,9 @@ namespace StarterPack {
                 CharCycle cycleNumber(CharCycle::CharSet::Numbers | CharCycle::CharSet::Space);
 
                 while( true ) {
+
+                    feedTheDog();
+                    delay( 10 );
 
                     //
                     // UPDATE DISPLAY

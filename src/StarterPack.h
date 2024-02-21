@@ -1,5 +1,7 @@
 #pragma once
 
+#include <spWDT.h>
+
 // or just add specific headers to your project
 // in any case the compiler will remove unused functions
 // so uploaded code won't get any bigger

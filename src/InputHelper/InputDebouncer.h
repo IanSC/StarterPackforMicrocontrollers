@@ -28,18 +28,19 @@
 
 #include <InputHelper/InputFilterInterface.h>
 
-#define DEBUG_TRACE(x)              ;
-#define DEBUG_KEY(msg,key)          ;
-#define DEBUG_KEY2(msg,key1,key2)   ;
-
-/*
-// #define DEBUG_TRACE(x)              x
-// #define DEBUG_KEY(msg,key)          Serial.print('['); Serial.print(msg); Serial.print(' '); \
-//                                     if (key<32) Serial.print((int)key); else Serial.print((char)key); Serial.print(']');
-// #define DEBUG_KEY2(msg,key1,key2)   Serial.print('['); Serial.print(msg); Serial.print(' '); \
-//                                     if (key1<32) Serial.print((int)key1); else Serial.print((char)key1); Serial.print("-->"); \
-//                                     if (key2<32) Serial.print((int)key2); else Serial.print((char)key2); Serial.print(']');
-*/
+// #define DEBUG_DIAGNOSE
+#if defined(DEBUG_DIAGNOSE)
+    #define DEBUG_TRACE(x)              x
+    #define DEBUG_KEY(msg,key)          Serial.print('['); Serial.print(msg); Serial.print(' '); \
+                                        if (key<32) Serial.print((int)key); else Serial.print((char)key); Serial.print(']');
+    #define DEBUG_KEY2(msg,key1,key2)   Serial.print('['); Serial.print(msg); Serial.print(' '); \
+                                        if (key1<32) Serial.print((int)key1); else Serial.print((char)key1); Serial.print("-->"); \
+                                        if (key2<32) Serial.print((int)key2); else Serial.print((char)key2); Serial.print(']');
+#else
+    #define DEBUG_TRACE(x)              ;
+    #define DEBUG_KEY(msg,key)          ;
+    #define DEBUG_KEY2(msg,key1,key2)   ;
+#endif
 
 namespace StarterPack {
 
@@ -305,4 +306,7 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
 
 }
 
+#undef DEBUG_DIAGNOSE
 #undef DEBUG_TRACE
+#undef DEBUG_KEY
+#undef DEBUG_KEY2

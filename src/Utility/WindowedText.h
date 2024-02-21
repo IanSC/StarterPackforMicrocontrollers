@@ -58,20 +58,20 @@ class WindowedText {
 
     private:
 
-        char    *buffer;
-        uint8_t maxBufferSize;      // maximum buffer size, including NULL terminator
-        uint8_t currentLength = 0;  // current length of buffer
-        uint8_t cursorPos;          // cursor position in buffer
+        char    * buffer;
+        uint8_t   maxBufferSize;        // maximum buffer size, including NULL terminator
+        uint8_t   currentLength = 0;    // current length of buffer
+        uint8_t   cursorPos;            // cursor position in buffer
 
-        uint8_t windowSize;         // size of window to display the buffer
-        uint8_t windowIndex;        // offset in buffer to print on start position of window
+        uint8_t   windowSize;           // size of window to display the buffer
+        uint8_t   windowIndex;          // offset in buffer to print on start position of window
         
     public:
 
         uint8_t getWindowSize() { return windowSize; }
         uint8_t getWindowIndex() { return windowIndex; }
 
-        WindowedText( char *buffer, uint8_t bufferSize, uint8_t windowSize,
+        WindowedText( char * buffer, uint8_t bufferSize, uint8_t windowSize,
         cursorRangeOptions cursorRange = cursorRangeOptions::WithinBufferPlusOne,
         int8_t cursorPos = -1, int8_t startPos = 0 ) {
             this->buffer = buffer;
@@ -104,12 +104,13 @@ class WindowedText {
         // CHARACTER
         //
 
-        inline char *charPtrAtCursor() {
+        inline char * charPtrAtCursor() {
             return charPtrAt( cursorPos );
         }
 
-        char *charPtrAt( uint8_t position ) {
-            if ( position < 0 || position > currentLength )
+        char * charPtrAt( uint8_t position ) {
+            if ( //position < 0 || 
+            position > currentLength )
                 return nullptr;
             return buffer+position;
         }
@@ -123,7 +124,7 @@ class WindowedText {
         }
 
         bool setCharAtCursor( char ch ) {
-            char *ptr = charPtrAtCursor();
+            char * ptr = charPtrAtCursor();
             if ( ptr == nullptr ) return false;
             *ptr = ch;
             return true;
@@ -133,7 +134,7 @@ class WindowedText {
             return currentLength;
         }
         
-        inline char *string() {
+        inline char * string() {
             return buffer;
         }
 
@@ -143,7 +144,7 @@ class WindowedText {
 
         bool trimEnd() {
             bool modified = false;
-            char *ptr = buffer+currentLength-1;
+            char * ptr = buffer+currentLength-1;
             while( *ptr == ' ' && ptr >= buffer ) {
                 *ptr = 0;
                 ptr--;
@@ -181,8 +182,8 @@ class WindowedText {
             return true;
         }
 
-    // bool findCharacter( uint8_t key, const char *list ) {
-    // // bool isCharInString( uint8_t key, const char *list ) {
+    // bool findCharacter( uint8_t key, const char * list ) {
+    // // bool isCharInString( uint8_t key, const char * list ) {
     //     if ( list == nullptr ) return false;
     //     return ( strchr( list, key ) != nullptr );
     // }
@@ -205,7 +206,7 @@ class WindowedText {
             //         // moved beyond end of data
             //         // replace with ' ' mising data
             //         buffer[cursorPos] = 0;
-            //         char *p = buffer+cursorPos-1;
+            //         char * p = buffer+cursorPos-1;
             //         while( *p == 0 ) {
             //             *p = ' ';
             //             p--;
@@ -245,7 +246,7 @@ class WindowedText {
                     // moved beyond end of data
                     // replace with ' ' mising data
                     buffer[cursorPos] = 0;
-                    char *p = buffer+cursorPos-1;
+                    char * p = buffer+cursorPos-1;
                     while( *p == 0 ) {
                         *p = ' ';
                         p--;
@@ -319,10 +320,10 @@ class WindowedText {
             // adjust cursor position validity
             // ideal startPos so cursor is visible on window
 
-            if ( cursorPos < 0 ) {
-                DEBUG_TRACE( Serial.println( "   zero cursor" ) )
-                cursorPos = 0;
-            }
+            // if ( cursorPos < 0 ) {
+            //     DEBUG_TRACE( Serial.println( "   zero cursor" ) )
+            //     cursorPos = 0;
+            // }
 
             if ( cursorPos > currentLength ) {
                 //                01234567
@@ -378,10 +379,10 @@ class WindowedText {
                 windowIndex = cursorPos - windowSize + 1;
                 DEBUG_TRACE( Serial.println( "   after end" ) )
             }
-            if ( windowIndex < 0 ) {
-                windowIndex = 0;
-                DEBUG_TRACE( Serial.println( "   start is negative" ) )
-            }
+            // if ( windowIndex < 0 ) {
+            //     windowIndex = 0;
+            //     DEBUG_TRACE( Serial.println( "   start is negative" ) )
+            // }
 
             // if there are hidden text on the left and
             // cursor is not at the rightmost yet
@@ -446,7 +447,7 @@ class WindowedText {
 
         bool insertAt( const char ch, const uint8_t position ) {
             // insert character on given position
-            if ( position < 0 || position > currentLength || !canAddChar() )
+            if ( /* position < 0 || */ position > currentLength || !canAddChar() )
                 return false;
 
             //                012345678901
@@ -458,7 +459,7 @@ class WindowedText {
 
             // bool insertNul = ( position == bLength );
 
-            char *ptr = buffer + currentLength;
+            char * ptr = buffer + currentLength;
             int8_t cnt = currentLength - position + 1;
             while ( cnt > 0 ) {
                 *(ptr+1) = *ptr;
@@ -489,9 +490,9 @@ class WindowedText {
     private:
 
         bool deleteAtCore( const uint8_t position ) {
-            if ( position < 0 || position >= currentLength )
+            if ( /* position < 0 || */ position >= currentLength )
                 return false;
-            char *ptr = buffer + position;
+            char * ptr = buffer + position;
             while ( *ptr != 0 ) {
                 *ptr = *(ptr+1);
                 ptr++;
@@ -614,7 +615,7 @@ class WindowedText {
     //
     public:
 
-        inline char *stringToDisplay() {
+        inline char * stringToDisplay() {
             return buffer + windowIndex;
         }
 
@@ -644,7 +645,7 @@ class WindowedText {
 // TEST
 //
 
-    static void TEST_WindowedText_Helper( WindowedText &w ) {
+    static void TEST_WindowedText_Helper( WindowedText & w ) {
         SerialPrintfln( "S (%2d) = '%s'", w.length(), w.string() );
         Serial.print(   "          ");
         for( int i=0 ; i<w.getWindowIndex() ; i++ ) Serial.print(' ');

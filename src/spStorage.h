@@ -12,7 +12,7 @@
 
 // Preferences p;
 
-// #define DEBUG_DIAGNOSE
+#define DEBUG_DIAGNOSE
 #include <dbgDefines.h>
 
 namespace StarterPack {
@@ -25,7 +25,7 @@ class spStorage {
         
     public:
 
-        spStorage( const char *PREF_FILE = "DATA" ) { //}, uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
+        spStorage( const char * PREF_FILE = "DATA" ) { //}, uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
             this->PREF_FILE = PREF_FILE;
             // this->VALID_FLAG = VALID_FLAG;
             // this->INVALID_FLAG = INVALID_FLAG;
@@ -110,7 +110,7 @@ class spStorage {
     //         error
     //     };
 
-    //     result isValid( const char *validityKey ) {
+    //     result isValid( const char * validityKey ) {
     //         Preferences p;
     //         result r = result::error;
     //         while( true ) {
@@ -132,7 +132,7 @@ class spStorage {
         static constexpr uint8_t VALID_FLAG   = B10101010;
         static constexpr uint8_t INVALID_FLAG = B01010101;
 
-        bool isValid( const char *key ) {
+        bool isValid( const char * key ) {
             Preferences p;
             bool r = false;
             while( true ) {
@@ -149,7 +149,7 @@ class spStorage {
             return r;
         }
 
-        bool setValid( const char *key ) {
+        bool setValid( const char * key ) {
             Preferences p;
             bool r = false;
             while( true ) {
@@ -164,7 +164,7 @@ class spStorage {
             return r;
         }
 
-        bool setInvalid( const char *key ) {
+        bool setInvalid( const char * key ) {
             Preferences p;
             bool r = false;
             while( true ) {
@@ -199,7 +199,7 @@ class spStorage {
             return r;
         }
 
-        bool removeKey( const char *key ) {
+        bool removeKey( const char * key ) {
             Preferences p;
             bool r = false;
             while( true ) {
@@ -242,7 +242,7 @@ class spStorage {
                     break;
                 }
                 if ( p.getBytes( key, data, sizeof(T) ) != sizeof(T) ) {
-                    DBG( "storageRead: read error" ); DBG_( key );
+                    DBG( "storageRead: read error " ); DBG_( key );
                     break;
                 }
                 r = true;
@@ -262,11 +262,11 @@ class spStorage {
             bool r = false;
             while( true ) {
                 if ( !p.begin( PREF_FILE, false ) ) {
-                    DBG_( "storageSave: begin error" );
+                    DBG( "storageSave: begin error " ); DBG_( key );
                     break;
                 }
                 if ( p.putBytes( key, data, sizeof(T) ) != sizeof(T) ) {
-                    DBG_( "storageSave: save error" );
+                    DBG( "storageSave: save error " ); DBG_( key );
                     p.remove( key );
                     break;
                 }
@@ -282,7 +282,7 @@ class spStorage {
     //
     public:
 
-        bool arrayExists( const char *key ) {
+        bool arrayExists( const char * key ) {
 
             char *KEY = new char[ strlen(key)+3 ];
             strcpy( KEY+2, key );
@@ -304,7 +304,7 @@ class spStorage {
             return r;
         }
 
-        bool deleteArray( const char *key ) {
+        bool deleteArray( const char * key ) {
             char * KEY = new char[ strlen(key)+3 ];
             strcpy( KEY+2, key );
             KEY[1] = '_';
@@ -328,7 +328,7 @@ class spStorage {
         }
 
         template <typename T, size_t S, typename TS>
-        bool readArray( const char *key, T (&data)[S], TS *usedSize ) {
+        bool readArray( const char * key, T (&data)[S], TS * usedSize ) {
 
             char * KEY = new char[ strlen(key)+3 ];
             strcpy( KEY+2, key );
@@ -337,15 +337,30 @@ class spStorage {
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, true ) ) break;
+                if ( !p.begin( PREF_FILE, true ) ) {
+                    DBG("storageReadArray: begin error "); DBG_( key );
+                    break;
+                }
                 // === DATA ===
                 KEY[0]='D';
-                if ( !p.isKey( KEY ) ) break;
-                if ( p.getBytes( KEY, &data, sizeof(data) ) != sizeof(data) ) break;
+                if ( !p.isKey( KEY ) ) {
+                    DBG("storageReadArray: missing key "); DBG_(KEY);
+                    break;
+                }
+                if ( p.getBytes( KEY, &data, sizeof(data) ) != sizeof(data) ) {
+                    DBG("storageReadArray: getBytes() error "); DBG_(KEY);
+                    break;
+                }
                 // === SIZE ===
                 KEY[0]='S';                
-                if ( !p.isKey( KEY ) ) break;
-                if ( p.getBytes( KEY, &usedSize, sizeof(TS)) != sizeof(TS) ) break;
+                if ( !p.isKey( KEY ) ) {
+                    DBG("storageReadArray: missing key "); DBG_(KEY);
+                    break;
+                }
+                if ( p.getBytes( KEY, usedSize, sizeof(TS) ) != sizeof(TS) ) {
+                    DBG("storageReadArray: getBytes() error "); DBG_(KEY);
+                    break;
+                }
                 r = true;
                 break;
             }
@@ -355,7 +370,7 @@ class spStorage {
         }
 
         template <typename T, size_t S, typename TS>
-        bool saveArray( const char *key, T (&data)[S], TS usedSize ) {            
+        bool saveArray( const char * key, T (&data)[S], TS usedSize ) {            
 
             char * KEY = new char[ strlen(key)+3 ];
             strcpy( KEY+2, key );
@@ -364,16 +379,21 @@ class spStorage {
             Preferences p;
             bool r = false;
             while( true ) {
-                if ( !p.begin( PREF_FILE, false ) ) break;
+                if ( !p.begin( PREF_FILE, false ) ) {
+                    DBG("storageSaveArray: begin error "); DBG_( key );
+                    break;
+                }
                 // === DATA ===
                 KEY[0]='D';
                 if ( p.putBytes( KEY, &data, sizeof(data) ) != sizeof(data) ) {
+                    DBG("storageSaveArray: putBytes() error "); DBG_(KEY);
                     p.remove( KEY );
                     break;
                 }
                 // === SIZE ===
                 KEY[0]='S';
                 if ( p.putBytes( KEY, &usedSize, sizeof(TS) ) != sizeof(TS) ) {
+                    DBG("storageSaveArray: putBytes() error "); DBG_(KEY);
                     p.remove( KEY );
                     break;
                 }

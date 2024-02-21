@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include <InputHelper/InputDebouncer.h>
+#include <spWDT.h>
 
 // add filter ??? just use 0 for key map
 // #include <InputHelper/InputKeyFilter.h>
@@ -71,7 +72,8 @@ class UserInterfaceDebounced : public InputDebouncer<char>
                     return;
                 // if ( getDebouncedKey() == INACTIVE_KEY )
                 //     return;
-                delay(10);
+                feedTheDog();
+                delay( 10 );
                 // if ( getNonDebouncedKey() == INACTIVE_KEY )
                 //     return;
             }
@@ -88,7 +90,8 @@ class UserInterfaceDebounced : public InputDebouncer<char>
                 // }
                 KEY key = getKeyDown();
                 if ( key != INACTIVE_KEY ) return key;
-                delay(10);
+                feedTheDog();
+                delay( 10 );
             }
         }
 
@@ -98,7 +101,8 @@ class UserInterfaceDebounced : public InputDebouncer<char>
             while ( true ) {
                 KEY key = getKeyUp();
                 if ( key != INACTIVE_KEY ) return key;
-                delay(10);
+                feedTheDog();
+                delay( 10 );
             }
         }
 

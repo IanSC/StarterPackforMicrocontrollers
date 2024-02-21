@@ -5,6 +5,7 @@
 #include <Utility/spVector.h>
 #include <LCDSupport/LCDUtility.h>
 #include <UserInterface.h>
+#include <spWDT.h>
 
 namespace StarterPack {
 
@@ -287,6 +288,9 @@ class menuSystem {
             ui::waitUntilNothingIsPressed();
 
             while( true ) {
+
+                feedTheDog();
+                delay( 10 );
 
                 uint8_t KEY_PRESSED = ui::getRepeatingKey();
 
