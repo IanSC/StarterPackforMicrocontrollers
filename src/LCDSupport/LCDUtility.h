@@ -276,7 +276,7 @@ namespace spLCD {
                 while( true ) {
 
                     feedTheDog();
-                    delay( 10 );
+                    // delay( 10 );
 
                     input = poll();
                     if ( input == POLL_CANCELLED )
@@ -743,7 +743,7 @@ namespace spLCD {
         while ( true ) {
 
             feedTheDog();
-            delay( 10 );
+            // delay( 10 );
 
             // display text
             if (update) {
@@ -899,7 +899,7 @@ namespace spLCD {
         while( true ) {
 
             feedTheDog();
-            delay( 10 );
+            // delay( 10 );
 
             if ( lastDisplayed != startingChar ) {
                 // Serial.printf( "%02X\n", startingChar );

@@ -290,7 +290,7 @@ class menuSystem {
             while( true ) {
 
                 feedTheDog();
-                delay( 10 );
+                // delay( 10 );
 
                 uint8_t KEY_PRESSED = ui::getRepeatingKey();
 

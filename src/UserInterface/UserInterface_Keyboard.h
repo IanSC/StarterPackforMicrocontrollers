@@ -213,7 +213,7 @@ namespace UserInterface {
             // Serial.println( "waitForAnyKeyPressed(): hang" );
             while( true ) {
                 feedTheDog();
-                delay( 10 );
+                delay( 100 );
             }
         }
         return KeyHandler->waitForAnyKeyPressed();
@@ -225,7 +225,7 @@ namespace UserInterface {
             // Serial.println( "waitForAnyKeyReleased(): hang" );
             while( true ) {
                 feedTheDog();
-                delay( 10 );
+                delay( 100 );
             }
         }
         // if ( KeyHandler == nullptr ) while( true ); // hang it ???

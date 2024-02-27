@@ -71,7 +71,7 @@ namespace StarterPack {
                 while( true ) {
 
                     feedTheDog();
-                    delay( 10 );
+                    // delay( 10 );
 
                     //
                     // DISPLAY

@@ -869,7 +869,7 @@ class SettingsEditor {
             while( true ) {
 
                 feedTheDog();
-                delay( 10 );
+                // delay( 10 );
 
                 if ( updateScreen ) {
                     updateScreen = false;

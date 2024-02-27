@@ -117,7 +117,7 @@ namespace StarterPack {
         while( true ) {
 
             feedTheDog();
-            delay( 10 );
+            // delay( 10 );
 
             uint8_t key = nEdit.prompt();
             if ( key == ui::kESCAPE ) {

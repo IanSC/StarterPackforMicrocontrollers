@@ -73,7 +73,7 @@ class UserInterfaceDebounced : public InputDebouncer<char>
                 // if ( getDebouncedKey() == INACTIVE_KEY )
                 //     return;
                 feedTheDog();
-                delay( 10 );
+                // delay( 10 );
                 // if ( getNonDebouncedKey() == INACTIVE_KEY )
                 //     return;
             }
@@ -91,7 +91,7 @@ class UserInterfaceDebounced : public InputDebouncer<char>
                 KEY key = getKeyDown();
                 if ( key != INACTIVE_KEY ) return key;
                 feedTheDog();
-                delay( 10 );
+                // delay( 10 );
             }
         }
 
@@ -102,7 +102,7 @@ class UserInterfaceDebounced : public InputDebouncer<char>
                 KEY key = getKeyUp();
                 if ( key != INACTIVE_KEY ) return key;
                 feedTheDog();
-                delay( 10 );
+                // delay( 10 );
             }
         }
 

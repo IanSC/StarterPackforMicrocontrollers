@@ -227,7 +227,7 @@ namespace StarterPack {
                 while( true ) {
 
                     feedTheDog();
-                    delay( 10 );
+                    // delay( 10 );
 
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
@@ -383,7 +383,7 @@ namespace StarterPack {
                 while( true ) {
 
                     feedTheDog();
-                    delay( 10 );
+                    // delay( 10 );
 
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
@@ -562,7 +562,7 @@ namespace StarterPack {
                 while( true ) {
 
                     feedTheDog();
-                    delay( 10 );
+                    // delay( 10 );
 
                     uint8_t r = editor.prompt();
                     if ( r == ui::kESCAPE )
@@ -1414,7 +1414,7 @@ namespace StarterPack {
             while( true ) {
 
                 feedTheDog();
-                delay( 10 );
+                // delay( 10 );
 
                 //
                 // DISPLAY
@@ -1593,7 +1593,7 @@ namespace StarterPack {
                     while( true ) {
 
                         feedTheDog();
-                        delay( 10 );
+                        // delay( 10 );
 
                         auto r = se->enterEditMode( editBuffer, dataWindow );
                         if ( r == PropertyEditorEntry::entryCore::editResult::accepted ) {
