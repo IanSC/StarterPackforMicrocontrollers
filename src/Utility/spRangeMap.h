@@ -32,38 +32,38 @@ namespace StarterPack { namespace RangeMap {
     }
 
     // int spMap( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
-    int IntInt( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
+    int IntInt( int value, int inputMin, int inputMax, int outputMin, int outputMax, bool limitRange=true ) {
         int run = inputMax - inputMin;
         if ( run == 0 ) return -1;
         auto r = ( (long)(value - inputMin) * (long)(outputMax - outputMin) ) / run + outputMin;
-        Limit(r, outputMin, outputMax);
+        if ( limitRange ) Limit(r, outputMin, outputMax);
         return r;
     }
 
     // long spMapLong( long value, long inputMin, long inputMax, long outputMin, long outputMax ) {
-    long LongLong( long value, long inputMin, long inputMax, long outputMin, long outputMax ) {
+    long LongLong( long value, long inputMin, long inputMax, long outputMin, long outputMax, bool limitRange=true ) {
         int run = inputMax - inputMin;
         if ( run == 0 ) return -1;
         auto r = ( (long long)(value - inputMin) * (long long)(outputMax - outputMin) ) / run + outputMin;
-        Limit(r, outputMin, outputMax);
+        if ( limitRange ) Limit(r, outputMin, outputMax);
         return r;
     }
 
-    inline float IntFloat( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
+    inline float IntFloat( int value, int inputMin, int inputMax, int outputMin, int outputMax, bool limitRange=true ) {
     // inline float spMapFloat( int value, int inputMin, int inputMax, int outputMin, int outputMax ) {
         float run = inputMax - inputMin;
         if ( run == 0 ) return -1;
         auto r = (float) ( (value - inputMin) * (outputMax - outputMin) ) / run + outputMin;
-        Limit(r, outputMin, outputMax);
+        if ( limitRange ) Limit(r, outputMin, outputMax);
         return r;
     }
 
     // inline float spMapFloat( float value, float inputMin, float inputMax, float outputMin, float outputMax ) {
-    inline float FloatFloat( float value, float inputMin, float inputMax, float outputMin, float outputMax ) {
+    inline float FloatFloat( float value, float inputMin, float inputMax, float outputMin, float outputMax, bool limitRange=true ) {
         float run = inputMax - inputMin;
         if ( run == 0 ) return -1;
         auto r = ( (value - inputMin) * (outputMax - outputMin) ) / run + outputMin;
-        Limit(r, outputMin, outputMax);
+        if ( limitRange ) Limit(r, outputMin, outputMax);
         return r;
     }
 

@@ -249,8 +249,8 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             debounceLastApprovedKey = INACTIVE_KEY;
         }
 
-        // ??? 2024 DON'T KNOW WHERE USED AND IT IT WORKS
-        void skipDebounceDelay() {
+        // ??? 2024 DON'T KNOW WHERE USED AND IF IT WORKS
+        void skipDebounceDelay_XXX() {
             // proceed to stability check
             // why skip? just don't set it ???
             if (debounceMode == debounceModeEnum::TimeDelay) {
@@ -259,8 +259,8 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             }
         }
 
-        // ??? 2024 DON'T KNOW WHERE USED AND IT IT WORKS
-        void cancelDebounceDelay() {
+        // ??? 2024 DON'T KNOW WHERE USED AND IF IT WORKS
+        void cancelDebounceDelay_XXX() {
             // for other cases, user can just release or press another key
             if (debounceMode == debounceModeEnum::TimeDelay)
                 debounceMode = debounceModeEnum::Waiting;

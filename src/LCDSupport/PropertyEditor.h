@@ -618,6 +618,9 @@ namespace StarterPack {
             int64_t incLow  = 1;
             int64_t incMed  = 10;
             int64_t incHigh = 100;
+            sliderInt * setIncLow ( int64_t value ) { incLow  = value; return this; }
+            sliderInt * setIncMed ( int64_t value ) { incMed  = value; return this; }
+            sliderInt * setIncHigh( int64_t value ) { incHigh = value; return this; }
             bool decrement( incrementLevel level ) override {
                 // switch( level ) {
                 // case incrementLevel::small:  if ( data>min+incLow  ) { data-=incLow; Serial.println("s"); return true; } break;

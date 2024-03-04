@@ -26,7 +26,7 @@ class UserInterfaceDebounced : public InputDebouncer<char>
     //
     public:
 
-        void cancelDebouncing() {}
+        void cancelDebouncing_XXX() {}
 
     //
     // VIRTUAL

@@ -232,19 +232,19 @@ namespace UserInterface {
         return KeyHandler->waitForAnyKeyReleased();
     }
 
-    void skipDebounceDelay() {
-        if ( KeyHandler == nullptr ) return;
-        KeyHandler->skipDebounceDelay();
-    }
-
-    void cancelDebounceDelay() {
-        if ( KeyHandler == nullptr ) return;
-        KeyHandler->cancelDebounceDelay();
-    }
-
     void clearDebouncedState() {
         if ( KeyHandler == nullptr ) return;
         KeyHandler->clearDebouncedState();
+    }
+
+    void skipDebounceDelay_XXX() {
+        if ( KeyHandler == nullptr ) return;
+        KeyHandler->skipDebounceDelay_XXX();
+    }
+
+    void cancelDebounceDelay_XXX() {
+        if ( KeyHandler == nullptr ) return;
+        KeyHandler->cancelDebounceDelay_XXX();
     }
 
 //
