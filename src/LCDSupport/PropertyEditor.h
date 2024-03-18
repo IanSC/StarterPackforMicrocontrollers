@@ -633,11 +633,14 @@ namespace StarterPack {
                 case incrementLevel::medium: delta = incMed;  break;
                 case incrementLevel::large:  delta = incHigh; break;
                 }
-                if ( data > min + delta  ) {
+                if ( data > max ) {
+                    data = max;
+                    return true;
+                } else if ( data > min + delta  ) {
                     data -= delta;
                     // Serial.printf( "DEC: %d - %d\n", data, delta );
                     return true;
-                }  else if ( data > min ) {
+                } else { // if ( data > min ) {
                     data = min;
                     return true;
                 }
@@ -655,11 +658,14 @@ namespace StarterPack {
                 case incrementLevel::medium: delta = incMed;  break;
                 case incrementLevel::large:  delta = incHigh; break;
                 }
-                if ( data + delta < max ) {
+                if ( data < min ) {
+                    data = min;
+                    return true;
+                } else if ( data + delta < max ) {
                     data += delta;
                     // Serial.printf( "INC: %d + %d\n", data, delta );
                     return true;
-                } else if ( data < max ) {
+                } else { // if ( data < max ) {
                     data = max;
                     return true;
                 }

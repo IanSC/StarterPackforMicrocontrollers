@@ -1,4 +1,5 @@
 #pragma once
+
 #include <stdint.h>
 #include <Arduino.h>
 
@@ -31,6 +32,10 @@ namespace StarterPack {
 
     class spEncoder {
 
+        public:
+        
+            typedef int64_t countSigned;
+
         protected:
 
             uint8_t  pinA, pinB;
@@ -42,9 +47,14 @@ namespace StarterPack {
 
             enum class openCollectorType : uint8_t {
                 // None,
-                NPN = 0,  // ACTIVE = positive
+                NPN = 0, // ACTIVE = positive
                 PNP = 1  // ACTIVE = negative
             };
+
+            spEncoder() {}
+            void setup( uint8_t pinA, uint8_t pinB ) {
+                this->pinA = pinA; this->pinB = pinB;
+            }
 
             spEncoder( uint8_t pinA, uint8_t pinB ) {
                 this->pinA = pinA; this->pinB = pinB;
@@ -53,7 +63,6 @@ namespace StarterPack {
 
             spEncoder( uint8_t pinA, uint8_t pinB, openCollectorType openCollector ) {
                 this->pinA = pinA; this->pinB = pinB;
-
                 setOpenCollectorInput( pinA, openCollector );
                 setOpenCollectorInput( pinB, openCollector );
                 this->pinA_activeState = getOpenCollectorActiveState( openCollector );
@@ -76,6 +85,9 @@ namespace StarterPack {
                 this->pinA_activeState = getOpenCollectorActiveState( openCollector );
                 this->pinB_activeState = getOpenCollectorActiveState( openCollector );
             }
+            openCollectorType getPinAB_OpenCollectorType() {
+                return getOpenCollectorActiveState( pinA_activeState );
+            }
 
             void setPinAB_activeStates( uint8_t pinA_activeState, uint8_t pinB_activeState ) {
                 auto pinA_OC = pinA_activeState == HIGH ? openCollectorType::NPN : openCollectorType::PNP;
@@ -84,6 +96,10 @@ namespace StarterPack {
                 setOpenCollectorInput( pinB, pinB_OC );
                 this->pinA_activeState = getOpenCollectorActiveState( pinA_OC );
                 this->pinB_activeState = getOpenCollectorActiveState( pinB_OC );
+            }
+            uint8_t getPinAB_activeStates() {
+                // assume: pinA_activeState = pinB_activeState
+                return this->pinA_activeState;
             }
 
 /*
@@ -132,6 +148,13 @@ namespace StarterPack {
                 case openCollectorType::PNP: return LOW;
                 default: return HIGH;
                 }
+            }
+
+            static openCollectorType getOpenCollectorActiveState( uint8_t activeState ) {
+                if ( activeState == LOW )
+                    return openCollectorType::PNP;
+                else
+                    return openCollectorType::NPN;
             }
 
             static void setOpenCollectorInput( uint8_t pin, openCollectorType openCollector ) {
@@ -208,19 +231,66 @@ namespace StarterPack {
 
         public:
 
-            void setDirection( bool cwIsPositive ) {
+            void setDirectionCwIsPositive( bool cwIsPositive ) {
                 this->cwIsPositive = cwIsPositive;
                 if ( cwIsPositive )
                     directionMap = directionMapCW;
                 else
                     directionMap = directionMapCCW;
             }
+            bool getDirectionCwIsPositive() {
+                return this->cwIsPositive;
+            }
             bool isDirectionCWPositive() {
                 return cwIsPositive;
             }
             void reverseDirectionCWPositive() {
-                setDirection( !cwIsPositive );
+                setDirectionCwIsPositive( !cwIsPositive );
             }
+
+        //
+        // TARGET
+        //
+        public:
+            typedef std::function<void(void)> cbCounterReachedDelegateF;
+        protected:
+            cbCounterReachedDelegateF cbCounterReachedF = nullptr;
+
+        protected:
+
+            bool triggerActive = false;
+            countSigned triggerStopPosition;
+
+        public:
+
+            void setTriggerAt( countSigned target ) {
+                triggerActive = true;
+                triggerStopPosition = target;
+            }
+
+            bool isTriggerActive() {
+                return triggerActive;
+            }
+            void cancelTrigger() {
+                triggerActive = false;
+            }
+
+            inline void setTriggerCallback( cbCounterReachedDelegateF cb ) {
+                cbCounterReachedF = cb; }
+
+            // inline void setTriggerToFullStop( cbCounterReachedDelegateF cb ) {
+            //     // use internal stop function
+            //     // after stopping stepMotor speed is still not 0
+            //     // use callback to set it
+            //     cbCounterReachedF = cb;
+            //     counter.setCounterReachedCallback( fullStopOnCounterReached );
+            // }
+            // inline void setTriggerCallback( spCounterHW::cbTargetReachedDelegateF cb ) {
+            //     counter.setCounterReachedCallback( cb ); }
+            // inline void setTriggerCallback( spCounterHW::cbTargetReachedDelegate cb ) {
+            //     counter.setCounterReachedCallback( cb ); }
+            // inline void clearTriggerCallback() {
+            //     counter.clearCounterReachedCallback(); }
 
         //
         // INTERRUPT
@@ -244,7 +314,7 @@ namespace StarterPack {
         protected:
 
             uint8_t prevState = 0;
-            volatile int32_t position = 0;
+            volatile countSigned _position = 0;
 
         public:
 
@@ -273,7 +343,7 @@ namespace StarterPack {
                 //               ^           ^     ^     ^     ^
                 //               ABab        1011  0010  0100  1101
                 //
-                //  ABab ==> AB - new state / ab - previous state
+                //  ABab, where AB - new state / ab - previous state
                 //
                 //    ABab   DIR   Value
                 //    ----   ---   -----
@@ -306,7 +376,7 @@ namespace StarterPack {
 
                 // -1, 0 or 1
                 int8_t currentDirection = directionMap[ prevState ];
-                position += currentDirection;
+                _position += currentDirection;
 
                 // same transition CW and CCW
                 // in diagram when (B) rises/falls
@@ -388,7 +458,18 @@ namespace StarterPack {
                     }
                 }
 
+                bool triggered = false;
+                if ( triggerActive ) {
+                    if ( _position == triggerStopPosition ) {
+                        triggerActive = false;
+                        triggered = true;
+                    }
+                }
+
                 portEXIT_CRITICAL_ISR( &mux );
+
+                if ( triggered && cbCounterReachedF != nullptr )
+                    cbCounterReachedF();
             }
         
         //
@@ -396,34 +477,36 @@ namespace StarterPack {
         //
         public:
 
-            int32_t get() {
+            countSigned get() {
                 portENTER_CRITICAL( &mux );
-                auto r = position;
+                auto r = _position;
                 portEXIT_CRITICAL( &mux );
                 return r;
             }
 
-            void set( int32_t position ) {
+            void set( countSigned position ) {
                 portENTER_CRITICAL( &mux );
-                this->position = position;
+                this->_position = position;
                 portEXIT_CRITICAL( &mux );
             }
 
-            void delta( int32_t value ) {
+            inline void reset() { set( 0 ); }
+
+            void delta( countSigned value ) {
                 portENTER_CRITICAL( &mux );
-                position += value;
+                _position += value;
                 portEXIT_CRITICAL( &mux );
             }
 
             void increment() {
                 portENTER_CRITICAL( &mux );
-                position++;
+                _position++;
                 portEXIT_CRITICAL( &mux );
             }
 
             void decrement() {
                 portENTER_CRITICAL( &mux );
-                position--;
+                _position--;
                 portEXIT_CRITICAL( &mux );
             }
 
@@ -432,11 +515,32 @@ namespace StarterPack {
         //
         public:
 
-            void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue ) {
-                setupZSync( zPin, encoderPPR, syncValue, HIGH );
+            void setZPin( uint8_t zPin, bool activeState=HIGH ) {
+                this->zPin = zPin;
+                setPinZ_activeState( activeState );
             }
 
-            void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, openCollectorType openCollector ) {
+            void setZPin( uint8_t zPin, openCollectorType openCollector ) {
+                this->zPin = zPin;
+                setPinZ_OpenCollectorType( openCollector );
+            }
+
+            void setupZSync( uint16_t encoderPPR, int32_t syncValue ) {
+                // when Z in hit, encoder count must be syncValue +/- multiple of encoder PPR
+                //
+                //      sVal-2*PPR    sVal-1*PPR    sVal          sVal+1*PPR    sVal+2*PPR
+                //   ---|-------------|-------------|-------------|-------------|-------------|---
+                //      Z             Z             Z             Z             Z             Z
+                //
+                this->encoderPPR = encoderPPR;
+                this->syncValue = syncValue;
+            }
+
+            // void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue ) {
+            //     setupZSync( zPin, encoderPPR, syncValue, HIGH );
+            // }
+
+            void setupZSync_ORIG( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, openCollectorType openCollector ) {
                 // when Z in hit, encoder count must be syncValue +/- multiple of encoder PPR
                 //
                 //      sVal-2*PPR    sVal-1*PPR    sVal          sVal+1*PPR    sVal+2*PPR
@@ -451,7 +555,7 @@ namespace StarterPack {
                 // this->zPin_activeState = getOpenCollectorActiveState( openCollector );
             }
 
-            void setupZSync( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, bool activeState ) {
+            void setupZSync_ORIG( uint8_t zPin, uint16_t encoderPPR, int32_t syncValue, bool activeState ) {
                 // when Z in hit, encoder count must be syncValue +/- multiple of encoder PPR
                 //
                 //      sVal-2*PPR    sVal-1*PPR    sVal          sVal+1*PPR    sVal+2*PPR
@@ -467,16 +571,25 @@ namespace StarterPack {
             void setPPR( uint16_t encoderPPR ) {
                 this->encoderPPR = encoderPPR;
             }
+            uint16_t getPPR() {
+                return encoderPPR;
+            }
 
             void setPinZ_OpenCollectorType( openCollectorType openCollector ) {
                 setOpenCollectorInput( zPin, openCollector );
                 this->zPin_activeState = getOpenCollectorActiveState( openCollector );
+            }
+            openCollectorType getPinZ_OpenCollectorType() {
+                return getOpenCollectorActiveState( zPin_activeState );
             }
 
             void setPinZ_activeState( uint8_t zPin_activeState ) {
                 auto pinZ_OC = pinA_activeState == HIGH ? openCollectorType::NPN : openCollectorType::PNP;
                 setOpenCollectorInput( zPin, pinZ_OC );
                 this->zPin_activeState = getOpenCollectorActiveState( pinZ_OC );
+            }
+            uint8_t getPinZ_activeState() {
+                return zPin_activeState;
             }
 
 /*
@@ -536,14 +649,27 @@ namespace StarterPack {
                 portEXIT_CRITICAL( &mux );
             }
 
-            uint32_t getMissingPulsesAbsolute() {
+            bool getZSyncStatus() {
+                portENTER_CRITICAL( &mux );
+                auto r = syncOnZ;
+                portEXIT_CRITICAL( &mux );
+                return r;
+            }
+
+            void setZSyncStatus( bool enable ) {
+                portENTER_CRITICAL( &mux );
+                syncOnZ = enable;
+                portEXIT_CRITICAL( &mux );
+            }
+
+            uint64_t getMissingPulsesAbsolute() {
                 portENTER_CRITICAL( &mux );
                 auto r = missingPulsesAbsolute;
                 portEXIT_CRITICAL( &mux );
                 return r;
             }
 
-            uint32_t getMissingPulses() {
+            int64_t getMissingPulses() {
                 portENTER_CRITICAL( &mux );
                 auto r = missingPulses;
                 portEXIT_CRITICAL( &mux );
@@ -557,6 +683,14 @@ namespace StarterPack {
                 portEXIT_CRITICAL( &mux );
             }
 
+            bool readZPinRaw() {
+                return ( digitalRead( zPin ) == HIGH );
+            }
+
+            bool readZPin() {
+                return ( digitalRead( zPin ) == zPin_activeState );
+            }
+
         protected:
 
             bool     syncOnZ = false;
@@ -565,14 +699,14 @@ namespace StarterPack {
             uint16_t encoderPPR = 100;
             int32_t  syncValue = 0;
 
-            uint32_t missingPulsesAbsolute = 0;
-            int32_t missingPulses = 0;
+            uint64_t missingPulsesAbsolute = 0;
+            int64_t  missingPulses = 0;
 
             inline void syncZCore() {
                 //Serial.println( "sync" );
                 if ( encoderPPR == 0 ) return;
 
-                auto adjusted = position - syncValue;
+                auto adjusted = _position - syncValue;
                 auto stray = adjusted % encoderPPR;
                 if ( stray == 0 ) return;
 
@@ -583,11 +717,11 @@ namespace StarterPack {
                         auto diff = encoderPPR - stray;
                         missingPulsesAbsolute += diff;
                         missingPulses += diff;
-                        position += diff;
+                        _position += diff;
                     } else {
                         missingPulsesAbsolute += stray;
                         missingPulses -= stray;
-                        position -= stray;
+                        _position -= stray;
                     }
                 } else {
                     // - stray
@@ -596,11 +730,11 @@ namespace StarterPack {
                         auto diff = encoderPPR + stray;
                         missingPulsesAbsolute += diff;
                         missingPulses -= diff;
-                        position -= diff;
+                        _position -= diff;
                     } else {
                         missingPulsesAbsolute -= stray;
                         missingPulses -= stray;
-                        position -= stray;
+                        _position -= stray;
                     }
                 }
             }
@@ -674,7 +808,9 @@ namespace StarterPack {
 
     void TEST_encoderZSyncCore( int32_t currentPosition, int32_t ppr, int32_t zSync, int32_t expected ) {
         spEncoder e( 0, 0, spEncoder::openCollectorType::NPN );
-        e.setupZSync( 0, ppr, zSync, spEncoder::openCollectorType::NPN );
+        e.setZPin( 0 );
+        e.setupZSync( ppr, zSync );
+        // e.setupZSync( 0, ppr, zSync, spEncoder::openCollectorType::NPN );
         e.set( currentPosition );
         TEST_encoderTriggerSyncZ( e );
 

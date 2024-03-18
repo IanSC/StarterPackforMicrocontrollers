@@ -10,7 +10,8 @@ class MatrixKeypadSupport {
 public:
 
     static void MatrixKeypadMappedTest(
-    MatrixKeypad &keypad,
+    UserInterfaceDebounced & keypad,
+    // MatrixKeypad &keypad,
     const char *keyMap,
     const char **keyName ) {
 

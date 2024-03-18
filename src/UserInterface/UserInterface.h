@@ -1,8 +1,12 @@
 #pragma once
 
+#include <stdint.h>
+
 // #include <UserInterface/UserInterfaceAllKeys.h>
 #include <LCD/LCDInterface.h>
 #include <UserInterface/UserInterface_Keyboard.h>
+
+#include <LCDSupport/LCDUtility.h>
 
 namespace StarterPack {
     
@@ -12,10 +16,13 @@ namespace UserInterface {
 // LCD
 //
 
-    LCDInterface *LCD = nullptr;
+    LCDInterface * LCD = nullptr;
 
-    void assignLCD( LCDInterface &lcdToUse ) {
+    void assignLCD( LCDInterface & lcdToUse ) {
         LCD = &lcdToUse;
+    }
+    void assignLCD( LCDInterface * lcdToUse ) {
+        LCD = lcdToUse;
     }
 
     bool hasScreen() {
@@ -177,6 +184,88 @@ namespace UserInterface {
     const char *headerDecorator = "((()))" ) {
         return promptDialog3( header, row2, row3, row4, headerDecorator );
     }
+
+//
+// CHOOSER
+//
+
+    template<size_t optCount>
+    inline static uint8_t Choose( const char* (&options)[optCount],
+    uint8_t optionsRow = 0,
+    uint8_t initialSelection = 0, bool crossover = false,
+    StarterPack::spLCD::backgroundProcessDelegate backgroundProcess = nullptr ) {
+        return StarterPack::spLCD::optionChooser::choose(
+            options, optionsRow,
+            initialSelection, crossover );
+    }
+
+    template<size_t optCount>
+    inline static uint8_t Choose( const char *caption, const char* (&options)[optCount],
+    uint8_t captionRow = 0, uint8_t optionsRow = 1, 
+    uint8_t initialSelection = 0, bool crossover = false,
+    StarterPack::spLCD::backgroundProcessDelegate backgroundProcess = nullptr ) {
+        return StarterPack::spLCD::optionChooser::choose(
+            caption, options,
+            captionRow, optionsRow,
+            initialSelection, crossover, backgroundProcess );
+    }
+
+    // void ss() {
+    //     StarterPack::spLCD::optionChooser::chooseNoYes( "Reset to Defaults?", 0, 1 );
+    // }
+
+    #define CHOOSER_VARIATIONS(fName,fNameCore) \
+        /* PLAIN */ \
+        inline static uint8_t fName( \
+        uint8_t optionsRow=0, \
+        bool crossover=false, uint8_t initialSelection=0 ) { \
+            return StarterPack::spLCD::optionChooser::fNameCore( optionsRow, crossover, initialSelection ); \
+        } \
+        /* PLAIN WITH MESSAGE */ \
+        inline static uint8_t fName( \
+        const char *caption, uint8_t captionRow=0, \
+        uint8_t optionsRow=1, \
+        bool crossover=false, uint8_t initialSelection=0 ) { \
+            return StarterPack::spLCD::optionChooser::fNameCore( caption, captionRow, optionsRow, crossover, initialSelection ); \
+        } \
+        /* WITH BACKGROUND PROCESS */ \
+        inline static uint8_t fName( \
+        StarterPack::spLCD::backgroundProcessDelegate backgroundProcess, \
+        uint8_t optionsRow=0, \
+        bool crossover=false, uint8_t initialSelection=0 ) { \
+            return StarterPack::spLCD::optionChooser::fNameCore( backgroundProcess, optionsRow, crossover, initialSelection ); \
+        } \
+        /* WITH MESSAGE / BACKGROUND PROCESS */ \
+        inline static uint8_t fName( \
+        StarterPack::spLCD::backgroundProcessDelegate backgroundProcess, \
+        const char *caption, \
+        uint8_t captionRow=0, uint8_t optionsRow=1, \
+        bool crossover=false, uint8_t initialSelection=0 ) { \
+            return StarterPack::spLCD::optionChooser::fNameCore( backgroundProcess, caption, captionRow, optionsRow, crossover, initialSelection ); \
+        }
+
+    // inline static uint8_t ChooseNoYes(
+    // uint8_t optionsRow=0,
+    // bool crossover=false, uint8_t initialSelection=0 ) {
+    //     return StarterPack::spLCD::optionChooser::chooseNoYes( optionsRow, crossover, initialSelection );
+    // }
+        // inline static uint8_t ChooseNoYes(
+        // const char *caption, uint8_t captionRow=0,
+        // uint8_t optionsRow=1,
+        // bool crossover=false, uint8_t initialSelection=0 ) {
+        //     return StarterPack::spLCD::optionChooser::chooseNoYes( caption, captionRow, optionsRow, crossover, initialSelection );
+        // }
+        //     inline static uint8_t ChooseNoYes(
+        // StarterPack::spLCD::backgroundProcessDelegate backgroundProcess,
+        // uint8_t optionsRow=0,
+        // bool crossover=false, uint8_t initialSelection=0 ) {
+        //     return StarterPack::spLCD::optionChooser::chooseNoYes( backgroundProcess, optionsRow, crossover, initialSelection );
+        // }
+    CHOOSER_VARIATIONS( ChooseYesNo,       chooseYesNo       )
+    CHOOSER_VARIATIONS( ChooseYesNoCancel, chooseYesNoCancel )
+    CHOOSER_VARIATIONS( ChooseNoYes,       chooseNoYes       )
+    CHOOSER_VARIATIONS( ChooseNoYesCancel, chooseNoYesCancel )
+    #undef CHOOSER_VARIATIONS
 
 //
 // ERROR CODES

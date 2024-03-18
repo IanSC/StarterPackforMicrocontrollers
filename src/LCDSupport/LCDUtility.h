@@ -8,12 +8,18 @@
 
 #pragma once
 
-#include <UserInterface.h>
+// #include <UserInterface.h>
 #include <LCD/LCDInterface.h>
 #include <spWDT.h>
 
 #include <Throttle_OLD.h>
 // #include <spUtility.h>
+
+namespace StarterPack::UserInterface {
+    // avoid circular UserInterface.h <--> LCDUtility.h
+    extern LCDInterface * LCD;
+    extern bool hasScreen();
+}
 
 namespace StarterPack {
 
@@ -23,9 +29,6 @@ namespace spLCD {
 // CHOOSER
 //
 // public:
-
-
-
 
     class optionChooser {
 

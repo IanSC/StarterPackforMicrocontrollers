@@ -207,7 +207,8 @@ class i2cHelper {
             inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl ) {
                 return wire.begin( (int) sda, (int) scl );
             }
-            inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl, uint32_t freq ) {
+            inline static bool beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl, uint32_t freq=100000, uint32_t timeout=50 ) {
+                wire.setTimeOut( timeout );
                 return wire.begin( (int) sda, (int) scl, (uint32_t) freq );
             }
             inline static bool beginSlave( TwoWire & wire, uint8_t sda, uint8_t scl ) {

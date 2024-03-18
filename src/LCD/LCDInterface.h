@@ -354,6 +354,56 @@ class LCDInterface : public Print {
             printStrAtRow( row, buffer );
         }
 
+    protected:
+
+        void printPaddedCore( uint8_t length, bool rightPadding, const char *format, va_list args ) {
+            const uint8_t maxChars = 21;
+            char buffer[maxChars];
+            vsnprintf( buffer, maxChars, format, args );
+
+            // https://stackoverflow.com/questions/276827/string-padding-in-c
+            // max = %-255s
+            char formatBuffer[7] = "%-\0\0\0\0";  // left = %10s / right = %-10s
+            char *ptr = formatBuffer + 1;         // skip '-' sign
+            if ( rightPadding ) ptr++;            // include '-' sign        
+            snprintf( ptr, 4, "%d", length );
+            strcat( formatBuffer, "s" );
+            printf( formatBuffer, buffer );
+            // SerialPrintf( formatBuffer, buffer );
+        }
+    
+    public:
+
+        void printPadLeftAt( uint8_t col, uint8_t row, uint8_t length, const char *format, ... ) {
+            setCursor( col, row );
+            va_list args;
+            va_start( args, format );
+            printPaddedCore( length, false, format, args );
+            va_end( args );
+        }
+
+        void printPadRightAt( uint8_t col, uint8_t row, uint8_t length, const char *format, ... ) {
+            setCursor( col, row );
+            va_list args;
+            va_start( args, format );
+            printPaddedCore( length, true, format, args );
+            va_end( args );
+        }
+
+        void printPadLeft( uint8_t length, const char *format, ... ) {
+            va_list args;
+            va_start( args, format );
+            printPaddedCore( length, false, format, args );
+            va_end( args );
+        }
+
+        void printPadRight( uint8_t length, const char *format, ... ) {
+            va_list args;
+            va_start( args, format );
+            printPaddedCore( length, true, format, args );
+            va_end( args );
+        }
+
     //
     // FULL SCREEN
     //
