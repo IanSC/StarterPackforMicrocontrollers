@@ -126,6 +126,53 @@ class MatrixKeypadBase {
             va_end( valist );
         }
 
+        void begin( bool driveLowScanning=true, bool rowOutputColInput=true ) { // bool driveColumnsIfMorePins = true ) {
+            // default drive low since Arduino only has PULLUP
+            // if using ESP32 input only pins for receivers, must drive high
+            if ( driveLowScanning )
+                activeState = LOW;
+            else
+                activeState = HIGH;
+            if ( rowOutputColInput ) {
+                sendPinCount = rowCount; sendPinList = rowPinList;
+                recvPinCount = colCount; recvPinList = colPinList;
+                sendViaRows = true;
+            } else {
+                sendPinCount = colCount; sendPinList = colPinList;
+                recvPinCount = rowCount; recvPinList = rowPinList;
+                sendViaRows = false;
+            }
+            // if ( driveColumnsIfMorePins && colCount > rowCount ) {
+            //     sendPinCount = colCount; sendPinList = colPinList;
+            //     recvPinCount = rowCount; recvPinList = rowPinList;
+            //     sendViaRows = false;
+            // } else {
+            //     sendPinCount = rowCount; sendPinList = rowPinList;
+            //     recvPinCount = colCount; recvPinList = colPinList;
+            //     sendViaRows = true;
+            // }
+            setOutputPinsStandby( 0, sendPinCount - 1 );
+            if ( driveLowScanning ) {
+                // will set to LOW the send pins when scanning
+                // pullup HIGH the receive pins
+                for ( uint8_t i = 0 ; i < recvPinCount; i++ )
+                    pinMode( recvPinList[i], INPUT_PULLUP );
+            } else {
+                // will set to HIGH the send pins when scanning
+                // pulldown LOW the receive pins (if possible)
+                // if no internal pulldown, must put external resistor to ground
+                //    otherwise it will be floating and will not work
+                #if defined(ESP32)
+                    for ( uint8_t i = 0 ; i < recvPinCount; i++ )
+                        pinMode( recvPinList[i], INPUT_PULLDOWN );
+                #else
+                    for ( uint8_t i = 0 ; i < recvPinCount; i++ )
+                        pinMode( recvPinList[i], INPUT );
+                #endif
+            }
+        }
+
+/*
         void begin( bool driveLowScanning = true, bool driveColumnsIfMorePins = true ) {
             // default drive low since Arduino only has PULLUP
             // if using ESP32 input only pins for receivers, must drive high
@@ -162,6 +209,7 @@ class MatrixKeypadBase {
                 #endif
             }
         }
+*/
 
         void serialDebug() {
             Serial.print( "ROW = " );

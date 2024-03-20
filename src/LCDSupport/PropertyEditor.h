@@ -461,9 +461,9 @@ namespace StarterPack {
                             break;
                         }
                     }
-                    Serial.println( caption );
-                    Serial.print("SEL = "); Serial.println( selectedIndex );
-                    Serial.print("VAL = "); Serial.println( valueOptions[selectedIndex-1] );
+                    // Serial.println( caption );
+                    // Serial.print("SEL = "); Serial.println( selectedIndex );
+                    // Serial.print("VAL = "); Serial.println( valueOptions[selectedIndex-1] );
                 }
             }
             // bool isValidSelection() {

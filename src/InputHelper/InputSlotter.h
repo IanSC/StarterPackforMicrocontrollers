@@ -94,7 +94,7 @@ class InputSlotter : public InputFilterInterface<DATA_TYPE> {
             DATA_TYPE  to;
             OUT_DATA_TYPE slot; // value to return if within range
         };
-        slotRange *slotRangeList = nullptr;
+        slotRange * slotRangeList = nullptr;
         uint8_t slotCount;
 
     public:
@@ -144,10 +144,11 @@ class InputSlotter : public InputFilterInterface<DATA_TYPE> {
             // should include value if nothing is pressed
             // 3rd arg is nothing is pressed value
 
-            this->slotCount = argCount;
-            if ( slotRangeList != nullptr )
-                delete[] slotRangeList;
-            slotRangeList = new slotRange[slotCount];
+            initSlotsN_allocateMemory( argCount );
+            // this->slotCount = argCount;
+            // if ( slotRangeList != nullptr )
+            //     delete[] slotRangeList;
+            // slotRangeList = new slotRange[slotCount];
 
             va_list valist;
             va_start( valist, argCount );
@@ -156,6 +157,72 @@ class InputSlotter : public InputFilterInterface<DATA_TYPE> {
                 slotRangeList[i].slot = i;
             }
             va_end( valist );
+
+            initSlotsN_process( useGuard, argCount );
+
+            /*
+            // sort list: https://stackoverflow.com/questions/33067907/simple-program-to-sort-numbers-in-c
+            for( int i = 0 ; i < slotCount-1 ; i++ ) {
+                for( int k = 0 ; k < slotCount-1-i ; k++ ) {
+                    if( slotRangeList[k].value > slotRangeList[k+1].value ) {
+                        int temp = slotRangeList[k].value;
+                        slotRangeList[k].value = slotRangeList[k+1].value;
+                        slotRangeList[k+1].value = temp;
+                        temp = slotRangeList[k].slot;
+                        slotRangeList[k].slot = slotRangeList[k+1].slot;
+                        slotRangeList[k+1].slot = temp;
+                    }
+                }
+            }
+
+            // GUARD: divide distance between target values by 3
+            // 1/3 for previous value, 1/3 dead range, 1/3 for next value
+            // ex. values     range
+            //       0        -inf to 33
+            //     100        66 to 133
+            //     200        166 to +inf
+            int divisor = useGuard ? 3 : 2;
+
+            // ARDUINO: DOES NOT WORK
+            // constexpr IN MIN = std::numeric_limits<IN>::min();
+            // constexpr IN MAX = std::numeric_limits<IN>::max();
+            static constexpr DATA_TYPE MIN = SP_NUMLIMITS_MIN_OF(DATA_TYPE);
+            static constexpr DATA_TYPE MAX = SP_NUMLIMITS_MAX_OF(DATA_TYPE);
+
+            for ( int i = 0 ; i < slotCount; i++ ) {
+                if ( i == 0 )
+                    slotRangeList[0].from = MIN; // INT_MIN;
+                else
+                    slotRangeList[i].from = slotRangeList[i].value - (slotRangeList[i].value-slotRangeList[i-1].value)/divisor;
+                if ( i < slotCount-1 )
+                    slotRangeList[i].to = slotRangeList[i].value + (slotRangeList[i+1].value-slotRangeList[i].value)/divisor;
+                else
+                    slotRangeList[i].to = MAX; // INT_MAX;
+            }
+
+            // DEBUG
+            // for ( int i = 0 ; i < slotCount; i++ )
+            //     Serial.printf( "%d = [ %d ] = %d [ %d --> %d ]\n", i, slotRangeList[i].slot, slotRangeList[i].value, slotRangeList[i].from, slotRangeList[i].to );
+
+            // // do initial read, otherwise debouncer will give wrong value 1st time
+            // debouncer.setInitialValue( readMappedKey() );
+
+            // // by default was set to false (assume = 0) already
+            // //buttonDebouncer.inactiveState = inactiveButton;
+            */
+        }
+
+    protected:
+
+        void initSlotsN_allocateMemory( int slotCount ) {
+            this->slotCount = slotCount;
+            if ( slotRangeList != nullptr )
+                delete[] slotRangeList;
+            if ( slotCount > 0 )
+                slotRangeList = new slotRange[slotCount];
+        }
+
+        void initSlotsN_process( bool useGuard, int argCount ) {
 
             // sort list: https://stackoverflow.com/questions/33067907/simple-program-to-sort-numbers-in-c
             for( int i = 0 ; i < slotCount-1 ; i++ ) {
@@ -205,6 +272,20 @@ class InputSlotter : public InputFilterInterface<DATA_TYPE> {
 
             // // by default was set to false (assume = 0) already
             // //buttonDebouncer.inactiveState = inactiveButton;
+        }
+
+    public:
+
+        void initSlotsN( bool useGuard, int slotCount, DATA_TYPE * val ) {
+            initSlotsN_allocateMemory( slotCount );
+
+            // copy data
+            for ( int i = 0 ; i < slotCount; i++ ) {
+                slotRangeList[i].value = val[i];
+                slotRangeList[i].slot = i;
+            }
+
+            initSlotsN_process( useGuard, slotCount );
         }
 
         // // do initial read, otherwise debouncer will give wrong value 1st time

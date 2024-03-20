@@ -12,7 +12,7 @@
 
 // Preferences p;
 
-#define DEBUG_DIAGNOSE
+// #define DEBUG_DIAGNOSE
 #include <dbgDefines.h>
 
 namespace StarterPack {

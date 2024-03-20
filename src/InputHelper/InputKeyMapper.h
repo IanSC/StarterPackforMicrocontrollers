@@ -63,6 +63,9 @@ class InputKeyMapper : public InputFilterInterface<OUT_DATA_TYPE> {
         inline void assignKeymap( const char *keyMap ) {
             this->keyMap = keyMap;
         }
+        const char * getKeymap() {
+            return keyMap;
+        }
 
     //
     // ACTION

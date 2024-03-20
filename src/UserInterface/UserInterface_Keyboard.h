@@ -119,7 +119,9 @@ namespace UserInterface {
         KeyHandler = handler;
     }
 
-    void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 10, uint16_t minimum = 50 ) {
+    void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 10
+    // , uint16_t minimum = 50 
+    ) { 
         if ( KeyHandler == nullptr ) return;
         KeyHandler->setStabilizationTimeInMs(activeStateStabilizeTime, inactiveStateStabilizeTime);
         // KeyHandler->debouncerSettings->stabilizedTimePressedInMs = activeStateStabilizeTime;
@@ -140,7 +142,7 @@ namespace UserInterface {
         // KeyHandler->repeaterSettings->repeatRateInMs = repeatRate;
     }
 
-    void setMultiClickSettingsInMs(uint16_t maxInterval, uint16_t repeatRate = 0) {
+    void setMultiClickSettingsInMs( uint16_t maxInterval, uint16_t repeatRate = 0 ) {
         if ( KeyHandler == nullptr ) return;
         KeyHandler->setMultiClickSettingsInMs(maxInterval, repeatRate);
     }
