@@ -90,7 +90,7 @@ class DigitalInput : public DigitalInputRaw {
 
         DigitalInput() {}
 
-        DigitalInput( const uint8_t pin, Init options = Init::Default )
+        DigitalInput( const int8_t pin, Init options = Init::Default )
         : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(options) ) {
             if ( ( options & Init::ActiveLow ) == Init::ActiveLow )
                 // MY_INACTIVE_STATE = HIGH;
@@ -100,8 +100,16 @@ class DigitalInput : public DigitalInputRaw {
                 ACTIVE_STATE = HIGH;
         }
 
+        void updateActiveState( Init options ) {
+            if ( ( options & Init::ActiveLow ) == Init::ActiveLow )
+                ACTIVE_STATE = LOW;
+            else
+                ACTIVE_STATE = HIGH;
+            updatePinMode( static_cast<DigitalInputRaw::Pull>(options) );
+        }
+
 /*
-        DigitalInput( const uint8_t pin, Active activeLogic, DigitalInput::Pull pullupOptions = DigitalInput::Pull::None )
+        DigitalInput( const int8_t pin, Active activeLogic, DigitalInput::Pull pullupOptions = DigitalInput::Pull::None )
         : DigitalInputRaw( pin, static_cast<DigitalInputRaw::Pull>(pullupOptions) ) {
             if ( ( activeLogic & Active::Low ) == Active::Low )
                 INACTIVE_STATE = HIGH;

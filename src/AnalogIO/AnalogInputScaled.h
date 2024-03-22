@@ -11,7 +11,7 @@ class AnalogInputScaled : public AnalogInputRaw, public InputLinearScale<int> {
 
     public:
 
-        AnalogInputScaled( uint8_t pin ) : AnalogInputRaw( pin ) {}
+        AnalogInputScaled( int8_t pin ) : AnalogInputRaw( pin ) {}
 
     //
     //

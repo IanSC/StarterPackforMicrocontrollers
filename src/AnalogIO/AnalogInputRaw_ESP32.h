@@ -71,7 +71,7 @@ class AnalogInputRaw_ESP32 {
 
         // /Users/<yourname>/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32c3/include/driver/include/driver/adc.h
 
-        void ESP32_mapGPIOtoADC(uint8_t PIN) {
+        void ESP32_mapGPIOtoADC( int8_t PIN ) {
             // don't know how to map GPIO to ADC channel
             // ~/.platformio/packages/framework-arduinoespressif32/tools/sdk/include/driver/driver/adc.h
             switch( PIN ) {

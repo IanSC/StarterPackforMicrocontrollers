@@ -27,7 +27,7 @@ class DigitalInputRaw {
 
     protected:
 
-        uint8_t PIN;                    // pin number to read
+        int8_t PIN;                     // pin number to read
         // bool INACTIVE_STATE = false;    // read result to be considered not "active"
 
     public:
@@ -73,8 +73,37 @@ class DigitalInputRaw {
         //     a = a | b; return a;
         // }
 
-        DigitalInputRaw( const uint8_t pin, Pull pullupOptions = Pull::None ) {
+        DigitalInputRaw( const int8_t pin, Pull pullupOptions = Pull::None ) {
             PIN = pin;
+            updatePinMode( pullupOptions );
+/*            
+            if ( PIN == -1 ) return;
+            // if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )
+            //     INACTIVE_STATE = HIGH;
+            // else
+            //     INACTIVE_STATE = LOW;
+            if ( ( pullupOptions & Pull::Up ) == Pull::Up )
+                pinMode( PIN, INPUT_PULLUP );
+            else if ( ( pullupOptions & Pull::Down ) == Pull::Down )
+                #if defined( ESP32 )
+                    pinMode( PIN, INPUT_PULLDOWN );
+                // #elif defined( ESP8266 )
+                //     // only pin16 can have pulldown
+                //     // ... just ignore
+                //     if (pin == 16)
+                //         pinMode( PIN, INPUT_PULLDOWN_16 );
+                //     else
+                //         pinMode( PIN, INPUT );
+                #else
+                    // #error DIGITAL INPUT PULLDOWN NOT SUPPORTED
+                    pinMode( PIN, INPUT );
+                #endif
+            else
+                pinMode( PIN, INPUT );
+*/                
+        }
+
+        void updatePinMode( Pull pullupOptions ) {
             if ( PIN == -1 ) return;
             // if ( ( options & optionsEnum::ACTIVE_LOW ) == optionsEnum::ACTIVE_LOW )
             //     INACTIVE_STATE = HIGH;

@@ -99,6 +99,7 @@ namespace UserInterface {
 
     void showHeader( uint8_t row, const char *header, const char *decorator = "((()))" ) {
         if ( LCD == nullptr ) return;
+//        LCD->printCenteredAtRow( row, header );
         LCD->setCursor( 0, row );
         int decoLen = strlen( decorator );
         int len = strlen( header ) + decoLen;
@@ -167,7 +168,7 @@ namespace UserInterface {
     inline void showDialog1( const char *header,
     const char *msg = nullptr,
     const char *headerDecorator = "((()))" ) {
-        showDialog3( header, nullptr, msg, nullptr );
+        showDialog3( header, nullptr, msg, nullptr, headerDecorator );
     }
 
     // 1-liner text dialog, wait for any key
@@ -175,7 +176,7 @@ namespace UserInterface {
     const char *msg = nullptr,
     const char *headerDecorator = "((()))" ) {
         if ( LCD == nullptr ) return INACTIVE_KEY;
-        showDialog3( header, nullptr, msg, nullptr );
+        showDialog3( header, nullptr, msg, nullptr, headerDecorator );
         return waitForAnyKeyPressed();
     }
 

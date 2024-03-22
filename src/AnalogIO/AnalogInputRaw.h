@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <spWDT.h>
 
 // FOR ESP32 NATIVE READ
 #include <AnalogIO/AnalogInputRaw_ESP32.h>
@@ -36,11 +37,11 @@ class AnalogInputRaw
 
     protected:
 
-        uint8_t PIN;
+        int8_t PIN;
 
     public:
 
-        AnalogInputRaw( uint8_t pin ) {
+        AnalogInputRaw( int8_t pin ) {
             PIN = pin;
             pinMode( PIN, INPUT );
             #if defined(SP_ANALOGINPUT_USE_ESP32_ADC)
@@ -60,6 +61,66 @@ class AnalogInputRaw
                 // Arduino style
                 return analogRead( PIN );
             #endif
+        }
+
+    //
+    //
+    //
+    public:
+
+        void getKeyAverage( uint8_t keyCount, DATA_TYPE * values ) {
+            for( int i=0 ; i<keyCount ; i++ ) {
+                Serial.print( "key " ); Serial.print( i+1 ); Serial.print( " : " );
+
+                // wait for release
+                while (1) {
+                    feedTheDog();
+                    auto v = readRaw();
+                    if ( v == 0 )
+                        break;
+                    delay( 20 );
+                }
+
+                values[i] = getStabilizedValue();
+
+                Serial.println( values[i] );
+            }
+        }
+
+    protected:
+
+        DATA_TYPE getStabilizedValue() {
+            uint32_t total = 0;
+            uint16_t cnt = 0;
+            DATA_TYPE avg = 0;
+            uint8_t consistentCount = 0;
+            while( true ) {
+
+                feedTheDog();
+
+                // wait for press
+                auto v = readRaw();
+                delay( 20 );
+                if ( v == 0 ) continue;
+
+                // check stability
+                total += v;
+                cnt++;
+                DATA_TYPE prevAvg = avg;
+                avg = (float) total / (float) cnt;
+                if ( prevAvg != avg ) {
+                    consistentCount = 0;
+                    continue;
+                }
+
+                // consistently stable
+                consistentCount++;
+                if ( consistentCount < 50 )
+                    continue;
+
+                break;
+            }
+            return avg;
         }
 
     //

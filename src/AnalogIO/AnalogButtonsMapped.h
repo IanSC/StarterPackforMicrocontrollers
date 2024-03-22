@@ -16,7 +16,7 @@ class AnalogButtonsMapped : public AnalogInput,
 
     public:
 
-        AnalogButtonsMapped( uint8_t pin ) : AnalogInput( pin ) {}
+        AnalogButtonsMapped( int8_t pin ) : AnalogInput( pin ) {}
 
         virtual KEY read() {
             auto value = readFiltered();

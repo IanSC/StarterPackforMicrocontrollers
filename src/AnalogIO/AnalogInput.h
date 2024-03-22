@@ -15,7 +15,7 @@ class AnalogInput : public AnalogInputRaw, public InputFilterList<AnalogInputRaw
 
     public:
 
-        AnalogInput( uint8_t pin ) : AnalogInputRaw( pin ) {}
+        AnalogInput( int8_t pin ) : AnalogInputRaw( pin ) {}
 
     //
     // FILTERS

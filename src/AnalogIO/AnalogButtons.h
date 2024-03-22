@@ -17,7 +17,7 @@ class AnalogButtonDB : public AnalogButtonsMapped,
 
     public:
 
-        AnalogButtonDB( const uint8_t pin ) : AnalogButtonsMapped(pin) { }
+        AnalogButtonDB( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
     public:
 
@@ -37,7 +37,7 @@ class AnalogButtonRP : public AnalogButtonsMapped,
 
     public:
 
-        AnalogButtonRP( const uint8_t pin ) : AnalogButtonsMapped(pin) { }
+        AnalogButtonRP( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
     public:
 
@@ -57,7 +57,7 @@ class AnalogButtonsMC : public AnalogButtonsMapped,
 
     public:
 
-        AnalogButtonsMC( const uint8_t pin ) : AnalogButtonsMapped(pin) { }
+        AnalogButtonsMC( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
     public:
 
@@ -77,7 +77,7 @@ class AnalogButtons : public AnalogButtonsMapped,
 
     public:
 
-        AnalogButtons( const uint8_t pin ) : AnalogButtonsMapped(pin) { }
+        AnalogButtons( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
     public:
 

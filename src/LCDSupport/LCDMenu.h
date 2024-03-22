@@ -79,6 +79,15 @@ class menuSystem {
                     options.insert(e);
                 }
                 menuBar *addSubmenu( const char *option, const char *description, const char *submenuTitle ) {
+
+                    // option       - text when being displayed by parent
+                    // submenuTitle - text when active as menu displayed as menu
+                    //
+                    // SCREEN 1: PARENT MENU
+                    //           [option-1] [option-2]
+                    // SCREEN 2: submenuTitle
+                    //           [child-1] [child-2]
+
                     // add entry, when selected show submenu
                     auto submenu = new menuBar();
                     submenu->title = submenuTitle;

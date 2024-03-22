@@ -354,6 +354,18 @@ class LCDInterface : public Print {
             printStrAtRow( row, buffer );
         }
 
+        void printCentered( uint8_t col, uint8_t row, uint8_t spaces, const char * str ) {
+            // setCursor( col, row );
+            col = col + (spaces - strlen(str))/2;
+            printAt( col, row, str );
+        }
+
+        void printCenteredAtRow( uint8_t row, const char * str ) {
+            // setCursor( col, row );
+            auto col = (maxColumns - strlen(str))/2;
+            printAt( col, row, str );
+        }
+
     protected:
 
         void printPaddedCore( uint8_t length, bool rightPadding, const char *format, va_list args ) {

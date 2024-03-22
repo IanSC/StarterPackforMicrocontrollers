@@ -17,7 +17,7 @@ class DigitalButtonDB : public DigitalInput,
 
     public:
 
-        DigitalButtonDB( const uint8_t pin, Init options = Init::Default ) :
+        DigitalButtonDB( const int8_t pin, Init options = Init::Default ) :
         DigitalInput(pin,options) {}
 
     public:
@@ -36,7 +36,7 @@ class DigitalButtonRP : public DigitalInput,
 
     public:
 
-        DigitalButtonRP( const uint8_t pin, Init options = Init::Default ) :
+        DigitalButtonRP( const int8_t pin, Init options = Init::Default ) :
         DigitalInput(pin,options) {}
 
     public:
@@ -55,7 +55,7 @@ class DigitalButtonMC : public DigitalInput,
 
     public:
 
-        DigitalButtonMC( const uint8_t pin, Init options = Init::Default ) :
+        DigitalButtonMC( const int8_t pin, Init options = Init::Default ) :
         DigitalInput(pin,options) {}
 
     public:
@@ -74,9 +74,9 @@ class DigitalButton : public DigitalInput,
 
     public:
 
-        DigitalButton( const uint8_t pin, Init options = Init::Default ) : DigitalInput( pin, options ) {}
+        DigitalButton( const int8_t pin, Init options = Init::Default ) : DigitalInput( pin, options ) {}
 
-        DigitalButton( const uint8_t pin, Init options, 
+        DigitalButton( const int8_t pin, Init options, 
         uint16_t stabilizationOnPressedMs, uint16_t stabilizationOnReleasedMs ) : DigitalInput( pin, options ) {
             setStabilizationTimeInMs( stabilizationOnPressedMs, stabilizationOnReleasedMs );
         }

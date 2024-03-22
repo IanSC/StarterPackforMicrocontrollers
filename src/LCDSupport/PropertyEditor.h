@@ -520,11 +520,11 @@ namespace StarterPack {
                     *((uint8_t*)ptr) = selectedIndex;
                 else {
                     if ( !isInvalidSelection() ) {
-                        Serial.println( caption );
-                        Serial.print("0 = "); Serial.println( valueOptions[0] );
-                        Serial.print("1 = "); Serial.println( valueOptions[1] );
-                        Serial.print("SEL = "); Serial.println( selectedIndex );
-                        Serial.print("VAL = "); Serial.println( valueOptions[selectedIndex-1] );
+                        // Serial.println( caption );
+                        // Serial.print("0 = "); Serial.println( valueOptions[0] );
+                        // Serial.print("1 = "); Serial.println( valueOptions[1] );
+                        // Serial.print("SEL = "); Serial.println( selectedIndex );
+                        // Serial.print("VAL = "); Serial.println( valueOptions[selectedIndex-1] );
                         *((uint8_t*)ptr) = valueOptions[selectedIndex-1];
                     }
                 }
