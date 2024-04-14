@@ -109,7 +109,7 @@ namespace UserInterface {
 // ASSIGN KEY HANDLER DEVICE
 //
 
-    UserInterfaceAllKeys *KeyHandler = nullptr;
+    UserInterfaceAllKeys * KeyHandler = nullptr;
 
     void assignKeyHandler( UserInterfaceAllKeys &handler ) {
         KeyHandler = &handler;

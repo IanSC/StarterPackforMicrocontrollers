@@ -280,8 +280,6 @@ class MatrixKeypadBase {
             if ( active ) {
                 // detected something active
                 // scan half at a time to narrow down
-                DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-                DEBUG_TRACE( Serial.println( "ACTIVE" ) );
                 if ( sendFrom == sendTo ) {
                     // already saved
                     setOutputPinsStandby( sendFrom, sendTo );
@@ -309,16 +307,19 @@ class MatrixKeypadBase {
                     DEBUG_TRACE( step -= 3 );
                 }
             } else {
-                DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-                DEBUG_TRACE( Serial.println( "INACTIVE" ) );
                 setOutputPinsStandby( sendFrom, sendTo );
             }
         }
 
         void setOutputPinsStandby( uint8_t sendFrom, uint8_t sendTo ) {
             // if ( sendFrom > sendTo ) return; // check just in case
-            DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-            DEBUG_TRACE( SerialPrintf( "standby: %d-%d\n", sendFrom, sendTo ) );
+            // DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
+            // DEBUG_TRACE(
+            //     if ( sendFrom == sendTo )
+            //         SerialPrintf( "standby: %d\n", sendFrom );
+            //     else
+            //         SerialPrintf( "standby: %d-%d\n", sendFrom, sendTo );
+            // );
             for ( ; sendFrom <= sendTo; sendFrom++ ) {
                 pinMode( sendPinList[sendFrom], INPUT );
                 digitalWrite( sendPinList[sendFrom], !activeState );
@@ -327,8 +328,13 @@ class MatrixKeypadBase {
 
         void setOutputPinsActive( uint8_t sendFrom, uint8_t sendTo ) {
             // if ( sendFrom > sendTo ) return; // check just in case
-            DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-            DEBUG_TRACE( SerialPrintf( "active: %d-%d\n", sendFrom, sendTo ) );
+            // DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
+            // DEBUG_TRACE(
+            //     if ( sendFrom == sendTo )
+            //         SerialPrintf( "active: %d\n", sendFrom );
+            //     else
+            //         SerialPrintf( "active: %d-%d\n", sendFrom, sendTo );
+            // );
             for ( int sendPin = sendFrom ; sendPin <= sendTo ; sendPin++ ) {
                 uint8_t p = sendPinList[sendPin];
                 pinMode( p, OUTPUT );
@@ -337,13 +343,18 @@ class MatrixKeypadBase {
         }
 
         bool scanInputs( uint8_t sendFrom, uint8_t sendTo ) {
+
+            // short wire: okay
+            // long wire with level converter: stuck key (but works with debug msg on, bec of delay)
+            delay(1);
+
             DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-            DEBUG_TRACE( Serial.print( "scanning: " ); Serial.print( sendFrom ); Serial.print( "-" ); Serial.println( sendTo );  );
+            // DEBUG_TRACE( Serial.print( "scanning " ); Serial.print( sendFrom ); Serial.print( "-" ); Serial.println( sendTo );  );
             if ( sendFrom == sendTo ) {
                 // single send slot being checked, record results
+                DEBUG_TRACE( Serial.print( "scanning " ); Serial.print( sendFrom ); Serial.print( ": " ); );
                 if ( sendViaRows ) {
                     for ( int recvPin = 0 ; recvPin < recvPinCount ; recvPin++ ) {
-                        uint8_t scanCode = sendFrom * recvPinCount + recvPin;
                         bool state = ( digitalRead( recvPinList[recvPin] ) == activeState );
                         // state = debouncer.debounce(state);
                         // if ( state )
@@ -351,30 +362,40 @@ class MatrixKeypadBase {
                         // else
                         //     state = debounceMatrixExisting( scanCode, state );
                         if ( state ) {
-                            DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
-                            DEBUG_TRACE( SerialPrintf( "SET %d\n", scanCode ) );
+                            uint8_t scanCode = sendFrom * recvPinCount + recvPin;
                             recordScanCode( scanCode );
+                            // DEBUG_TRACE( SerialPrintCharsN( ' ', step ) );
+                            // DEBUG_TRACE( SerialPrintf( "SET %d\n", scanCode ) );
+                            DEBUG_TRACE( Serial.print( scanCode ); Serial.print( ", " ) );
                         }
                     }
                 } else {
                     for ( int recvPin = 0 ; recvPin < recvPinCount ; recvPin++ ) {
-                        uint8_t scanCode = recvPin * sendPinCount + sendFrom;
                         bool state = ( digitalRead( recvPinList[recvPin] ) == activeState );
                         // state = debouncer.debounce(state);
                         // if ( state )
                         //     state = debounceMatrix( scanCode, state );
                         // else
                         //     state = debounceMatrixExisting( scanCode, state );
-                        if ( state ) recordScanCode( scanCode );
+                        if ( state ) {
+                            uint8_t scanCode = recvPin * sendPinCount + sendFrom;
+                            recordScanCode( scanCode );
+                            DEBUG_TRACE( Serial.print( scanCode ); Serial.print( ", " ) );
+                        }
                     }
                 }
+                DEBUG_TRACE( Serial.println() );
             } else {
                 // multiple send slot being checked, if any is pressed
                 // return immediately for detailed checking
+                DEBUG_TRACE( Serial.print( "scanning " ); Serial.print( sendFrom ); Serial.print( "-" ); Serial.print( sendTo );  );
                 for ( int recvPin = 0 ; recvPin < recvPinCount ; recvPin++ ) {
-                    if ( digitalRead( recvPinList[recvPin] ) == activeState )
+                    if ( digitalRead( recvPinList[recvPin] ) == activeState ) {
+                        DEBUG_TRACE( Serial.println( ": ACTIVE" ) );
                         return true;
+                    }
                 }
+                DEBUG_TRACE( Serial.println( ": INACTIVE" ) );
             }
             return false;
         }

@@ -285,23 +285,31 @@ class menuSystem {
 
         static constexpr uint8_t EXIT_VALUE = 0;
 
-        uint8_t prompt() {
+        uint8_t prompt( UserInterfaceAllKeys * alternateKeyHandler = nullptr ) {
             namespace ui = StarterPack::UserInterface;
 
             if ( currentMenu == nullptr ) return 0;
+
+            UserInterfaceAllKeys * keypad;
+            if ( alternateKeyHandler != nullptr )
+                keypad = alternateKeyHandler;
+            else
+                keypad = StarterPack::UserInterface::KeyHandler;
 
             // display current menu
             // reprocess, might have added new entries, etc.
             displayMenu( currentMenu );
 
-            ui::waitUntilNothingIsPressed();
+            // ui::waitUntilNothingIsPressed();
+            keypad->waitUntilNothingIsPressed();
 
             while( true ) {
 
                 feedTheDog();
                 // delay( 10 );
 
-                uint8_t KEY_PRESSED = ui::getRepeatingKey();
+                // uint8_t KEY_PRESSED = ui::getRepeatingKey();
+                uint8_t KEY_PRESSED = keypad->getRepeatingKey();
 
                 if ( KEY_PRESSED == ui::kENTER ) {
 
@@ -348,7 +356,8 @@ class menuSystem {
                     }
 
                     // do not accept repeating [ENTER]
-                    ui::waitUntilNothingIsPressed();
+                    // ui::waitUntilNothingIsPressed();
+                    keypad->waitUntilNothingIsPressed();
 
                 } else if ( KEY_PRESSED == ui::kESCAPE ) {
 
@@ -361,7 +370,8 @@ class menuSystem {
                     displayMenu( currentMenu );
 
                     // do not accept repeating [ESC]
-                    ui::waitUntilNothingIsPressed();
+                    // ui::waitUntilNothingIsPressed();
+                    keypad->waitUntilNothingIsPressed();
 
                 } else if ( KEY_PRESSED == ui::kLEFT ) {
                     

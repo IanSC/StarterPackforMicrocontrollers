@@ -59,13 +59,13 @@ class InputGroupedBase : public InputCombiner<char> {
             digitalInputMapList.clear();
         }
 
-        void addInput( DigitalInput &dIO, KEY key ) {
+        void addInput( DigitalInput & dIO, KEY key ) {
             auto e = new digitalInputMap();
             e->dIO = &dIO;
             e->key = key;
             digitalInputMapList.insert(e);
         }
-        void addInput( DigitalInput *dIO, KEY key ) {
+        void addInput( DigitalInput * dIO, KEY key ) {
             auto e = new digitalInputMap();
             e->dIO = dIO;
             e->key = key;
@@ -89,15 +89,43 @@ class InputGroupedBase : public InputCombiner<char> {
             analogInputList.clear();
         }
 
-        void addInput( AnalogButtonsMapped &aIO ) {
+        void addInput( AnalogButtonsMapped & aIO ) {
             auto e = new analogInput();
             e->aIO = &aIO;
             analogInputList.insert(e);
         }
-        void addInput( AnalogButtonsMapped *aIO ) {
+        void addInput( AnalogButtonsMapped * aIO ) {
             auto e = new analogInput();
             e->aIO = aIO;
             analogInputList.insert(e);
+        }
+
+    //
+    // KITCHEN SINK
+    //
+    protected:
+
+        struct keypadInput {
+            UserInterfaceAllKeys * keypad = nullptr;
+        };
+        StarterPack::spVector<keypadInput> keypadList;
+
+    public:
+
+        void clearKeypads() {
+            keypadList.deletePayload = true;
+            keypadList.clear();
+        }
+
+        void addInput( UserInterfaceAllKeys & keypad ) {
+            auto e = new keypadInput();
+            e->keypad = &keypad;
+            keypadList.insert( e );
+        }
+        void addInput( UserInterfaceAllKeys * keypad ) {
+            auto e = new keypadInput();
+            e->keypad = keypad;
+            keypadList.insert( e );
         }
 
     //
@@ -117,36 +145,59 @@ class InputGroupedBase : public InputCombiner<char> {
             //
             // DIGITAL
             //
-            auto *dInput = digitalInputMapList.getFirst();
-            while ( dInput != nullptr ) {
-                if ( dInput->dIO->readLogicalRaw() ) {
-                    keysPressed[index] = dInput->key;
-                    index++;
-                    if ( index >= MAX_SIMULTANEOUS_KEYS ) {
-                        keysPressed[index] = 0;
-                        return keysPressed;
-                        // break;
+            {
+                auto *dInput = digitalInputMapList.getFirst();
+                while ( dInput != nullptr ) {
+                    if ( dInput->dIO->readLogicalRaw() ) {
+                        keysPressed[index] = dInput->key;
+                        index++;
+                        if ( index >= MAX_SIMULTANEOUS_KEYS ) {
+                            keysPressed[index] = 0;
+                            return keysPressed;
+                            // break;
+                        }
                     }
+                    dInput = digitalInputMapList.getNext();
                 }
-                dInput = digitalInputMapList.getNext();
             }
 
             //
             // ANALOG
             //
-            auto *aInput = analogInputList.getFirst();
-            while ( aInput != nullptr ) {
-                auto key = aInput->aIO->read();
-                if (key != AnalogButtonsMapped::INACTIVE_KEY) {
-                    keysPressed[index] = key;
-                    index++;
-                    if ( index >= MAX_SIMULTANEOUS_KEYS ) {
-                        keysPressed[index] = 0;
-                        return keysPressed;
-                        // break;
+            {
+                auto *aInput = analogInputList.getFirst();
+                while ( aInput != nullptr ) {
+                    auto key = aInput->aIO->read();
+                    if (key != AnalogButtonsMapped::INACTIVE_KEY) {
+                        keysPressed[index] = key;
+                        index++;
+                        if ( index >= MAX_SIMULTANEOUS_KEYS ) {
+                            keysPressed[index] = 0;
+                            return keysPressed;
+                            // break;
+                        }
                     }
+                    aInput = analogInputList.getNext();
                 }
-                aInput = analogInputList.getNext();
+            }
+
+            //
+            // KEYPAD
+            //
+            {
+                auto *kInput = keypadList.getFirst();
+                while ( kInput != nullptr ) {
+                    auto key = kInput->keypad->getDebouncedKey();
+                    if (key != UserInterfaceAllKeys::INACTIVE_KEY) {
+                        keysPressed[index] = key;
+                        index++;
+                        if ( index >= MAX_SIMULTANEOUS_KEYS ) {
+                            keysPressed[index] = 0;
+                            return keysPressed;
+                        }
+                    }
+                    kInput = keypadList.getNext();
+                }
             }
 
             keysPressed[index] = 0;
