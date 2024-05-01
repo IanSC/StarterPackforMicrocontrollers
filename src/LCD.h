@@ -16,4 +16,4 @@
 #include <LCD/LCDBuffered_i2c.h>
 
 // custom character support
-#include <LCD/LCDBitmap.h>
+#include <LCDSupport/LCDBitmap.h>

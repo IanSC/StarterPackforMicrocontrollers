@@ -12,7 +12,7 @@
 //  hardware: LCD Keypad Shield
 
 #include <StarterPack.h> // include all
-#include <LCDUtility.h>  // ... or only those used in this project
+#include <LCDSupport/LCDChooser.h>  // ... or only those used in this project
 using namespace StarterPack;
 
 const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;

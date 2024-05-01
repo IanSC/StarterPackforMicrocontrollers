@@ -334,7 +334,21 @@ class LCDInterface : public Print {
                 printf( format, ts ... );
             }
         #else
+            void printf( const char *format, ... ) {
+                char buffer[maxColumns+1];
+                va_list args;
+                va_start( args, format );
+                vsnprintf( buffer, maxColumns, format, args );
+                va_end( args );
+                print( buffer );
+            }
             void printfAt( uint8_t col, uint8_t row, const char *format, ... ) {
+                // https://stackoverflow.com/questions/3530771/passing-variable-arguments-to-another-function-that-accepts-a-variable-argument
+                // setCursor( col, row );
+                // va_list args;
+                // va_start( args, format );
+                // printf( format, args );
+                // va_end( args );
                 char buffer[maxColumns+1];
                 va_list args;
                 va_start( args, format );

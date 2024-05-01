@@ -48,7 +48,7 @@ template<typename DATA_TYPE>
 class InputDebouncer : public InputFilterInterface<DATA_TYPE>
 {
 
-    private:
+    // private:
 
         // typedef T DATA_TYPE;
         static constexpr DATA_TYPE INACTIVE_KEY = 0;
@@ -91,12 +91,13 @@ class InputDebouncer : public InputFilterInterface<DATA_TYPE>
             uint16_t stabilizedTimeReleasedInMs = 10;
         #endif
 
-        inline void setDebouncerDelayInMs(uint16_t whenPressed, uint16_t whenReleased) {
+        inline void setDebouncerDelayTimeInMs(uint16_t whenPressed, uint16_t whenReleased) {
             debounceDelayPressedInMs  = whenPressed;
             debounceDelayReleasedInMs = whenReleased;
         }
 
-        inline void setStabilizationTimeInMs(uint16_t whenPressed, uint16_t whenReleased) {
+        inline void setDebounceStabilizeTimeInMs(uint16_t whenPressed, uint16_t whenReleased) {
+        // inline void setStabilizationTimeInMs(uint16_t whenPressed, uint16_t whenReleased) {
             stabilizedTimePressedInMs  = whenPressed;
             stabilizedTimeReleasedInMs = whenReleased;
         }

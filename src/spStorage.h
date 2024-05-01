@@ -3,7 +3,7 @@
 #include <nvs_flash.h>
 
 #include <UserInterface.h>
-#include <LCDSupport/LCDUtility.h>
+#include <LCDSupport/LCDChooser.h>
 
 // nvs_open failed: NOT_INITIALIZED
 // https://github.com/espressif/arduino-esp32/issues/3421
@@ -87,6 +87,31 @@ class spStorage {
                     return wipeResult::okay;
                 } else {
                     ui::promptErrorDialog1( errSource, errCode, "error erasing data" );
+                    return wipeResult::error;
+                }
+            } else {
+                ui::LCD->printStrAtRow( 3, "CANCELLED" );
+                // ui::LCD->displayAll();
+                ui::LCD->refresh();
+                ui::waitForAnyKeyPressed();
+                return wipeResult::cancelled;
+            }
+        }
+
+        wipeResult wipeWithPrompt() {
+            namespace ui = StarterPack::UserInterface;
+
+            ui::LCD->clear();
+            uint8_t input = StarterPack::spLCD::optionChooser::chooseNoYes( "Erase Data?" );
+            // uint8_t input = StarterPack::LCDUtility::promptNoYes( "Erase Data?" )->prompt();
+
+            if ( input == 2 ) {
+                if ( wipeCore() ) {
+                    ui::promptDialog1( "RESET", "data erased" );
+                    return wipeResult::okay;
+                } else {
+                    ui::promptDialog1( "ERROR", "while wiping" );
+                    // ui::promptErrorDialog1( errSource, errCode, "error erasing data" );
                     return wipeResult::error;
                 }
             } else {

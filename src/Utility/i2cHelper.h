@@ -215,6 +215,19 @@ class i2cHelper {
                 // slave has no clock
                 return wire.begin( sda, scl );
             }
+        #elif defined(ARDUINO_ARCH_ESP8266)
+            inline static void beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl ) {
+                wire.begin( (int) sda, (int) scl );
+            }
+            inline static void beginMaster( TwoWire & wire, uint8_t sda, uint8_t scl, uint32_t freq=100000, uint32_t timeout=50 ) {
+                wire.setClock( freq );
+                wire.setTimeout( timeout );
+                wire.begin( (int) sda, (int) scl );
+            }
+            inline static void beginSlave( TwoWire & wire, uint8_t sda, uint8_t scl ) {
+                // slave has no clock
+                wire.begin( sda, scl );
+            }
         #elif defined(ARDUINO_ARCH_SAMD)
             // SEEDUINO XIAO SAMD21
             // https://community.platformio.org/t/using-preprocessor-directives-defined-in-platformio-ini/24169/2

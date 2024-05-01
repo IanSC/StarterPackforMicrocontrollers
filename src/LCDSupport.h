@@ -1,7 +1,11 @@
 #pragma once
 
 // lcd utilities
-#include <LCDSupport/LCDUtility.h>
+// #include <LCDSupport/LCDUtility.h>
+#include <LCDSupport/LCDChooser.h>
+#include <LCDSupport/LCDMultiline.h>
+#include <LCDSupport/LCDBlinker.h>
+#include <LCDSupport/LCDCharSet.h>
 
 // lcd menu
 #include <LCDSupport/LCDMenu.h>

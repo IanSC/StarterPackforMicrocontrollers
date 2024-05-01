@@ -29,6 +29,7 @@
 
 #include <InputHelper/InputFilterInterface.h>
 #include <InputHelper/InputKeyFilter.h>
+#include <InputHelper/InputKeySource.h>
 
 namespace StarterPack {
 
@@ -39,7 +40,7 @@ class InputRepeater : public InputFilterInterface<DATA_TYPE>,
     private:
 
         // typedef T DATA_TYPE;
-        static constexpr DATA_TYPE INACTIVE_KEY = 0;
+        // static constexpr DATA_TYPE INACTIVE_KEY = 0;
 
     //
     // FILTER BASE
@@ -67,7 +68,7 @@ class InputRepeater : public InputFilterInterface<DATA_TYPE>,
             uint16_t repeatRateInMs = 250;
         #endif
 
-        inline void setRepeatSettingsInMs(uint16_t repeatDelay, uint16_t repeatRate) {
+        inline void setRepeatDelayAndRateInMs(uint16_t repeatDelay, uint16_t repeatRate) {
             repeatDelayInMs = repeatDelayInMs;
             repeatRateInMs = repeatRateInMs;
         }
@@ -158,14 +159,14 @@ class InputRepeater : public InputFilterInterface<DATA_TYPE>,
         DATA_TYPE actionGetRepeatingKeyCore( DATA_TYPE current ) {
 
             // (1) key released...
-            if ( current == INACTIVE_KEY ) {
+            if ( current == InputKeySource::INACTIVE_KEY ) {
                 repeatMode = repeatModeEnum::Idle;
                 return current;
             }
 
             // (2) wait for key up but haven't got it, checked in (1)
             if ( repeatMode == repeatModeEnum::WaitForKeyUp )
-                return INACTIVE_KEY;
+                return InputKeySource::INACTIVE_KEY;
 
             // (3) pressed another key
             if ( current != repeatTargetKey ) {
@@ -203,7 +204,7 @@ class InputRepeater : public InputFilterInterface<DATA_TYPE>,
                         return current;
                     } else {
                         // still waiting for repeat delay to kick in
-                        return INACTIVE_KEY;
+                        return InputKeySource::INACTIVE_KEY;
                     }
                 }
                 // break;
@@ -219,7 +220,7 @@ class InputRepeater : public InputFilterInterface<DATA_TYPE>,
                         return current;
                     } else {
                         // still waiting for next repeat cycle
-                        return INACTIVE_KEY;
+                        return InputKeySource::INACTIVE_KEY;
                     }
                 }
                 // break;
@@ -232,7 +233,7 @@ class InputRepeater : public InputFilterInterface<DATA_TYPE>,
             }
             // ... just to remove warning
             // DEBUG_TRACE( Serial.println( "WTF ???" ) );
-            return INACTIVE_KEY;
+            return InputKeySource::INACTIVE_KEY;
         }
 
     //

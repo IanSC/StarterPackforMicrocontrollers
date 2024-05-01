@@ -6,7 +6,7 @@
 #include <LCD/LCDInterface.h>
 #include <UserInterface/UserInterface_Keyboard.h>
 
-#include <LCDSupport/LCDUtility.h>
+#include <LCDSupport/LCDChooser.h>
 
 namespace StarterPack {
     

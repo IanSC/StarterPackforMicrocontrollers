@@ -107,8 +107,7 @@ class InputGroupedBase : public InputCombiner<InputKeySource::KEY> {
     protected:
 
         struct keypadInput {
-            // UserInterfaceAllKeys * keypad = nullptr;
-            InputKeySource * keySource = nullptr;
+            UserInterfaceAllKeys * keypad = nullptr;
         };
         StarterPack::spVector<keypadInput> keypadList;
 
@@ -119,34 +118,15 @@ class InputGroupedBase : public InputCombiner<InputKeySource::KEY> {
             keypadList.clear();
         }
 
-        void addInput( InputKeySource & keySource ) {
+        void addInput( UserInterfaceAllKeys & keypad ) {
             auto e = new keypadInput();
-            e->keySource = &keySource;
+            e->keypad = &keypad;
             keypadList.insert( e );
         }
-        void addInput( InputKeySource * keySource ) {
+        void addInput( UserInterfaceAllKeys * keypad ) {
             auto e = new keypadInput();
-            e->keySource = keySource;
+            e->keypad = keypad;
             keypadList.insert( e );
-        }
-
-        // void addInput( UserInterfaceAllKeys & keypad ) {
-        //     auto e = new keypadInput();
-        //     e->keypad = &keypad;
-        //     keypadList.insert( e );
-        // }
-        // void addInput( UserInterfaceAllKeys * keypad ) {
-        //     auto e = new keypadInput();
-        //     e->keypad = keypad;
-        //     keypadList.insert( e );
-        // }
-
-        void clearBuffers() {
-            auto *kInput = keypadList.getFirst();
-            while ( kInput != nullptr ) {
-                kInput->keySource->clearBuffers();
-                kInput = keypadList.getNext();
-            }
         }
 
     //
@@ -209,8 +189,7 @@ class InputGroupedBase : public InputCombiner<InputKeySource::KEY> {
                 auto *kInput = keypadList.getFirst();
                 while ( kInput != nullptr ) {
                     // auto key = kInput->keypad->getStableKey();
-                    // auto key = kInput->keypad->getNonDebouncedKey();
-                    auto key = kInput->keySource->getNonDebouncedKey();
+                    auto key = kInput->keypad->getNonDebouncedKey();
                     if (key != InputKeySource::INACTIVE_KEY) {
                         keysPressed[index] = key;
                         index++;

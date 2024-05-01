@@ -28,7 +28,7 @@ namespace StarterPack {
 // PRINTF
 //
 
-    namespace INTERNAL {
+    namespace _INTERNAL {
         void SerialPrintfCore( const char *format, va_list args ) {
             // https://stackoverflow.com/questions/3530771/passing-variable-arguments-to-another-function-that-accepts-a-variable-argument
             // how to pass to SerialPrintf() without template
@@ -43,7 +43,7 @@ namespace StarterPack {
     void SerialPrintf( const char *format, ... ) {
         va_list args;
         va_start( args, format );
-        INTERNAL::SerialPrintfCore( format, args );
+        _INTERNAL::SerialPrintfCore( format, args );
         va_end( args );
         // TO CALL vsnprintf() DIRECTLY:
         // void func( const char *format, va_list args ):
@@ -59,7 +59,7 @@ namespace StarterPack {
         // https://stackoverflow.com/questions/3530771/passing-variable-arguments-to-another-function-that-accepts-a-variable-argument
         va_list args;
         va_start( args, format );
-        INTERNAL::SerialPrintfCore( format, args );
+        _INTERNAL::SerialPrintfCore( format, args );
         va_end( args );
         Serial.println();
     }
@@ -68,7 +68,7 @@ namespace StarterPack {
 // PADDED
 //
 
-    namespace INTERNAL {
+    namespace _INTERNAL {
         void SerialPrintPaddedCore( uint8_t length, bool rightPadding, const char *format, va_list args ) {
             const uint8_t maxChars = 100;
             char buffer[maxChars];
@@ -88,14 +88,14 @@ namespace StarterPack {
     void SerialPrintPadLeft( uint8_t length, const char *format, ... ) {
         va_list args;
         va_start( args, format );
-        INTERNAL::SerialPrintPaddedCore( length, false, format, args );
+        _INTERNAL::SerialPrintPaddedCore( length, false, format, args );
         va_end( args );
     }
 
     void SerialPrintPadRight( uint8_t length, const char *format, ... ) {
         va_list args;
         va_start( args, format );
-        INTERNAL::SerialPrintPaddedCore( length, true, format, args );
+        _INTERNAL::SerialPrintPaddedCore( length, true, format, args );
         va_end( args );
     }
 

@@ -1,3 +1,51 @@
+InputCombiner
+    map multiple keys to single key, eg. press [U][L] --> [1]
+
+InputDebouncer
+    apply time persistence check on input for stability
+
+InputFilterInterface
+InputFilterList
+    list of input filters, eg. apply slot then mapping
+
+InputGroupedBase
+InputGroupedDB
+InputGroupedRP
+InputGroupedMC
+InputGrouped
+    group multiple source of inputs
+    eg. 3 digital buttons, instead of separately checking each for HIGH/LOW
+        group them together to check single object
+        grp.getKey() --> '1', '2' or '3'
+
+InputKeyFilterCore
+InputKeyFilter
+    filter allowed, disallowed keys
+
+InputKeyMapper
+    map input index to keys, eg. 1 --> 'A', 2 --> 'B'
+
+InputLinearScale
+    scale input linearly, eg. 0..1024 --> 0..100
+
+InputMultiClick
+InputMultiClickMapper
+    handle multiple clicks, eg. press 1, 3 times
+
+InputRepeater
+    repeat keys if continuously held down
+
+InputRunningAvg
+InputRunningAvgChained
+    perform averaging for adc readings
+
+InputSlotter
+    map input range to another value, eg. 0..100 --> 'A', 101..200 --> 'B'
+
+=======
+ NOTES
+=======
+
 Verbose Function/Variable Names
 
     to prevent collision during multiple inheritance

@@ -2,6 +2,7 @@
 
 #include <AnalogIO/AnalogButtonsMapped.h>
 
+#include <UserInterface/UserInterfaceBasic.h>
 #include <UserInterface/UserInterfaceDebounced.h>
 #include <UserInterface/UserInterfaceRepeated.h>
 #include <UserInterface/UserInterfaceMultiClick.h>
@@ -13,80 +14,154 @@ namespace StarterPack {
 // DEBOUNCED
 //
 class AnalogButtonDB : public AnalogButtonsMapped,
-                       public UserInterfaceDebounced {
+                       public UserInterfaceBasic,
+                       public UserInterfaceDebounced { public:
 
-    public:
+    AnalogButtonDB( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
-        AnalogButtonDB( const int8_t pin ) : AnalogButtonsMapped(pin) { }
-
-    public:
-
-        inline UserInterfaceDebounced::KEY getNonDebouncedKey() override {
-            return AnalogButtonsMapped::read();
-            // auto value = AnalogButtonsMapped::read();
-            // return UserInterfaceDebounced::actionDebounce(value);
-        }
-
+    inline InputKeySource::KEY getNonDebouncedKey() override {
+        return AnalogButtonsMapped::read();
+    }
+    inline InputKeySource::KEY getStableKey() override {
+        return UserInterfaceDebounced::getDebouncedKey();
+    }
+    inline void clearBuffers() override { }
 };
 
 //
 // DEBOUNCED REPEATED
 //
 class AnalogButtonRP : public AnalogButtonsMapped,
-                       public UserInterfaceRepeated {
+                       public UserInterfaceBasic,
+                       public UserInterfaceDebounced,
+                       public UserInterfaceRepeated { public:
 
-    public:
+    AnalogButtonRP( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
-        AnalogButtonRP( const int8_t pin ) : AnalogButtonsMapped(pin) { }
-
-    public:
-
-        inline UserInterfaceRepeated::KEY getNonDebouncedKey() override {
-            return AnalogButtonsMapped::read();
-            // auto value = AnalogButtonsMapped::read();
-            // return UserInterfaceRepeated::actionGetRepeatingKey(value);
-        }
-
+    inline InputKeySource::KEY getNonDebouncedKey() override {
+        return AnalogButtonsMapped::read();
+    }
+    inline InputKeySource::KEY getStableKey() override {
+        return UserInterfaceDebounced::getDebouncedKey();
+    }
+    inline void clearBuffers() override { }
 };
 
 //
 // DEBOUNCED MULTI-CLICK
 //
 class AnalogButtonsMC : public AnalogButtonsMapped,
-                        public UserInterfaceMultiClick {
+                        public UserInterfaceBasic,
+                        public UserInterfaceDebounced,
+                        public UserInterfaceMultiClick { public:
 
-    public:
+    AnalogButtonsMC( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
-        AnalogButtonsMC( const int8_t pin ) : AnalogButtonsMapped(pin) { }
-
-    public:
-
-        inline UserInterfaceRepeated::KEY getNonDebouncedKey() override {
-            return AnalogButtonsMapped::read();
-            // auto value = AnalogButtonsMapped::read();
-            // return UserInterfaceMultiClick::actionGetMultiClickKey(value);
-        }
-
+    inline InputKeySource::KEY getNonDebouncedKey() override {
+        return AnalogButtonsMapped::read();
+    }
+    inline InputKeySource::KEY getStableKey() override {
+        return UserInterfaceDebounced::getDebouncedKey();
+    }
+    inline void clearBuffers() override { }
 };
 
 //
 // DEBOUNCED MULTI-CLICK WITH REAL REPEATED LOGIC
 //
 class AnalogButtons : public AnalogButtonsMapped,
-                      public UserInterfaceAllKeys {
+                      public UserInterfaceDebounced,
+                      public UserInterfaceAllKeys { public:
 
-    public:
+    AnalogButtons( const int8_t pin ) : AnalogButtonsMapped(pin) { }
 
-        AnalogButtons( const int8_t pin ) : AnalogButtonsMapped(pin) { }
-
-    public:
-
-        inline UserInterfaceRepeated::KEY getNonDebouncedKey() override {
-            return AnalogButtonsMapped::read();
-            // auto value = AnalogButtonsMapped::read();
-            // return UserInterfaceMultiClick::actionGetMultiClickKey(value);
-        }
-
+    inline InputKeySource::KEY getNonDebouncedKey() override {
+        return AnalogButtonsMapped::read();
+    }
+    inline InputKeySource::KEY getStableKey() override {
+        return UserInterfaceDebounced::getDebouncedKey();
+    }
+    inline void clearBuffers() override { }
 };
+
+// //
+// // DEBOUNCED
+// //
+// class AnalogButtonDB : public AnalogButtonsMapped,
+//                        public UserInterfaceDebounced {
+
+//     public:
+
+//         AnalogButtonDB( const int8_t pin ) : AnalogButtonsMapped(pin) { }
+
+//     public:
+
+//         inline UserInterfaceDebounced::KEY getNonDebouncedKey() override {
+//             return AnalogButtonsMapped::read();
+//             // auto value = AnalogButtonsMapped::read();
+//             // return UserInterfaceDebounced::actionDebounce(value);
+//         }
+
+// };
+
+// //
+// // DEBOUNCED REPEATED
+// //
+// class AnalogButtonRP : public AnalogButtonsMapped,
+//                        public UserInterfaceDebouncedRepeated {
+
+//     public:
+
+//         AnalogButtonRP( const int8_t pin ) : AnalogButtonsMapped(pin) { }
+
+//     public:
+
+//         inline UserInterfaceDebouncedRepeated::KEY getNonDebouncedKey() override {
+//             return AnalogButtonsMapped::read();
+//             // auto value = AnalogButtonsMapped::read();
+//             // return UserInterfaceRepeated::actionGetRepeatingKey(value);
+//         }
+
+// };
+
+// //
+// // DEBOUNCED MULTI-CLICK
+// //
+// class AnalogButtonsMC : public AnalogButtonsMapped,
+//                         public UserInterfaceDebouncedMultiClick {
+
+//     public:
+
+//         AnalogButtonsMC( const int8_t pin ) : AnalogButtonsMapped(pin) { }
+
+//     public:
+
+//         inline UserInterfaceDebouncedMultiClick::KEY getNonDebouncedKey() override {
+//             return AnalogButtonsMapped::read();
+//             // auto value = AnalogButtonsMapped::read();
+//             // return UserInterfaceMultiClick::actionGetMultiClickKey(value);
+//         }
+
+// };
+
+// //
+// // DEBOUNCED MULTI-CLICK WITH REAL REPEATED LOGIC
+// //
+// class AnalogButtons : public AnalogButtonsMapped,
+//                       public UserInterfaceAllKeys {
+
+//     public:
+
+//         AnalogButtons( const int8_t pin ) : AnalogButtonsMapped(pin) { }
+
+//     public:
+
+//         inline UserInterfaceAllKeys::KEY getNonDebouncedKey() override {
+//             return AnalogButtonsMapped::read();
+//             // auto value = AnalogButtonsMapped::read();
+//             // return UserInterfaceMultiClick::actionGetMultiClickKey(value);
+//         }
+
+// };
 
 }

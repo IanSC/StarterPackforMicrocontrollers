@@ -25,6 +25,7 @@
 
 #include <InputHelper/InputFilterInterface.h>
 #include <InputHelper/InputMultiClickMapper.h>
+#include <InputHelper/InputKeySource.h>
 
 namespace StarterPack {
 
@@ -35,7 +36,7 @@ class InputMultiClick : public InputFilterInterface<DATA_TYPE>,
     private:
 
         // typedef T DATA_TYPE;
-        static constexpr DATA_TYPE INACTIVE_KEY = 0;
+        static constexpr DATA_TYPE INACTIVE_KEY = InputKeySource::INACTIVE_KEY;
 
     //
     // FILTER BASE

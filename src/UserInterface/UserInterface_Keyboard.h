@@ -9,7 +9,7 @@ namespace StarterPack {
 namespace UserInterface {
 
     typedef UserInterfaceAllKeys::KEY KEY;
-    static const KEY INACTIVE_KEY = UserInterfaceAllKeys::INACTIVE_KEY;
+    static const KEY INACTIVE_KEY = InputKeySource::INACTIVE_KEY;
 
     //  difference between c[XXX] and k[XXX]
     //  c___ are constants
@@ -119,32 +119,32 @@ namespace UserInterface {
         KeyHandler = handler;
     }
 
-    void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 10
-    // , uint16_t minimum = 50 
-    ) { 
-        if ( KeyHandler == nullptr ) return;
-        KeyHandler->setStabilizationTimeInMs(activeStateStabilizeTime, inactiveStateStabilizeTime);
-        // KeyHandler->debouncerSettings->stabilizedTimePressedInMs = activeStateStabilizeTime;
-        // KeyHandler->debouncerSettings->stabilizedTimeReleasedInMs = inactiveStateStabilizeTime;
-    }
+//IAN    void setDebounceStabilizeTimeInMs( uint16_t activeStateStabilizeTime = 50, uint16_t inactiveStateStabilizeTime = 10
+//IAN    // , uint16_t minimum = 50 
+//IAN    ) { 
+//IAN        if ( KeyHandler == nullptr ) return;
+//IAN        KeyHandler->setStabilizationTimeInMs(activeStateStabilizeTime, inactiveStateStabilizeTime);
+//IAN        // KeyHandler->debouncerSettings->stabilizedTimePressedInMs = activeStateStabilizeTime;
+//IAN        // KeyHandler->debouncerSettings->stabilizedTimeReleasedInMs = inactiveStateStabilizeTime;
+//IAN    }
 
-    void setDebounceDelayTimeInMs( uint16_t activeStateDelayTime = 0, uint16_t inactiveStateDelayTime = 0 ) {
-        if ( KeyHandler == nullptr ) return;
-        KeyHandler->setDebouncerDelayInMs(activeStateDelayTime, inactiveStateDelayTime);
-        // KeyHandler->debouncerSettings->debounceDelayPressedInMs = activeStateDelayTime;
-        // KeyHandler->debouncerSettings->debounceDelayReleasedInMs = inactiveStateDelayTime;
-    }
+//IAN    void setDebounceDelayTimeInMs( uint16_t activeStateDelayTime = 0, uint16_t inactiveStateDelayTime = 0 ) {
+//IAN        if ( KeyHandler == nullptr ) return;
+//IAN        KeyHandler->setDebouncerDelayInMs(activeStateDelayTime, inactiveStateDelayTime);
+//IAN        // KeyHandler->debouncerSettings->debounceDelayPressedInMs = activeStateDelayTime;
+//IAN        // KeyHandler->debouncerSettings->debounceDelayReleasedInMs = inactiveStateDelayTime;
+//IAN    }
 
     void setRepeatDelayAndRateInMs( uint16_t repeatDelay = 400, uint16_t repeatRate = 250 ) {
         if ( KeyHandler == nullptr ) return;
-        KeyHandler->setRepeatSettingsInMs(repeatDelay, repeatRate);
+        KeyHandler->setRepeatDelayAndRateInMs( repeatDelay, repeatRate );
         // KeyHandler->repeaterSettings->repeatDelayInMs = repeatDelay;
         // KeyHandler->repeaterSettings->repeatRateInMs = repeatRate;
     }
 
     void setMultiClickSettingsInMs( uint16_t maxInterval, uint16_t repeatRate = 0 ) {
         if ( KeyHandler == nullptr ) return;
-        KeyHandler->setMultiClickSettingsInMs(maxInterval, repeatRate);
+        KeyHandler->setMultiClickSettingsInMs( maxInterval, repeatRate );
     }
 
 //
@@ -186,18 +186,19 @@ namespace UserInterface {
 
     KEY getDebouncedKey() {
         if ( KeyHandler == nullptr ) return INACTIVE_KEY;
-        return KeyHandler->getDebouncedKey();
+//        return KeyHandler->getDebouncedKey();
+        return KeyHandler->getStableKey();
     }
 
-    KEY getKeyDown() {
-        if ( KeyHandler == nullptr ) return INACTIVE_KEY;
-        return KeyHandler->getKeyDown();
-    }
+//IAN     KEY getKeyDown() {
+//IAN         if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+//IAN         return KeyHandler->getKeyDown();
+//IAN     }
 
-    KEY getKeyUp() {
-        if ( KeyHandler == nullptr ) return INACTIVE_KEY;
-        return KeyHandler->getKeyUp();
-    }
+//IAN     KEY getKeyUp() {
+//IAN         if ( KeyHandler == nullptr ) return INACTIVE_KEY;
+//IAN         return KeyHandler->getKeyUp();
+//IAN     }
 
     bool isKeyPressed( KEY key ) {
         if ( KeyHandler == nullptr ) return false;
@@ -234,20 +235,23 @@ namespace UserInterface {
         return KeyHandler->waitForAnyKeyReleased();
     }
 
+    void clearDebouncedState_NEW() {
+    }
+
     void clearDebouncedState() {
         if ( KeyHandler == nullptr ) return;
         KeyHandler->clearDebouncedState();
     }
 
-    void skipDebounceDelay_XXX() {
-        if ( KeyHandler == nullptr ) return;
-        KeyHandler->skipDebounceDelay_XXX();
-    }
+//IAN    void skipDebounceDelay_XXX() {
+//IAN        if ( KeyHandler == nullptr ) return;
+//IAN        KeyHandler->skipDebounceDelay_XXX();
+//IAN    }
 
-    void cancelDebounceDelay_XXX() {
-        if ( KeyHandler == nullptr ) return;
-        KeyHandler->cancelDebounceDelay_XXX();
-    }
+//IAN    void cancelDebounceDelay_XXX() {
+//IAN        if ( KeyHandler == nullptr ) return;
+//IAN        KeyHandler->cancelDebounceDelay_XXX();
+//IAN    }
 
 //
 // FROM MULTI-CLICK: UserInterfaceMultiClick

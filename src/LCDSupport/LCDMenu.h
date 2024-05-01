@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include <Utility/spVector.h>
-#include <LCDSupport/LCDUtility.h>
+#include <LCDSupport/LCDChooser.h>
 #include <UserInterface.h>
 #include <spWDT.h>
 

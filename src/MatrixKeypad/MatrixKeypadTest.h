@@ -10,10 +10,11 @@ class MatrixKeypadSupport {
 public:
 
     static void MatrixKeypadMappedTest(
-    UserInterfaceDebounced & keypad,
+    UserInterfaceBasic & keypad,
+//    UserInterfaceDebounced & keypad,
     // MatrixKeypad &keypad,
-    const char *keyMap,
-    const char **keyName ) {
+    const char * keyMap,
+    const char ** keyName ) {
 
         namespace ui = StarterPack::UserInterface;
         auto lcd = ui::LCD;
