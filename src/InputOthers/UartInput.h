@@ -48,7 +48,7 @@ class UartInput : public InputKeyMapper<uint8_t,uint8_t> { // }: public UserInte
             // 1000 ms / 320 keys = 3.125 msec per key 
             auto available = uart->available();
             if ( available < 3 ) {
-                // still incompleted
+                // still incomplete, return last key found
                 DBG_IF( available!=0, "available only = " ); DBG_IF_( available!=0, available );
                 return lastRead;
             }
@@ -58,31 +58,80 @@ class UartInput : public InputKeyMapper<uint8_t,uint8_t> { // }: public UserInte
                 // M - - M -   incomplete at end
                 // - M - - M   ...
                 // - - M - -   incomplete at start
-                auto discard = uart->available() - 5;
+                auto discard = available - 5;
                 DBG_IF( discard>0, "discard = " ); DBG_IF_( discard>0, discard );
                 for( int i=0 ; i<discard ; i++ )
                     uart->read();
             }
+
+            // can get key
+            // if anything goes wrong return no key
+            lastRead = 0;
+
+            // possible: * * M K
+            // invalid chars, marker, key
+            // just throw invalid chars or excess chars
+            //    but do not remove marker yet unless has at least 3 chars
+            // ex.
+            //    * * M     - process on next call
+            //    * * M K   - process on next call
+            //    * * M K C - process now: has marker, key and check
+            
             // look for marker
+            bool markerFound = false;
             while( uart->available() ) {
-                auto marker = uart->read();
+                auto marker = uart->peek();
                 if ( marker == B10101010 ) {
                     DBG_( "marker found" );
+                    if ( uart->available() < 3 ) {
+                        // can't get complete key yet
+                        // but return no key, since garbage was detected
+                        return 0;
+                    }
+                    markerFound = true;
+                    uart->read();
                     break;
+                } else {
+                    // not marker - throw away
+                    uart->read();
                 }
             }
-            lastRead = 0;
-            InputKeySource::KEY candidate;
+
+
+            // // look for marker
+            // bool markerFound = false;
+            // while( uart->available() ) {
+            //     auto marker = uart->read();
+            //     if ( marker == B10101010 ) {
+            //         DBG_( "marker found" );
+            //         markerFound = true;
+            //         break;
+            //     }
+            // }
+            if ( !markerFound ) {
+                DBG_( "no marker" );
+                return 0;
+            }
+
+            // InputKeySource::KEY candidate;
             if( uart->available() ) {
-                candidate = uart->read();
+                InputKeySource::KEY candidate = uart->read();
                 DBG( "candidate = " ); DBG_( (uint8_t) candidate );
-            }
-            if ( uart->available() ) {
-                auto check = uart->read();
-                if ( candidate != ~check ) {
-                    lastRead = candidate;
-                    DBG( "check = " ); DBG_( (uint8_t) check );
+                if ( uart->available() ) {
+                    InputKeySource::KEY check = uart->read();
+                    check = ~check;
+                    if ( candidate == check ) {
+                        lastRead = candidate;
+                        DBG( "check pass = " ); DBG_( (uint8_t) check );
+                    } else {
+                        DBG( "check fail = " ); DBG_( (uint8_t) check );
+                        // DBG( "check fail = " ); DBG_( (uint8_t) ~check );
+                    }
+                } else {
+                    DBG_( "no check" );
                 }
+            } else {
+                DBG_( "no key" );
             }
             return lastRead;
         }

@@ -90,7 +90,7 @@ class InputKeyMapper : public InputFilterInterface<OUT_DATA_TYPE> {
             //        '7', '8', '9',
             //         ui::cESCAPE, '0', ui::cENTER, 0 }; <--- forgot NULL
             //     keypad.assignKeymap(keymap);
-            // if ( strlen( keyMap ) < scanCode )
+            // if ( scanCode >= strlen( keyMap ) )
             //     return scanCode;
 
             return keyMap[ scanCode-1 ];

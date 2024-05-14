@@ -64,7 +64,9 @@ class DigitalInput : public DigitalInputRaw {
             ActiveLow  = 4,
             Default            = ActiveHigh | PullNone,
             ActiveLowPullUp    = ActiveLow  | PullUp, // best for Arduino
-            ActiveHighPullDown = ActiveHigh | PullDown
+            ActiveHighPullDown = ActiveHigh | PullDown,
+            ActiveLowPullDown  = ActiveLow  | PullDown,
+            ActiveHighPullUp   = ActiveHigh | PullUp
         };
         CLASS_ENUM_MANIPULATION( Init )
 

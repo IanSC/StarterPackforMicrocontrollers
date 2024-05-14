@@ -1,6 +1,9 @@
 #pragma once
+
 #include <Preferences.h>
-#include <nvs_flash.h>
+#if defined( ESP32 )
+    #include <nvs_flash.h>
+#endif
 
 #include <UserInterface.h>
 #include <LCDSupport/LCDChooser.h>
@@ -26,10 +29,12 @@ class spStorage {
     public:
 
         spStorage( const char * PREF_FILE = "DATA" ) { //}, uint8_t VALID_FLAG = 0x23, uint8_t INVALID_FLAG = 0x34 ) {
+            #if defined( ESP32 )
+                ESP_ERROR_CHECK( nvs_flash_init() );
+            #endif
             this->PREF_FILE = PREF_FILE;
             // this->VALID_FLAG = VALID_FLAG;
             // this->INVALID_FLAG = INVALID_FLAG;
-            ESP_ERROR_CHECK( nvs_flash_init() );
             // open as read/write to force creation
             // if still missing and opened as read only
             //    error: [Preferences.cpp:50] begin(): nvs_open failed: NOT_FOUND
@@ -278,7 +283,7 @@ class spStorage {
         }
 
         template <typename T>
-        bool saveData( const char * key, T * data ) {
+        bool saveData( const char * key, const T * const data ) {
 
             // https://randomnerdtutorials.com/esp32-save-data-permanently-preferences/
             // https://github.com/espressif/arduino-esp32/issues/2497
@@ -395,7 +400,7 @@ class spStorage {
         }
 
         template <typename T, size_t S, typename TS>
-        bool saveArray( const char * key, T (&data)[S], TS usedSize ) {            
+        bool saveArray( const char * key, const T (&data)[S], const TS usedSize ) {            
 
             char * KEY = new char[ strlen(key)+3 ];
             strcpy( KEY+2, key );

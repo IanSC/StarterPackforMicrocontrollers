@@ -21,6 +21,9 @@
 
 #include <Utility/spEnum.h>
 
+// #define DEBUG_DIAGNOSE
+#include <dbgDefines.h>
+
 namespace StarterPack {
 
 class DigitalInputRaw {
@@ -109,11 +112,13 @@ class DigitalInputRaw {
             //     INACTIVE_STATE = HIGH;
             // else
             //     INACTIVE_STATE = LOW;
-            if ( ( pullupOptions & Pull::Up ) == Pull::Up )
+            if ( ( pullupOptions & Pull::Up ) == Pull::Up ) {
                 pinMode( PIN, INPUT_PULLUP );
-            else if ( ( pullupOptions & Pull::Down ) == Pull::Down )
+                DBG( "PIN " ); DBG( PIN ); DBG_( " = INPUT_PULLUP" ); 
+            } else if ( ( pullupOptions & Pull::Down ) == Pull::Down ) {
                 #if defined( ESP32 )
                     pinMode( PIN, INPUT_PULLDOWN );
+                    DBG( "PIN " ); DBG( PIN ); DBG_( " = INPUT_PULLDOWN" ); 
                 // #elif defined( ESP8266 )
                 //     // only pin16 can have pulldown
                 //     // ... just ignore
@@ -124,9 +129,12 @@ class DigitalInputRaw {
                 #else
                     // #error DIGITAL INPUT PULLDOWN NOT SUPPORTED
                     pinMode( PIN, INPUT );
+                    DBG( "PIN " ); DBG( PIN ); DBG_( " = INPUT" ); 
                 #endif
-            else
+            } else {
                 pinMode( PIN, INPUT );
+                DBG( "PIN " ); DBG( PIN ); DBG_( " = INPUT" ); 
+            }
         }
 
     //
@@ -159,7 +167,7 @@ class DigitalInputRaw {
         inline int readRaw() {
             if ( PIN == -1 ) return LOW;
             auto r = digitalRead( PIN );
-// Serial.print( "P" ); Serial.print( PIN ); Serial.print( " = " ); Serial.println( r );
+            // DBG( "P" ); DBG( PIN ); DBG( " = " ); DBG_( r );
             return r;
         }
 
@@ -194,3 +202,5 @@ class DigitalInputRaw {
 };
 
 }
+
+#include <dbgDefinesOff.h>
