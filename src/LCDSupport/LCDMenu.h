@@ -294,7 +294,7 @@ class menuSystem {
             if ( alternateKeyHandler != nullptr )
                 keypad = alternateKeyHandler;
             else
-                keypad = StarterPack::UserInterface::KeyHandler;
+                keypad = ui::KeyHandler;
 
             // display current menu
             // reprocess, might have added new entries, etc.

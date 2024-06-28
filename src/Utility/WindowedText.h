@@ -645,7 +645,9 @@ class WindowedText {
 // TEST
 //
 
-    static void TEST_WindowedText_Helper( WindowedText & w ) {
+namespace TEST_WindowedText {
+
+    void TEST_WindowedText_Helper( WindowedText & w ) {
         SerialPrintfln( "S (%2d) = '%s'", w.length(), w.string() );
         Serial.print(   "          ");
         for( int i=0 ; i<w.getWindowIndex() ; i++ ) Serial.print(' ');
@@ -658,7 +660,7 @@ class WindowedText {
         // SerialPrintfln( "cursorPos = %d", w.getCursorNumericPosition() );
     }
 
-    static void TEST_WindowedText_1() {
+    void TEST_WindowedText_1() {
         char buffer[20];
         buffer[0] = 0;
 
@@ -688,7 +690,7 @@ class WindowedText {
         TEST_WindowedText_Helper( w );
     }
 
-    static void TEST_WindowedText_2() {
+    void TEST_WindowedText_2() {
         char buffer[4] = "123";
         //buffer[0] = 0;
 
@@ -714,6 +716,8 @@ class WindowedText {
         SerialPrintfln( "c forward = %d", w.cursorForward() );
         TEST_WindowedText_Helper( w );
     }
+
+}
 
 }
 

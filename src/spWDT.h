@@ -31,7 +31,10 @@ namespace StarterPack {
                 rtc_wdt_feed();
                 // cannot call delay: https://esp32.com/viewtopic.php?t=27367
                 // delay(1);
-                // vTaskDelay( 1 );
+
+                // will not work without this ???!!!
+                vTaskDelay( 1 );
+
                 // yield();
 
             #endif

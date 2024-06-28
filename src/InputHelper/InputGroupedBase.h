@@ -20,6 +20,7 @@
 #pragma once
 
 #include <Utility/spVector.h>
+#include <spWDT.h>
 
 #include <UserInterface/UserInterfaceAllKeys.h>
 #include <DigitalIO/DigitalInput.h>
@@ -169,6 +170,7 @@ class InputGroupedBase : public InputCombiner<InputKeySource::KEY> {
             {
                 auto *dInput = digitalInputMapList.getFirst();
                 while ( dInput != nullptr ) {
+                    feedTheDog();
                     if ( dInput->dIO->readLogicalRaw() ) {
                         keysPressed[index] = dInput->key;
                         index++;
@@ -188,6 +190,7 @@ class InputGroupedBase : public InputCombiner<InputKeySource::KEY> {
             {
                 auto *aInput = analogInputList.getFirst();
                 while ( aInput != nullptr ) {
+                    feedTheDog();
                     auto key = aInput->aIO->read();
                     if (key != AnalogButtonsMapped::INACTIVE_KEY) {
                         keysPressed[index] = key;
@@ -208,6 +211,7 @@ class InputGroupedBase : public InputCombiner<InputKeySource::KEY> {
             {
                 auto *kInput = keypadList.getFirst();
                 while ( kInput != nullptr ) {
+                    feedTheDog();
                     // auto key = kInput->keypad->getStableKey();
                     // auto key = kInput->keypad->getNonDebouncedKey();
                     auto key = kInput->keySource->getNonDebouncedKey();

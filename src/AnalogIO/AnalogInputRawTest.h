@@ -66,7 +66,6 @@ public:
         auto keyValuesNoZero = keyValuesWithZero+1;
 
         ui::LCD->clear();
-        uint8_t row = 0, col = 0;
         for( int i=0 ; i<keyCount ; i++ ) {
             ui::LCD->printAt( 0, 0, "Press Key " );
             ui::LCD->print( i+1 );
